@@ -1,0 +1,8 @@
+
+class LP3_ASSERT_EQUAL { ~hfile=<Lp3/Assert.h> };
+class LP3_ASSERT_EQUAL_MESSAGE { ~hfile=<Lp3/Assert.h> };
+class LP3_ASSERT_FALSE { ~hfile=<Lp3/Assert.h> };
+class LP3_ASSERT_FALSE_MESSAGE { ~hfile=<Lp3/Assert.h> };
+class LP3_ASSERT_TRUE { ~hfile=<Lp3/Assert.h> };
+class LP3_ASSERT_TRUE_MESSAGE { ~hfile=<Lp3/Assert.h> };
+class LP3_FAIL { ~hfile=<Lp3/Assert.h> };

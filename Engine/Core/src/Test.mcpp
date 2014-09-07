@@ -1,0 +1,168 @@
+//#define BOOST_TEST_MODULE Core
+//#include <boost/test/unit_test.hpp>
+//
+//#include <Lp3/Assert.h>
+//#include <Lp3/LE.h>
+//#include <Lp3/Memory/GlobalHeap.h>
+//#include <Lp3/Memory/GlobalHeapPtr.h>
+//#include <Lp3/Memory/Host.h>
+//#include <Lp3/Memory/ManagedPointer.h>
+//#include <Lp3/Memory/MemoryStackPtr.h>
+//#include <Lp3/Memory/MemoryStack.h>
+//#include <Lp3/Memory/MemoryStackEntryFooter.h>
+//#include <Lp3/Memory/MemoryStackException.h>
+//#include <string>
+//
+//using Lp3::Memory::GlobalHeap;
+//using Lp3::Memory::GlobalHeapPtr;
+//using Lp3::Memory::Host;
+//using Lp3::Memory::ManagedPointer;
+//using Lp3::Memory::MemoryStack;
+//using Lp3::Memory::MemoryStackEntryFooter;
+//using Lp3::Memory::MemoryStackPtr;
+//using Lp3::Memory::MemoryStackException;
+//
+//BOOST_AUTO_TEST_CASE(Lp3Primitives)
+//{
+//	// Make sure these match the sizes we're expecting...
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::Int16), 2);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::UInt16), 2);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::Int32), 4);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::UInt32), 4);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::Int64), 8);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::UInt64), 8);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::Float32), 4);
+//	LP3_ASSERT_EQUAL(sizeof(Lp3::Float64), 8);
+//}
+//
+//struct Pod
+//{
+//	Lp3::Byte b1;
+//	Lp3::Byte b2;
+//	Lp3::Byte b3;
+//	Lp3::Byte b4;
+//};
+//
+//class SimpleClass
+//{
+//private:
+//	std::string & msg;
+//public:
+//	SimpleClass(std::string & msg)
+//		: msg(msg)
+//	{
+//		msg = "created";
+//	}
+//
+//	public: ~SimpleClass() 
+//	{
+//		msg = "destroyed" ;
+//	}
+//};
+//
+//BOOST_AUTO_TEST_CASE(Memory_Stack_throws_when_too_many_allocations)
+//{
+//	GlobalHeapPtr globalHeap = GlobalHeap::GetGlobalHeap();
+//	const size_t requestedSize = 0;
+//	MemoryStackPtr stack = MemoryStack::Create(globalHeap.get(), 0, 0);
+//	BOOST_CHECK_THROW(stack->Alloc(4), MemoryStackException)
+//}
+//
+//BOOST_AUTO_TEST_CASE(Memory_Stack_throws_when_too_many_allocations_2)
+//{
+//	GlobalHeapPtr globalHeap = GlobalHeap::GetGlobalHeap();
+//	const size_t requestedSize = 0;
+//	MemoryStackPtr stack = MemoryStack::Create(globalHeap.get(), 0, 0);
+//	try
+//	{
+//		Pod * pod = new (stack.get()) Pod();
+//		BOOST_FAIL("Should not have reached this point.");
+//	}
+//	catch (const MemoryStackException & e)
+//	{
+//		LP3_ASSERT_EQUAL(e.actualEntryCount, 0);
+//		LP3_ASSERT_EQUAL(e.reservedEntryCount, 0);
+//	}	
+//}
+//
+//BOOST_AUTO_TEST_CASE(MemoryStackTests)
+//{
+//	const size_t requestedSize = 6 * 1024 * 1024;
+//	GlobalHeapPtr globalHeap = GlobalHeap::GetGlobalHeap();
+//	const size_t totalSize = sizeof(MemoryStack) + requestedSize 
+//		                     + sizeof(MemoryStackEntryFooter) * 10;
+//	MemoryStackPtr stack = MemoryStack::Create(globalHeap.get(), 10, 
+//		                                       requestedSize);
+//	// Initial state
+//	LP3_ASSERT_EQUAL(totalSize, stack->GetSize());
+//	LP3_ASSERT_EQUAL(requestedSize, stack->GetBytesTotal());
+//	LP3_ASSERT_EQUAL(0, stack->GetBytesUsed());	
+//	LP3_ASSERT_EQUAL(requestedSize, stack->GetBytesFree());
+//	// routine allocation.
+//	Pod * pod = new (stack.get()) Pod;	
+//	LP3_ASSERT_EQUAL(sizeof(Pod), stack->GetBytesUsed());	
+//	LP3_ASSERT_EQUAL(requestedSize - sizeof(Pod), stack->GetBytesFree());
+//	// Routine allocation 2
+//	char * const text = static_cast<char *>(stack->Alloc(1024));
+//	LP3_ASSERT_EQUAL(sizeof(Pod) + 1024, stack->GetBytesUsed());	
+//	LP3_ASSERT_EQUAL(requestedSize - sizeof(Pod) - 1024, 
+//		             stack->GetBytesFree());
+//	// Routine allocation 3
+//	Pod * pod2 = new (stack.get()) Pod;
+//	LP3_ASSERT_EQUAL((sizeof(Pod) * 2)+ 1024, stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL(requestedSize - (sizeof(Pod) * 2) - 1024, 
+//		             stack->GetBytesFree());
+//
+//	std::string message = "construct";
+//	// Routine allocation 4
+//	SimpleClass * sc = new (stack.get()) SimpleClass(message);
+//	LP3_ASSERT_EQUAL("created", message);
+//	LP3_ASSERT_EQUAL(((sizeof(Pod) * 2) + 1024 + sizeof(SimpleClass)), 
+//		             stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL((requestedSize - (sizeof(Pod) * 2) - 1024 - 
+//                      sizeof(SimpleClass)), 
+//                     stack->GetBytesFree());
+//	// Make sure the entry footer has the inuse flag set.
+//	char * scPtr = static_cast<char *>(static_cast<void *>(sc));
+//	scPtr += sizeof(sc);
+//	scPtr += (sizeof(void *));
+//	Lp3::UInt32 * flagPtr = static_cast<Lp3::UInt32 *>(
+//		static_cast<void *>(scPtr));
+//	LP3_ASSERT_EQUAL_MESSAGE(0x830C, *flagPtr,
+//		                     "Flag must state memory is in use.");
+//
+//	// routine deallocation - removes last item, behaves intuitively.
+//	stack->Destroy(sc);
+//	LP3_ASSERT_EQUAL_MESSAGE("destroyed", message, 
+//		"Destroy should call the destructor.");
+//	LP3_ASSERT_EQUAL_MESSAGE(0xAC41, *flagPtr,
+//		                     "Flag must state memory is free.");
+//	LP3_ASSERT_EQUAL((sizeof(Pod) * 2)+ 1024, stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL(requestedSize - (sizeof(Pod) * 2) - 1024, 
+//	                 stack->GetBytesFree());
+//
+//	// Deallocation two- we delete something low in the stack. The space 
+//	// can't be claimed because there are allocations later on.
+//	stack->Destroy(pod);
+//	LP3_ASSERT_EQUAL((sizeof(Pod) * 2)+ 1024, stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL(requestedSize - (sizeof(Pod) * 2) - 1024, 
+//		             stack->GetBytesFree());
+//
+//	// Deallocation three - again, its at the bottom so nothing happens.
+//	stack->Free(text);
+//	LP3_ASSERT_EQUAL((sizeof(Pod) * 2)+ 1024, stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL(requestedSize - (sizeof(Pod) * 2) - 1024, 
+//		stack->GetBytesFree());
+//
+//	// Deallocation four - with the third allocation deleted, it
+//	// should now iterate through the footers and free up all space until
+//	// the start.
+//	stack->Destroy(pod2);
+//	LP3_ASSERT_EQUAL(0, stack->GetBytesUsed());
+//	LP3_ASSERT_EQUAL(requestedSize, stack->GetBytesFree());
+//}
+//
+//BOOST_AUTO_TEST_CASE(ManagedPointerTests)
+//{
+//	ManagedPointer<SimpleClass> ptr = new () 
+//}

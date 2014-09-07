@@ -1,0 +1,8 @@
+class LPCDIDATAFORMAT  { ~hfile=<dinput.h> };
+class LPCDIDEVICEINSTANCE { ~hfile=<dinput.h> };
+class DIDATAFORMAT { ~hfile=<dinput.h> } ;
+class LPDIRECTINPUT8 { ~hfile=<dinput.h> };
+class LPDIRECTINPUTDEVICE8 { ~hfile=<dinput.h> };
+class DIDEVICEINSTANCE { ~hfile=<dinput.h> };
+class DIJOYSTATE2 { ~hfile=<dinput.h> };
+class XINPUT_STATE { ~hfile=<XInput.h> };

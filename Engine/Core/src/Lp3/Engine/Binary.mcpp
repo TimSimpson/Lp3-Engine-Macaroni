@@ -1,0 +1,14 @@
+class LP3_ENGINE_BINARY_STRUCT_BEGIN
+{
+    // This macro can create a struct which puts all the bits where they
+    // should be.
+    // WARNING: This uses a GCC macro which can potentially be unsafe except
+    // on x86 if a pointer to this struct is dereferenced.
+    ~hfile=<Lp3/Engine/Binary.h>
+};
+
+class LP3_ENGINE_BINARY_STRUCT_END
+{
+    // Ends the definition of a binary struct.
+    ~hfile=<Lp3/Engine/Binary.h>
+};

@@ -1,0 +1,136 @@
+/**
+ * DirectInput Demo
+ *
+ *  This program showcases the DirectInput classes.
+ */
+~unit DreamcastDemo type=exe platform=dreamcast;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+
+~import Lp3::Engine::Input::Device;
+~import Lp3::Engine::Input::Dreamcast::DreamcastDeviceSource;
+
+~import std::string;
+
+~block "top" {
+#include <Lp3/LE.h>
+#ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom" {
+#else // LP3_COMPILE_TARGET_DREAMCAST
+	#include <iostream>
+	int main() {
+		std::cout << "This program will only run on the Dreamcast." << std::endl;
+	}
+#endif
+}
+
+~block "cpp" :=
+
+
+#include <kos.h>
+#include <stdlib.h>
+#include <time.h>
+
+
+// Stolen from bfont.c KOS example.
+int clear_talk() {
+    int x, y, o;
+    for(y = 0; y < 480; y++)
+    {
+        for(x = 0; x < 640; x++)
+        {
+            int c = (x ^ y) & 255;
+            vram_s[y * 640 + x] = 0;
+        }
+    }
+}
+
+int talk(int row, bool columnR, const char * msg) {
+    int o;
+    o = 20 * 640 + 20 + (columnR ? 320 : 0);
+
+
+    /* Test with ISO8859-1 encoding */
+    bfont_set_encoding(BFONT_CODE_ISO8859_1);
+    bfont_draw_str(vram_s + o + (640 * 24 * row), 640, 1,
+                   const_cast<char *>(msg));
+}
+
+
+#define TALK_FMT(r, x) { string s = str(x); talk(r, false, s.c_str()); }
+#define TALK_FMT2(r, x) { string s = str(x); talk(r, true, s.c_str()); }
+
+int main(int argc, char **argv) {
+
+    LP3_LOG_DEBUG("Lp3::Engine::Input Dreamcast Demo!");
+    LP3_LOG_DEBUG("");
+    LP3_LOG_DEBUG(" :3   <!!!!  <3  @ ");
+    LP3_LOG_DEBUG("");
+
+    DreamcastDeviceSource input;
+    Device * device = input.GetDevice(0);
+
+    clear_talk();
+    for(;;) {
+        //LP3_LOG_DEBUG("HI");
+        device->Update();
+        int index = device->FindPressedKeyCode();
+        talk(1, false, "Lp3::Engine::Input Dreamcast Demo");
+        talk(2, false, "-------------------------");
+        if (index >= 0)
+        {
+            talk(4, false, device->GetKeyName(index));
+        }
+        else
+        {
+            talk(4, false, " '_' ?              ");
+        }
+        //string up = str(format("Up /\\: %f") % device->GetKeyAnalogState(13));
+        //talk(4, up.c_str());
+        talk(6, false, "Digital Values");
+        talk(7, false, "-------------");
+
+//  X
+// <- X X
+//  X
+        TALK_FMT(9, format("D /\\: %s  A /\\: %s") % (device->GetKeyState(0) ? "X" : " ")
+                     % (device->GetKeyState(13) ? "X" : " "));
+        TALK_FMT(10, format("D \\/: %s  A \\/: %s") % (device->GetKeyState(1) ? "X" : " ")
+                     % (device->GetKeyState(14) ? "X" : " "));
+        TALK_FMT(11, format("D <-: %s  A <-: %s") % (device->GetKeyState(2) ? "X" : " ")
+                     % (device->GetKeyState(15) ? "X" : " "));
+        TALK_FMT(12, format("D ->: %s  A ->: %s") % (device->GetKeyState(3) ? "X" : " ")
+                     % (device->GetKeyState(16) ? "X" : " "));
+        TALK_FMT(13, format("L : %s  Y: %s  R : %s")
+            % (device->GetKeyState(11) ? "X" : " ")
+            % (device->GetKeyState(8) ? "X" : " ")
+            % (device->GetKeyState(12) ? "X" : " "));
+        TALK_FMT(14, format("X : %s  A: %s  B : %s")
+            % (device->GetKeyState(7) ? "X" : " ")
+            % (device->GetKeyState(4) ? "X" : " ")
+            % (device->GetKeyState(5) ? "X" : " "));
+
+        talk(6, true, "Analog Values");
+        talk(7, true, "-------------");
+
+        TALK_FMT2(9, format("Up /\\: %f") % device->GetKeyAnalogState(13));
+        TALK_FMT2(10, format("D  \\/: %f") % device->GetKeyAnalogState(14));
+        TALK_FMT2(11, format("Le <-: %f") % device->GetKeyAnalogState(15));
+        TALK_FMT2(12, format("Ri ->: %f") % device->GetKeyAnalogState(16));
+        TALK_FMT2(13, format("Lt [L]: %f") % device->GetKeyAnalogState(11));
+        TALK_FMT2(14, format("Rt [R]: %f") % device->GetKeyAnalogState(12));
+
+        usleep(1000);
+        if(device->GetKeyState(10))
+            break;
+    }
+
+    LP3_LOG_DEBUG(str(boost::format("devices: %d") % maple_enum_count()).c_str());
+
+    return 0;
+}
+
+
+

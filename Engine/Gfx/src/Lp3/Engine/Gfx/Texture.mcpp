@@ -1,0 +1,32 @@
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import boost::intrusive_ptr;
+~import Lp3::Engine::Gfx::Texture;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class Texture
+{
+    ~hfile=<Lp3/Engine/Gfx/Texture.hpp>
+
+
+    public void CopyPixels(const unsigned int x, const unsigned int y,
+                           InternalPixel * pixels,
+                           const unsigned int srcWidth,
+                           const unsigned int srcHeight)
+        /*
+           Copies pixels from an array of InternalPixel elements to the texture.
+           Note that this is an expensive operation as video ram may end up
+           being updated on the Dreamcast using a DMA call.
+        */
+    ;
+};
+
+
+class TexturePtr
+{
+    ~hfile=<Lp3/Engine/Gfx/TexturePtr.hpp>
+};
+

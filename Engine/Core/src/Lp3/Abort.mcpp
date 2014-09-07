@@ -1,0 +1,4 @@
+~import LP3_THROW;
+~import LP3_LOG_CRITICAL;
+
+class LP3_ABORT { ~hfile=<Lp3/Abort.h> };

@@ -1,0 +1,18 @@
+~import Lp3::Engine::Gfx::Renderer;
+~import boost::intrusive_ptr;
+~import Lp3::Engine::Gfx::Texture;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class VideoMemory
+{
+    virtual ~VideoMemory()
+    {
+    }
+
+    // Create a texture with the given dimensions.
+    virtual Texture create(unsigned int width, unsigned int height) = 0;
+
+};

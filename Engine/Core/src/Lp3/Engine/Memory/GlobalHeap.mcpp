@@ -1,0 +1,73 @@
+~import LP3_ASSERT_TRUE;
+~import boost::intrusive_ptr;
+~import Lp3::Engine::Memory::Host;
+~import Lp3::Engine::Memory::SharedHost;
+
+~namespace Lp3::Engine::Memory;
+
+class GlobalHeap {};
+
+typedef intrusive_ptr<GlobalHeap> GlobalHeapPtr;
+
+/** A Host compliant wrapper for the boring old global heap
+ * (global operator new and operator delete functions). */
+class GlobalHeap : public virtual SharedHost
+{
+    ~hidden ~global const size_t MaxMemory = (sizeof(size_t) * 8) ^ 2;
+
+    private GlobalHeap()
+    {
+    }
+
+    private virtual ~GlobalHeap()
+    {
+    }
+
+    /** Allocates some memory. */
+    public void * Alloc(const size_t size)
+    {
+        // This next line is SOLEY to catch a wascally Lua behavior that
+        // I wish to know more about... specifically, it sometimes attempts
+        // to free memory yet claims the memories original size was 0.
+        LP3_ASSERT_TRUE_MESSAGE(size > 0,
+            "Allocation request that was no more than zero.");
+        return ::operator new(size);
+    }
+
+    /** Frees some memory. */
+    public void Free(void * ptr)
+    {
+        ::operator delete(ptr);
+    }
+
+    /** The bytes available for use. */
+    public size_t GetBytesFree() const
+    {
+        return MaxMemory - GetBytesUsed();
+    }
+
+    /** The size of this Host's usable memory. */
+    public size_t GetBytesAvailable() const
+    {
+        return MaxMemory;
+    }
+
+    /** The Bytes used by this Host. */
+    public size_t GetBytesUsed() const
+    {
+        return 0;
+    }
+
+    public static GlobalHeapPtr GetGlobalHeap()
+    {
+        return GlobalHeapPtr(new GlobalHeap());
+    }
+
+    /** The size of this Host's usuable memory plus the sizeof() it's
+     * type. */
+    public size_t GetSize() const
+    {
+        return MaxMemory;
+    }
+
+};

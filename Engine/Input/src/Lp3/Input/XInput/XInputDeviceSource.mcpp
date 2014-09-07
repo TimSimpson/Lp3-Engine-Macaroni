@@ -1,0 +1,76 @@
+~namespace Lp3::Engine::Input::XInput;
+
+
+~import Lp3::Engine::Input::XInput::XInputDevice;
+~import Lp3::Engine::Input::DeviceSource;
+~import boost::format;
+~import boost::optional;
+~import LP3_ASSERT_TRUE;
+
+class XInputDeviceSource : public DeviceSource
+{
+    ~block "top" {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+    }
+    ~block "bottom" {
+        #endif // LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    ~block "h-predef"
+    {
+        #include <Lp3/Engine/Input/XInput/XInputDevice.h>
+    }
+
+    ~block "h"
+    {
+        private: XInputDevice devices[4];
+    }
+
+    ~hidden static const int MAX_CONTROLLERS = 4;
+
+    public XInputDeviceSource()
+    {
+        for (int i = 0; i < 4; ++ i)
+        {
+            devices[i].index = i;
+            devices[i].name = str(boost::format("XInput Controller %d")
+                                  % (i + 1));
+        }
+    }
+
+    public ~XInputDeviceSource()
+    {
+    }
+
+    public optional<unsigned int> FindConnectedController()
+    {
+        for (int i = 0; i < MAX_CONTROLLERS; ++ i)
+        {
+            if (devices[i].IsConnected())
+            {
+                return i;
+            }
+        }
+        return boost::none;
+    }
+
+    public virtual Device * GetDevice(unsigned int index)
+    {
+        LP3_ASSERT_TRUE(index >= 0 && index <= MAX_CONTROLLERS);
+        return &devices[index];
+    }
+
+    public virtual unsigned int GetDeviceCount() const
+    {
+        return MAX_CONTROLLERS;
+    }
+
+    public virtual void Update()
+    {
+        for (int i = 0; i < 4; ++ i)
+        {
+            devices[i].Update();
+        }
+    }
+};

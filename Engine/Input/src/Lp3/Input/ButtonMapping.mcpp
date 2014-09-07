@@ -1,0 +1,31 @@
+~import Lp3::Engine::Input::Device;
+~import std::string;
+
+~namespace Lp3::Engine::Input;
+
+/* Pairs a Device with a key index.
+ * More over, a button in Lp3::Engine::Input parlance is an "action" such as
+ * "Jump," "Attack," "Left," "Right," etc.
+ */
+class ButtonMapping
+{
+    ~block "h-predef"
+    {
+        #include <Lp3/LE.h>
+        #include <Lp3/Engine/Input/Device.h>
+    }
+
+    public Device * Device;
+    public string DeviceName;
+    public unsigned int KeyIndex;
+
+    public inline bool GetState()
+    {
+        return Device->GetKeyState(KeyIndex);
+    }
+
+    public inline Lp3::Float32 GetAnalogState()
+    {
+        return Device->GetKeyAnalogState(KeyIndex);
+    }
+};

@@ -1,0 +1,23 @@
+~import LP3_ABORT;
+~import LP3_ASSERT_FALSE_MESSAGE;
+~import LP3_LOG_DEBUG;
+~import boost::format;
+~import std::fstream;
+~import std::string;
+
+~import Lp3::Engine::Resources::EnvVars;
+~import std::fstream;
+~import Lp3::Engine::Resources::ResettableReadStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+
+~namespace Lp3::Engine::Resources;
+
+
+// Maps a file to the basic stream concept.
+// If *ANYTHING* goes wrong, abort is called. Remember, this is for a very
+// controlled environment where files should always be present.
+class InputFileStream : public ResettableReadStream
+{
+    ~hfile=<Lp3/Engine/Resources/InputFileStream.hpp>
+};

@@ -1,0 +1,96 @@
+~import Lp3::Engine::Memory::Host;
+~import boost::optional;
+~import Lp3::Engine::Resources::ResettableReadStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+
+
+~namespace Lp3::Engine::Resources;
+
+
+class MemoryStream : public ResettableReadStream
+{
+    private size_t actualSize;
+    private Host & host;
+    private char * pBuffer;
+    private size_t pBufferSize;
+    private size_t readIndex;
+
+    ~block "cpp-include"
+    {
+        #include <algorithm>
+    }
+
+    public MemoryStream(Host & host, size_t bufferSize)
+    :   actualSize(0),
+        host(host),
+        pBuffer(reinterpret_cast<char *>(host.Alloc(bufferSize))),
+        pBufferSize(bufferSize),
+        readIndex(0)
+    {
+    }
+
+    public ~MemoryStream()
+    {
+        host.Free(pBuffer);
+    }
+
+    public static ResettableReadStreamPtr Create(Host & host, size_t bufferSize)
+    {
+        ResettableReadStreamPtr ptr(new MemoryStream(host, bufferSize));
+        return ptr;
+    }
+
+    public virtual bool Eof() const
+    {
+        return readIndex >= actualSize;
+    }
+
+    public void Load(ReadStreamPtr input, optional<size_t> length,
+                     size_t readChunkSize)
+    {
+        if (actualSize > pBufferSize)
+        {
+            return;
+        }
+        size_t maxSize = pBufferSize - actualSize;
+        if (length)
+        {
+            maxSize = std::min(maxSize, length.get());
+        }
+        readChunkSize = std::min(readChunkSize, maxSize);
+
+        size_t count = 0;
+        while(!input->Eof() && count < maxSize)
+        {
+            const size_t result = input->Read(loadStart(), readChunkSize);
+            count += result;
+            actualSize += result;
+        }
+    }
+
+    ~hidden inline char * loadStart()
+    {
+        return pBuffer + actualSize;
+    }
+
+    ~hidden inline char * loadEnd()
+    {
+        return pBuffer + pBufferSize;
+    }
+
+    public virtual size_t Read(char * buffer, size_t bytes)
+    {
+        LP3_ASSERT_TRUE(readIndex <= actualSize);
+        char * src = pBuffer + readIndex;
+        const size_t count = std::min(bytes, actualSize - readIndex);
+        memcpy(buffer, src, count);
+        readIndex += count;
+        return count;
+    }
+
+    public virtual void Reset(size_t position=0)
+    {
+        readIndex = 0;
+    }
+};

@@ -1,0 +1,208 @@
+~import Lp3::Engine::Input::DirectInput::DirectInputDevice;
+~import Lp3::Exception;
+~import boost::format;
+~import LPDIRECTINPUT8;
+~import Lp3::Float32;
+~import HINSTANCE;
+~import HWND;
+~import LP3_LOG_ERROR;
+~import std::vector;
+
+~namespace Lp3::Engine::Input::DirectInput;
+
+class DiGamePadDevice : public DirectInputDevice
+{
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+        #define DIRECTINPUT_VESRION 0x0800
+        #include <dinput.h>
+    }
+    ~block "bottom"
+    {
+        #endif // End LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    ~block "cpp-include"
+    {
+        #include <limits>
+    }
+
+    private DIJOYSTATE2 js;
+
+    ~block "cpp" { namespace {
+        const size_t JOYKEYNAME_BUTTON_START = 4;
+        const size_t JOYKEYNUMBUTTONS = JOYKEYNAME_BUTTON_START + 12;
+        // Thanks, Win32.
+        #undef min
+        #undef max
+        const LONG AXIS_LOW = 0; //std::numeric_limits<Lp3::UInt16>::min();//-1000//0
+        const LONG AXIS_HIGH = 65535; //std::numeric_limits<Lp3::UInt16>::max();//65535
+        const LONG AXIS_MIDDLE = 32767;//32767
+        const LONG AXIS_ALLOWANCE = AXIS_MIDDLE / 4;//( AXIS_MIDDLE / 4 )
+        const char JoyKeyName[JOYKEYNUMBUTTONS][21] =
+        {
+          //"01234567890123456789",
+          "Axis 1 Up           ",
+          "Axis 1 Down         ",
+          "Axis 1 Left         ",
+          "Axis 1 Right        ",
+          "Button 1            ",
+          "Button 2            ",
+          "Button 3            ",
+          "Button 4            ",
+          "Button 5            ",
+          "Button 6            ",
+          "Button 7            ",
+          "Button 8            ",
+          "Button 9            ",
+          "Button 10           ",
+          "Button 11           ",
+          "Button 12           ",
+        };
+    }} // End ~cpp
+
+    public DiGamePadDevice(DIDEVICEINSTANCE devInstance,
+                           LPDIRECTINPUT8 * di8,
+                           HWND hWnd)
+    :   DirectInputDevice(devInstance)
+
+    {
+        initialize(hWnd, di8, device, deviceInstance, c_dfDIJoystick2, true);
+
+       // Now we gather info on capabilities of joystick.
+       DIDEVCAPS devCaps;
+       devCaps.dwSize = sizeof(DIDEVCAPS);
+       HRESULT hr;
+       if (FAILED(hr = device->GetCapabilities(&devCaps)))
+       {
+          LP3_LOG_ERROR("Failed to GetCapabilities.");
+       }
+       device->Acquire();
+    }
+
+    public virtual int FindPressedKeyCode()
+    {
+        for (int i = 0; i < 12; i ++)
+        {
+            if ((js.rgbButtons[i] & 0x80) == 0x80)
+            {
+                return JOYKEYNAME_BUTTON_START + i;
+            }
+        }
+        LP3_LOG_DEBUG("js.lX=%d < %d", js.lX, (AXIS_MIDDLE - AXIS_ALLOWANCE));
+        if (js.lX > AXIS_MIDDLE + AXIS_ALLOWANCE)
+           return 3;//LP3_LOG_DEBUG("right");
+        else if (js.lX < AXIS_MIDDLE - AXIS_ALLOWANCE)
+           return 2;//LP3_LOG_DEBUG("left");
+        if (js.lY > AXIS_MIDDLE + AXIS_ALLOWANCE)
+           return 1;//LP3_LOG_DEBUG("right");
+        else if (js.lY < AXIS_MIDDLE - AXIS_ALLOWANCE)
+           return 0;//LP3_LOG_DEBUG("left");
+        return -1;
+    }
+
+    public virtual int GetKeyCount()
+    {
+        return JOYKEYNUMBUTTONS;
+    }
+
+    public virtual const char * GetKeyName(unsigned int keyCode)
+    {
+        return (char *)JoyKeyName[keyCode];
+    }
+
+    public virtual bool GetKeyState(unsigned int keyCode)
+    {
+        if (keyCode >= JOYKEYNAME_BUTTON_START)
+        {
+            return ((js.rgbButtons[keyCode - JOYKEYNAME_BUTTON_START] & 0x80)
+                    == 0x80);
+        }
+        if (keyCode == 0)
+        {
+            return (js.lY < AXIS_MIDDLE - AXIS_ALLOWANCE);
+        }
+        if (keyCode == 1)
+        {
+            return (js.lY > AXIS_MIDDLE + AXIS_ALLOWANCE);
+        }
+        if (keyCode == 2)
+        {
+            return (js.lX < AXIS_MIDDLE - AXIS_ALLOWANCE);
+        }
+        if (keyCode == 3)
+        {
+            return (js.lX > AXIS_MIDDLE + AXIS_ALLOWANCE);
+        }
+    }
+
+    public virtual Lp3::Float32 GetKeyAnalogState(unsigned int keyCode)
+    {
+        if (keyCode >= JOYKEYNAME_BUTTON_START)
+        {
+            return GetKeyState(keyCode);
+        }
+        if (keyCode == 0)
+        {
+            if (js.lY < AXIS_MIDDLE)
+            {
+               Lp3::Float32 rtn = static_cast<Lp3::Float32>(AXIS_MIDDLE - js.lY)
+                                  - AXIS_ALLOWANCE;
+               if (rtn > 0.0f)
+               {
+                  return rtn / static_cast<Lp3::Float32>(AXIS_MIDDLE - AXIS_ALLOWANCE);
+               }
+            }
+            return 0.0f;
+        }
+        if (keyCode == 1)
+        {
+            if (js.lY > AXIS_MIDDLE)
+            {
+               Lp3::Float32 rtn = static_cast<Lp3::Float32>(js.lY - AXIS_MIDDLE)
+                                  - AXIS_ALLOWANCE;
+               if (rtn > 0.0f)
+               {
+                  return rtn / static_cast<Lp3::Float32>(AXIS_MIDDLE - AXIS_ALLOWANCE);
+               }
+            }
+            return 0.0f;
+        }
+        if (keyCode == 2)
+        {
+              Lp3::Float32 rtn = static_cast<Lp3::Float32>(AXIS_MIDDLE - js.lX)
+                                 - AXIS_ALLOWANCE;
+              if (rtn > 0.0f)
+              {
+                return rtn / static_cast<Lp3::Float32>(AXIS_MIDDLE - AXIS_ALLOWANCE);
+              }
+              return 0;
+        }
+        if (keyCode == 3)
+        {
+            Lp3::Float32 rtn =  static_cast<Lp3::Float32>(js.lX - AXIS_MIDDLE)
+                                - AXIS_ALLOWANCE;
+            if (rtn > 0.0f)
+            {
+               return rtn / static_cast<Lp3::Float32>(AXIS_MIDDLE - AXIS_ALLOWANCE);
+            }
+            return 0;
+        }
+    }
+
+    public virtual bool IsAnalogKey(unsigned int keyCode)
+    {
+        return (keyCode >=0 && keyCode < 4);
+    }
+
+    protected virtual void update()
+    {
+        HRESULT hr = device->GetDeviceState(sizeof(DIJOYSTATE2), &js);
+        if (FAILED(hr)){
+           LP3_LOG_DEBUG("Could not get device state.");
+           return;// -1;
+        }
+    }
+}

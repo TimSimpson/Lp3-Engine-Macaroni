@@ -1,0 +1,93 @@
+~import LP3_ABORT;
+~import LP3_ASSERT_FALSE_MESSAGE;
+~import LP3_LOG_DEBUG;
+~import boost::format;
+~import std::fstream;
+~import std::string;
+
+~import Lp3::Engine::Resources::EnvVars;
+~import std::fstream;
+~import Lp3::Engine::Resources::ResettableReadStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+~import FILE;
+
+
+~namespace Lp3::Engine::Resources;
+
+
+// Maps a file to the basic stream concept.
+// If *ANYTHING* goes wrong, abort is called. Remember, this is for a very
+// controlled environment where files should always be present.
+class DreamcastInputFileStream : public ResettableReadStream
+{
+
+    private FILE * file;
+    private int position;
+
+    public DreamcastInputFileStream(const char * filePath)
+    :   file()
+    {
+        string fullPath = str(format("%s/%s") % EnvVars::Get("LP3_ROOT_PATH")
+                                              % filePath);
+        LP3_LOG_DEBUG("Opening file %s...", fullPath);
+        file = fopen(fullPath.c_str(), "rb");
+        position = 0;
+        if (NULL == file)
+        {
+            LP3_ABORT("Error opening file %s!", fullPath);
+        }
+    }
+
+    public ~DreamcastInputFileStream()
+    {
+        if (file != NULL)
+        {
+            fclose(file);
+            file = NULL;
+        }
+    }
+
+    public static ResettableReadStreamPtr Create(const char * filePath)
+    {
+        ResettableReadStreamPtr ptr(new DreamcastInputFileStream(filePath));
+        return ptr;
+    }
+
+    public virtual bool Eof() const
+    {
+        return 0 != feof(file);
+    }
+
+    public virtual size_t Read(char * buffer, const size_t bytes)
+    {
+        //LP3_ASSERT_FALSE_MESSAGE(eof, "File is at EOF!");
+        const auto count = fread(buffer, 1, bytes, file);
+        // Emulate the C++ fstream by only setting eof after another read.
+        //if (0 == count)
+        //{
+        //    eof = true;
+       // }
+        return count;
+    }
+
+    public virtual void Reset(size_t position=0)
+    {
+        const auto n = fseek(file, position, SEEK_SET);
+        if (n >= 0)
+        {
+            LP3_ABORT("Reset file failed!");
+        }
+        clearerr(file);
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

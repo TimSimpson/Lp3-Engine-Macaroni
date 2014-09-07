@@ -1,0 +1,27 @@
+~namespace Lp3::Engine::Input;
+
+~import Lp3::Engine::Input::Device::Device;
+
+/** A source for devices. */
+class DeviceSource
+{
+    ~block "cpp-include"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            #include <Lp3/Engine/Input/DirectInput/DirectInputDeviceSource.h>
+        #else
+            #include <Lp3/Engine/Input/Dreamcast/DreamcastDeviceSource.h>
+        #endif
+    }
+
+    public virtual ~DeviceSource()
+    {
+    }
+
+    public virtual Device * GetDevice(unsigned int index) = 0;
+
+    public virtual unsigned int GetDeviceCount() const = 0;
+
+    public virtual void Update() = 0;
+};

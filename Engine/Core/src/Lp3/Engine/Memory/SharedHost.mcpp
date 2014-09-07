@@ -1,0 +1,117 @@
+~import boost::intrusive_ptr;
+
+~namespace Lp3::Engine::Memory;
+
+class SharedHost {};
+
+typedef intrusive_ptr<SharedHost> SharedHostPtr;
+
+
+/** A Host which may be owned by multiple entities. */
+class SharedHost : public Host
+{
+    ~block "h-predef"
+    {
+        #include <Lp3/Assert.h>
+        #include <memory>
+        #include "SharedHostPtr.h"
+    }
+
+    private int referenceCount;
+
+    public ~global ~friend void intrusive_ptr_add_ref(SharedHost * host)
+    {
+        ++ host->referenceCount;
+    }
+
+    public ~global ~friend void intrusive_ptr_release(SharedHost * host)
+    {
+        -- host->referenceCount;
+        if (host->referenceCount <= 0)
+        {
+            delete host;
+        }
+    }
+
+    public SharedHost()
+    :   Host(),
+        referenceCount(0)
+    {
+    }
+
+    ~block "h"
+    {
+    public:
+
+        template<typename T>
+        struct Deleter
+        {
+            SharedHostPtr host;
+
+            Deleter(SharedHostPtr host)
+            :   host(host)
+            {
+            }
+
+            void operator() (T * nakedPointer) {
+                LP3_ASSERT_FALSE_MESSAGE(!host, "Deleter using no host!");
+                host->Delete(nakedPointer);
+            }
+        };
+
+
+        template<typename T>
+        using unique_ptr = ::std::unique_ptr<T, Deleter<T>>;
+
+        template<typename T>
+        static unique_ptr<T> null_unique_ptr()
+        {
+            SharedHostPtr empty;
+            unique_ptr<T> uPtr(nullptr, Deleter<T>(empty));
+            return uPtr;
+        }
+
+        template<typename T, typename... Parameters>
+        unique_ptr<T> make_unique(Parameters... arguments)
+        {
+            SharedHostPtr hostPtr(this);
+            Deleter<T> deleter(hostPtr);
+            std::unique_ptr<T, Deleter<T>> uPtr(
+                this->New<T>(std::forward<Parameters>(arguments)...),
+                deleter);
+            return uPtr;
+        }
+
+        template<typename T>
+        using intrusive_ptr = ::boost::intrusive_ptr<T>;
+
+
+        template<typename T, typename... Parameters>
+        intrusive_ptr<T> make_intrusive(Parameters... arguments)
+        {
+            SharedHostPtr hostPtr(this);
+            intrusive_ptr<T> iPtr(this->New<T>(
+                hostPtr, std::forward<Parameters>(arguments)...));
+            return iPtr;
+        }
+
+
+        /*template<typename T>
+        using shared_ptr = ::std::shared_ptr<T>;
+
+
+        template<typename T, typename... Parameters>
+        shared_ptr<T> make_shared(Parameters... arguments)
+        {
+            SharedHostPtr hostPtr(this);
+            Deleter<T> deleter(hostPtr);
+            std::unique_ptr<T, Deleter<T>> uPtr(
+                this->New<T>(std::forward<Parameters>(arguments)...),
+                deleter);
+            return uPtr;
+        }*/
+
+
+
+    }
+};

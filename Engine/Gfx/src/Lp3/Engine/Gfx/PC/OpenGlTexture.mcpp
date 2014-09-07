@@ -1,0 +1,136 @@
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import boost::shared_ptr;
+
+
+~namespace Lp3::Engine::Gfx::OpenGl;
+
+
+class OpenGlTexture {};
+
+typedef boost::shared_ptr<OpenGlTexture> OpenGlTexturePtr;
+
+
+class OpenGlTexture : public Image
+{
+    private InternalPixel * data;
+    private unsigned int height;
+    private unsigned int width;
+    public GLuint textureId;
+
+    ~block "cpp-include"
+    {
+        #include <Lp3/Engine/Gfx/PC/OpenGlFunctions.hpp>
+    }
+
+    public OpenGlTexture(const unsigned int width,
+                         const unsigned int height)
+    :   data(new InternalPixel[width * height]),
+        height(height),
+        width(width)
+    {
+        //Note that textureId is garbage until Restore is called!
+    }
+
+    public ~OpenGlTexture()
+    {
+        safeGlDeleteTextures(1, &textureId);
+        delete[] data;
+    }
+
+    //WARNING: Untested, unused!
+    public void CopyPixels(const unsigned int x, const unsigned int y,
+                           InternalPixel * pixels,
+                           const unsigned int srcWidth,
+                           const unsigned int srcHeight)
+    {
+        // Tell OpenGL to alter the piece of the texture we wish to edit.
+        safeGlBindTexture(GL_TEXTURE_2D, textureId);
+        safeGlTexSubImage2D(GL_TEXTURE_2D, 0, x, y,
+                        srcWidth, srcHeight,
+                        GL_RGBA,
+                        GL_UNSIGNED_BYTE,
+                        pixels);
+        // Copy to the system memory so we can change screen modes
+        // and the texture will still look the same.
+        for (unsigned int yI = 0; yI < srcHeight; yI ++)
+        {
+            for (unsigned int xI = 0; xI < srcWidth; xI ++)
+            {
+                const unsigned int index = (y + yI) * this->width + (x + xI);
+                const unsigned int srcIndex = (yI * srcWidth) + xI;
+                data[index] = pixels[srcIndex];
+            }
+        }
+    }
+
+    public unsigned int GetHeight() const
+    {
+        return height;
+    }
+
+    public unsigned int GetWidth() const
+    {
+        return width;
+    }
+
+    public void Restore()
+     /*
+           Asks the texture to restore itself to whatever has been set in
+           video memory.
+           This is necessary as with OpenGL the texture, which is stored in
+           video memory, can be wiped out when the video mode is changed (this
+           happens when changing resolutions). To deal with this, the same
+           image data is also stored in system memory (yes, this is lazy) and
+           is converted back to video memory on command.
+           On the Dreamcast, this method does not exist.
+    */
+    {
+        safeGlGenTextures(1, &textureId);
+        /* Tell OpenGL to work with it. */
+        safeGlBindTexture(GL_TEXTURE_2D, textureId);
+        /* Use GL_NEAREST for the texture filter when texture is
+         * farthest and closest away.  This makes it blocky- to make it smooth
+         * use GL_LINEAR. */
+        safeGlTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+        safeGlTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        safeGlTexImage2D(GL_TEXTURE_2D,    // Generate a new texture.
+                     0,                // Mip level for this texture (none).
+                     4,                // # of color components- R, G, B, and A.
+                     width,
+                     height,
+                     0,                // Border.
+                     GL_RGBA,          // Describe color format to OpenGL.
+                     GL_UNSIGNED_BYTE, // Data type used for each pixel.
+                     data
+        );
+    }
+
+    //TODO: This feels wrong somehow. As if maybe I should create a class that
+    //      offers access to this buffer.
+    public virtual void SetPixel(size_t x, size_t y, const Pixel & pixel)
+    {
+        data[(y * width) + x].Set(pixel);
+    }
+
+    public virtual void SetPixel(int x, int y, const Pixel & pixel)
+    {
+        data[(y * width) + x].Set(pixel);
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifndef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};
+

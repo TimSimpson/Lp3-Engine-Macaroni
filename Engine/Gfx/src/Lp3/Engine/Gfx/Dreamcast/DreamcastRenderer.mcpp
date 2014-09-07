@@ -1,0 +1,375 @@
+~import Lp3::Engine::Gfx::Geometry::CoordinatePair2d;
+~import Lp3::Engine::Gfx::Dreamcast::DreamcastTexture;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::NonTexturedFlatQuad;
+~import Lp3::Engine::Gfx::NonTexturedQuad;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::Geometry::SpriteCoordinates;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadUV;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+
+~namespace Lp3::Engine::Gfx::Dreamcast;
+
+
+class DreamcastRenderer
+{
+    ~block "h"
+    {
+        friend class DreamcastScreen;
+    }
+    ~block "cpp-include"
+    {
+        #include <Lp3/Engine/Gfx/Geometry.hpp>
+    }
+
+    private pvr_poly_cxt_t baseCxt;
+    private pvr_poly_cxt_t cxtTR;
+    private pvr_poly_hdr_t hdr;
+
+    private pvr_poly_cxt_t currentCxt;
+
+    private Size2d<float> currentTextureSize;
+
+    public DreamcastRenderer()
+    {
+        currentTextureSize = { 1, 1 };
+
+        pvr_init_params_t params = {
+            // Enable opaque and translucent polygons with size 16
+            { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
+            //{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0 },
+            // Vertex buffer size 512K
+            512*1024
+        };
+        pvr_init(&params);
+
+        //pvr_set_bg_color(1.0f, 0.25f, 0.25f);
+        pvr_set_bg_color(0.2f, 0.2f, 0.2f);
+
+        pvr_poly_cxt_t cxt;
+        pvr_poly_cxt_col(&cxt, PVR_LIST_OP_POLY);
+        cxt.gen.shading = PVR_SHADE_FLAT;
+        pvr_poly_compile(&hdr, &cxt);
+
+        // OLD, ancient junk- delete?
+        pvr_poly_cxt_col(&baseCxt, PVR_LIST_TR_POLY);
+        baseCxt.gen.shading = PVR_SHADE_FLAT;
+        baseCxt.gen.alpha = PVR_ALPHA_ENABLE;
+        baseCxt.txr.env = PVR_TXRENV_MODULATE;
+        baseCxt.txr.enable = PVR_TEXTURE_ENABLE;
+        baseCxt.txr.mipmap = PVR_MIPMAP_DISABLE;
+        baseCxt.txr.mipmap_bias = PVR_MIPBIAS_NORMAL;
+        baseCxt.txr.filter = PVR_FILTER_NONE; //Try bilinear
+        // baseCxt.txr.filter = PVR_FILTER_BILINEAR; // <-NEW!!!
+        baseCxt.txr.alpha = PVR_TXRALPHA_ENABLE;
+        baseCxt.txr.uv_flip = PVR_UVFLIP_NONE;
+        baseCxt.txr.uv_clamp = PVR_UVCLAMP_NONE;
+        baseCxt.txr.format = PVR_TXRFMT_NONE;
+        baseCxt.txr.base = nullptr;
+        baseCxt.txr.width = -1;
+        baseCxt.txr.height = -1;
+
+        pvr_poly_cxt_col(&cxtTR, PVR_LIST_TR_POLY);
+
+        cxtTR.gen.shading = PVR_SHADE_FLAT;
+        cxtTR.txr.env = PVR_TXRENV_MODULATE;
+        cxtTR.txr.enable = PVR_TEXTURE_ENABLE;
+        cxtTR.txr.mipmap = PVR_MIPMAP_DISABLE;
+        cxtTR.txr.mipmap_bias = PVR_MIPBIAS_NORMAL;
+        cxtTR.txr.filter = PVR_FILTER_NONE; //Try bilinear
+        // cxt.txr.filter = PVR_FILTER_BILINEAR; // <-NEW!!!
+        cxtTR.txr.alpha = PVR_TXRALPHA_ENABLE;
+        cxtTR.txr.uv_flip = PVR_UVFLIP_NONE;
+        cxtTR.txr.uv_clamp = PVR_UVCLAMP_NONE;
+        cxtTR.txr.format = PVR_TXRFMT_NONE;
+        cxtTR.txr.base = NULL;
+        cxtTR.txr.width = -1;
+        cxtTR.txr.height = -1;
+    }
+
+    private void beginFrame()
+    {
+        pvr_wait_ready();
+
+        pvr_scene_begin();
+
+        pvr_list_begin(PVR_LIST_OP_POLY);
+
+        pvr_prim(&hdr, sizeof(hdr));
+    }
+
+    private void beginTranslucent()
+    {
+        pvr_list_finish();
+        pvr_list_begin(PVR_LIST_TR_POLY);
+    }
+
+
+    private void endFrame()
+    {
+        pvr_list_finish();
+        pvr_scene_finish();
+    }
+public:
+
+    static const TexturedQuadUV Normal = {{0.0, 0.0}, {1.0, 1.0}};
+
+    void Quad(const float x, const float y, const float width, const float height,
+              const float Z, const VertexPixel & pixel)
+    {
+        const auto c = quadCoordinates(x, y, width, height);
+        Quad(c, Z, pixel);
+    }
+
+    void Quad(const SpriteCoordinates & c, const float z,
+              const VertexPixel & pixel)
+    {
+        pvr_vertex_t vert;
+        vert.flags = PVR_CMD_VERTEX;
+        vert.x = c.A.X;
+        vert.y = c.B.Y;
+        vert.z = z;
+        vert.u = 0;
+        vert.v = 0;
+        vert.argb = pixel.argb;
+        vert.oargb = 0;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.A.X;
+        vert.y = c.A.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.B.X;
+        vert.y = c.B.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.B.X;
+        vert.y = c.A.Y;
+        vert.flags = PVR_CMD_VERTEX_EOL;
+        pvr_prim(&vert, sizeof(vert));
+    }
+
+    void Quad(const NonTexturedQuad & q)
+    {
+        pvr_vertex_t vert;
+        vert.flags = PVR_CMD_VERTEX;
+        vert.x = q.C.X;
+        vert.y = q.C.Y;
+        vert.z = q.C.Z;
+        vert.u = 0;
+        vert.v = 0;
+        vert.argb = q.CC.argb;
+        vert.oargb = 0;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.A.X;
+        vert.y = q.A.Y;
+        vert.z = q.A.Z;
+        vert.argb = q.CA.argb;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.D.X;
+        vert.y = q.D.Y;
+        vert.z = q.D.Z;
+        vert.argb = q.CD.argb;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.B.X;
+        vert.y = q.B.Y;
+        vert.z = q.B.Z;
+        vert.argb = q.CB.argb;
+        vert.flags = PVR_CMD_VERTEX_EOL;
+        pvr_prim(&vert, sizeof(vert));
+    }
+
+    void Quad(const NonTexturedFlatQuad & q)
+    {
+        pvr_vertex_t vert;
+        vert.flags = PVR_CMD_VERTEX;
+        vert.x = q.C.X;
+        vert.y = q.C.Y;
+        vert.z = q.Z;
+        vert.u = 0;
+        vert.v = 0;
+        vert.argb = q.CC.argb;
+        vert.oargb = 0;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.A.X;
+        vert.y = q.A.Y;
+        vert.argb = q.CA.argb;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.D.X;
+        vert.y = q.D.Y;
+        vert.argb = q.CD.argb;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = q.B.X;
+        vert.y = q.B.Y;
+        vert.argb = q.CB.argb;
+        vert.flags = PVR_CMD_VERTEX_EOL;
+        pvr_prim(&vert, sizeof(vert));
+    }
+
+    ~hidden inline const CoordinatePair2d<float> quadCoordinates(
+        const float x, const float y, const float width, const float height)
+    {
+        return {{x, y}, {x + width - 1, y + height - 1}};
+    }
+
+    ~hidden inline const CoordinatePair2d<float> quadCoordinates(
+        const ScreenPoint p, const Size2d<float> size)
+    {
+        return {{p.X, p.Y}, {p.X + size.Width - 1, p.Y + size.Height - 1}};
+    }
+
+    void TexturedQuad(const ScreenPoint positionTL,
+                      const float z,
+                      const TexturedQuadSrc & src)
+    {
+        const Size2d<float> size = { src.B.X - src.A.X + 1,
+                                     src.B.Y - src.A.Y + 1 };
+        TexturedQuad(positionTL, size, z, src);
+    }
+
+    void TexturedQuad(const ScreenPoint positionTL,
+                      const Size2d<float> size, const float z,
+                      const TexturedQuadSrc & src)
+    {
+        const auto c = quadCoordinates(positionTL, size);
+        const TexturedQuadUV uv(src, currentTextureSize);
+        TexturedQuad(c, z, uv);
+    }
+
+    public void TexturedQuad(const SpriteCoordinates & c, const float z,
+                             const TexturedQuadSrc & src)
+    {
+        const TexturedQuadUV uv(src, currentTextureSize);
+        TexturedQuad(c, z, uv);
+    }
+
+    void TexturedQuad(const ScreenPoint positionTL,
+                      const Size2d<float> size, const float z,
+                      const TexturedQuadUV & uv=Normal)
+    {
+        const auto c = quadCoordinates(positionTL, size);
+        TexturedQuad(c, z, uv);
+    }
+
+    public void TexturedQuad(const SpriteCoordinates & c, const float z,
+                             const TexturedQuadUV & uv=Normal)
+    {
+        // Note: To make a quad appear on the screen, two styles seem to work.
+        // A "Z" (starting at the upper left corner, ending in the lower right
+        // one) and an "N" (starting at the lower left corner, ending in the
+        // upper right). I've choosen the "N" style here.
+
+        pvr_vertex_t vert;
+        vert.flags = PVR_CMD_VERTEX;
+        vert.argb = PVR_PACK_COLOR(1, 1, 1, 1);
+        vert.oargb = 0;
+        vert.z = z;
+
+        vert.x = c.A.X;
+        vert.y = c.B.Y;
+        vert.u = uv.A.X;
+        vert.v = uv.B.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.A.X;
+        vert.y = c.A.Y;
+        vert.u = uv.A.X;
+        vert.v = uv.A.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.B.X;
+        vert.y = c.B.Y;
+        vert.u = uv.B.X;
+        vert.v = uv.B.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = c.B.X;
+        vert.y = c.A.Y;
+        vert.u = uv.B.X;
+        vert.v = uv.A.Y;
+        vert.flags = PVR_CMD_VERTEX_EOL; // end quad
+        pvr_prim(&vert, sizeof(vert));
+    }
+
+    void Triangle(const ScreenPoint p1, const ScreenPoint p2,
+                  const ScreenPoint p3, const float z,
+                  const VertexPixel & pixel)
+    {
+        pvr_vertex_t vert;
+        vert.flags = PVR_CMD_VERTEX;
+        vert.argb = pixel.argb;
+        vert.oargb = 0;
+        vert.z = z;
+
+        vert.x = p1.X;
+        vert.y = p1.Y;
+        vert.u = 0;
+        vert.v = 0;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = p2.X;
+        vert.y = p2.Y;
+        pvr_prim(&vert, sizeof(vert));
+
+        vert.x = p3.X;
+        vert.y = p3.Y;
+        vert.flags = PVR_CMD_VERTEX_EOL;
+        pvr_prim(&vert, sizeof(vert));
+    }
+
+    void UseNoTexture()
+    {
+        pvr_poly_cxt_col(&currentCxt, PVR_LIST_OP_POLY);
+        currentTextureSize = { 1, 1 };
+        currentCxt.gen.shading = PVR_SHADE_GOURAUD; // Useful for gradients.
+        pvr_poly_hdr_t hdr;
+        pvr_poly_compile(&hdr, &currentCxt);
+        pvr_prim(&hdr, sizeof(hdr));
+    }
+
+    void UseTexture(TexturePtr texture)
+    {
+        pvr_poly_cxt_col(&currentCxt, PVR_LIST_TR_POLY);
+
+        currentCxt.gen.shading = PVR_SHADE_FLAT;
+        currentCxt.gen.alpha = PVR_ALPHA_ENABLE;
+        currentCxt.txr.env = PVR_TXRENV_MODULATE;
+        currentCxt.txr.enable = PVR_TEXTURE_ENABLE;
+        currentCxt.txr.mipmap = PVR_MIPMAP_DISABLE;
+        currentCxt.txr.mipmap_bias = PVR_MIPBIAS_NORMAL;
+        currentCxt.txr.filter = PVR_FILTER_NONE;
+
+
+
+        currentCxt.txr.format = PVR_TXRFMT_ARGB4444;
+        currentCxt.txr.width = texture->GetWidth();
+        currentCxt.txr.height = texture->GetHeight();
+        currentCxt.txr.base = texture->data;
+        pvr_poly_hdr_t hdr;
+        pvr_poly_compile(&hdr, &currentCxt);
+        pvr_prim(&hdr, sizeof(hdr));
+
+        currentTextureSize = { texture->GetWidth(), texture->GetHeight() };
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

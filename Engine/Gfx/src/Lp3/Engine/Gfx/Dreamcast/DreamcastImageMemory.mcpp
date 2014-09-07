@@ -1,0 +1,72 @@
+~import Lp3::Engine::Gfx::BitmapReader;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::GfxManager;
+~import boost::optional;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+
+~namespace Lp3::Engine::Gfx::Dreamcast;
+
+
+class DreamcastImageMemory
+{
+    public DreamcastImageMemory()
+    {
+    }
+
+    public ~DreamcastImageMemory()
+    {
+    }
+
+    ~hidden TexturePtr createTexture(const unsigned int width,
+                                     const unsigned int height)
+    {
+        TexturePtr texture(new DreamcastTexture(width, height));
+        return texture;
+    }
+
+    public TexturePtr CreateTexture(const unsigned int width,
+                                    const unsigned int height,
+                                    const Pixel pixel)
+    {
+        const Pixel red(0xFF, 0x00, 0x00, 0xFF);
+        TexturePtr texture = createTexture(width, height);
+        for (unsigned int j = 0; j < height; j ++)
+        {
+            for (unsigned int i = 0; i < width; i ++)
+            {
+                texture->SetPixel(i, j, pixel);
+            }
+        }
+
+
+        for (unsigned int j = 0; j < 2; j ++) {
+            texture->SetPixel(j, j, red);
+        }
+
+        return texture;
+    }
+
+    public TexturePtr LoadTexture(ReadStreamPtr input,
+                                 const optional<Pixel> & colorKey = boost::none)
+    {
+        BitmapReader reader(input);
+        TexturePtr texture(new DreamcastTexture(reader.Width(), reader.Height()));
+        reader.Read(*texture, colorKey);
+        //texture->Restore();
+        //TODO: Consider loading in larger chunks.
+        return texture;
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

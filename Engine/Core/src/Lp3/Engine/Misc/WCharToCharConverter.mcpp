@@ -1,0 +1,53 @@
+~import LP3_ASSERT_TRUE;
+~import nullptr;
+~import wcslen;
+~import wcstombs;
+
+~namespace Lp3::Engine::Misc;
+
+/**
+ * Converts from wchar_t * to char *.  Saves to a buffer which is destroyed
+ * when this instance is destroyed.
+ */
+class WCharToCharConverter
+{
+	~block "top" {
+		#include <Lp3/LE.h>
+		#ifdef LP3_COMPILE_TARGET_WINDOWS
+	}
+	~block "bottom" {
+		#endif // LP3_COMPILE_TARGET_DREAMCAST
+	}
+	private char * converted;
+
+	public WCharToCharConverter(const wchar_t * original)
+		: converted(nullptr)
+	{
+		int totalLength = wcslen(original);
+		int maxBytes = totalLength + 1;
+		converted = new char[maxBytes];
+		try
+		{
+			#pragma warning(disable : 4996) // Disable warning on wbstombs
+			size_t convertedCount = wcstombs(converted, original, maxBytes);
+			//wctomb_s(&convertedCount, converted, exePathW.size(), buffer);
+			LP3_ASSERT_TRUE_MESSAGE(convertedCount == (maxBytes - 1),
+				"Could not convert wide character string to classic char string.");
+		}
+		catch(...)
+		{
+			delete[] converted;
+			throw; // Rethrows whatever we caught.
+		}
+	}
+
+	public ~WCharToCharConverter()
+	{
+		delete[] converted;
+	}
+
+	public const char * GetCharPtr()
+	{
+		return converted;
+	}
+};

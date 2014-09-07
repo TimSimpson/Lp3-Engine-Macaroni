@@ -1,0 +1,10 @@
+~import Lp3::Engine::Gfx::Pixel;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class ImageMemory
+{
+    ~hfile=<Lp3/Engine/Gfx/ImageMemory.hpp>
+};

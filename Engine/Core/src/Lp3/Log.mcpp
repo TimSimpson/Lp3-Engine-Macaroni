@@ -1,0 +1,34 @@
+~import Lp3::Engine::Log::ErrOutPipe;
+
+class LP3_LOG_CRITICAL { ~hfile=<Lp3/Log.h> };
+class LP3_LOG_DEBUG { ~hfile=<Lp3/Log.h> };
+class LP3_LOG_ERROR { ~hfile=<Lp3/Log.h> };
+class LP3_LOG_WARNING { ~hfile=<Lp3/Log.h> };
+
+namespace Lp3::Log
+{
+    class LogSystem
+    {
+        ~block "cpp-include" {
+            #include <Lp3/LE.h>
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+            #include <Lp3/Engine/Log/ErrOutPipe.h>
+            #endif // LP3_COMPILE_TARGET_WINDOWS
+        }
+
+        public LogSystem()
+        {
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+            Lp3::Engine::Log::ErrOutPipe::Init();
+            #endif // LP3_COMPILE_TARGET_WINDOWS
+        }
+
+        public ~LogSystem()
+        {
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+            Lp3::Engine::Log::ErrOutPipe::Close();
+            #endif // LP3_COMPILE_TARGET_WINDOWS
+        }
+
+    };
+}

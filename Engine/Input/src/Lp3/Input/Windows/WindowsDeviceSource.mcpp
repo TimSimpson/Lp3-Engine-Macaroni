@@ -1,0 +1,77 @@
+~namespace Lp3::Engine::Input::Windows;
+
+
+~import Lp3::Engine::Input::Windows::WindowsDeviceSource;
+~import Lp3::Engine::Input::DirectInput::DirectInputDeviceSource;
+~import Lp3::Engine::Input::XInput::XInputDeviceSource;
+~import LP3_FAIL;
+~import HINSTANCE;
+~import HWND;
+~import boost::optional;
+
+
+class WindowsDeviceSource : public DeviceSource
+{
+    ~block "top" {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+    }
+    ~block "bottom" {
+        #endif // LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    private DirectInputDeviceSource dxInput;
+    private XInputDeviceSource xInput;
+
+    public WindowsDeviceSource(HINSTANCE hInstance, HWND hWnd)
+    :   dxInput(hInstance, hWnd),
+        xInput()
+    {
+    }
+
+    public ~WindowsDeviceSource()
+    {
+    }
+
+    public optional<unsigned int> FindXInputDevice()
+    {
+        const auto result =  xInput.FindConnectedController();
+        if (result)
+        {
+            return dxInput.GetDeviceCount() + result.get();
+        }
+        else
+        {
+            return boost::none;
+        }
+    }
+
+    public virtual Device * GetDevice(unsigned int index)
+    {
+        const int xIndex = index - dxInput.GetDeviceCount();
+        if (xIndex < 0)
+        {
+            return dxInput.GetDevice(index);
+        }
+        else if (xIndex < xInput.GetDeviceCount())
+        {
+            return xInput.GetDevice(xIndex);
+        }
+        else
+        {
+            LP3_FAIL("Bad device index.");
+            return nullptr;
+        }
+    }
+
+    public virtual unsigned int GetDeviceCount() const
+    {
+        return dxInput.GetDeviceCount() + xInput.GetDeviceCount();
+    }
+
+    public virtual void Update()
+    {
+        dxInput.Update();
+        xInput.Update();
+    }
+};

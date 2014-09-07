@@ -1,0 +1,50 @@
+~import Lp3::Engine::Input::Device;
+~import Lp3::Engine::Input::ButtonMapping;
+~import Lp3::Float32;
+~import std::vector;
+
+
+~namespace Lp3::Engine::Input;
+
+
+/** Makes an easy to use Controller. */
+class Control
+{
+
+    private vector<ButtonMapping> buttons;
+
+    ~block "h"
+    {
+        friend class Controls;
+        enum VALUES { buttonCount = 22 };
+    }
+
+    public Control()
+    {
+        for (unsigned int index = 0; index < buttonCount; index ++)
+        {
+            buttons.push_back(ButtonMapping());
+        }
+    }
+
+    public Lp3::Float32 AnalogState(unsigned int index)
+    {
+        return buttons[index].GetAnalogState();
+    }
+
+    protected void ConfigureButtonMapping(unsigned int index, ButtonMapping ck)
+    {
+        buttons[index] = ck;
+    }
+
+    public unsigned int GetButtonCount()
+    {
+        return buttonCount;
+    }
+
+    public bool State(unsigned int index)
+    {
+        return buttons[index].GetState();
+    }
+
+};

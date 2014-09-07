@@ -1,0 +1,93 @@
+~unit MotivatingExample type=exe; // platform=windows;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import std::string;
+~import std::vector;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+
+const auto red   = VertexPixel::Create(255, 0, 0, 255);
+const auto green = VertexPixel::Create(0, 255, 0, 255);
+const auto blue  = VertexPixel::Create(0, 0, 255, 255);
+
+
+class ColoredBlock : public ScreenObject
+{
+	virtual void DrawOpaque(Renderer & renderer)
+	{
+		renderer.UseNoTexture();
+		static float angle;
+		VertexPixel pixels[3];
+		pixels[0] = red;
+		pixels[1] = green;
+		pixels[2] = blue;
+		int pixelIndex = 0;
+		int start = ( (int) angle ) % 10 - 0;
+
+		for (float i = start; i < 640; i += 10) {
+			for (float j = start; j < 480; j += 10) {
+				renderer.Quad(i, j, 8.0, 8.0, 0.5f, pixels[pixelIndex]);
+				pixelIndex += 1;
+				if (pixelIndex > 2) {
+					pixelIndex = 0;
+				}
+			}
+		}
+		// Increase angle to rotate
+		angle+=0.25;
+	}
+
+	virtual void DrawTranslucent(Renderer & renderer)
+	{
+		//	renderer.Quad(10, 10, 320, 240, 0.0f, green);
+	}
+};
+
+
+
+class Main
+{
+	GfxManager manager;
+
+public:
+	Main(const vector<string> & arguments
+		 	LP3_COMPILE_TARGET_WINDOWS_THEN(
+					   , HINSTANCE hInstance, HWND hWnd
+			)
+	)
+	:	manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd))
+	{
+		Screen & screen = manager.GetScreen(0);
+		ScreenObjectPtr obj(new ColoredBlock());
+		screen.SetObject(obj);
+	}
+
+	~Main()
+	{
+	}
+
+	void Iterate()
+	{
+		manager.Render();
+	}
+
+	#ifdef LP3_COMPILE_TARGET_WINDOWS
+		void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+		                    LPARAM lParam)
+		{
+		}
+	#endif
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::MotivatingExample");

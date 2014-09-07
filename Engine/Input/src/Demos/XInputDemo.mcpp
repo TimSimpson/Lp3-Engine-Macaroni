@@ -1,0 +1,148 @@
+/**
+ * XInput Demo
+ *
+ *  This program showcases the XInput classes.
+ */
+~unit XInputDemo type=exe platform=windows;
+
+~import boost::format;
+~import Lp3::Log::LogSystem;
+~import LP3_LOG_DEBUG;
+
+~import Lp3::Engine::Input::XInput::XInputDeviceSource;
+~import Lp3::Engine::Input::Device;
+~import Lp3::Engine::Input::PlatformDeviceSource;
+
+~block "top" {
+#include <Lp3/LE.h>
+#ifdef LP3_COMPILE_TARGET_WINDOWS
+}
+~block "bottom" {
+#endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
+~block "cpp" :=
+
+#pragma comment(lib, "Gdi32.lib")
+#pragma comment(lib, "shell32.lib")
+#pragma comment(lib, "user32.lib")
+#pragma comment(lib, "xinput.lib")
+#pragma comment(linker, "/SUBSYSTEM:WINDOWS")
+
+//#include <LpInput.h>
+#include <windows.h>
+
+// the WindowProc function prototype
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
+
+static XInputDeviceSource * _xinput = nullptr;
+
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
+                   LPSTR lpCmdLine, int nCmdShow)
+{
+    LogSystem logSystem;
+    LP3_LOG_DEBUG("Hello from the Lp3::Engine::Input Direct Input demo!");
+
+    HWND hWnd;
+    WNDCLASSEX wc;
+
+    ZeroMemory(&wc, sizeof(WNDCLASSEX));
+
+    wc.cbSize = sizeof(WNDCLASSEX);
+    wc.style = CS_HREDRAW | CS_VREDRAW;
+    wc.lpfnWndProc = WindowProc;
+    wc.hInstance = hInstance;
+    wc.hCursor = LoadCursor(NULL, IDC_ARROW);
+    wc.lpszClassName = "WindowClass";
+
+    RegisterClassEx(&wc);
+
+    hWnd = CreateWindowEx(NULL,
+                          "WindowClass",
+                          "Lp3::Engine::Input",
+                          WS_OVERLAPPEDWINDOW,
+                          0, 0,
+                          320, 240,
+                          NULL,
+                          NULL,
+                          hInstance,
+                          NULL);
+
+    ShowWindow(hWnd, nCmdShow);
+
+    XInputDeviceSource xinput;
+    _xinput = &xinput;
+
+    for (size_t i = 0; i < xinput.GetDeviceCount(); i ++)
+    {
+        LP3_LOG_DEBUG(xinput.GetDevice(i)->GetName());
+    }
+    LP3_LOG_DEBUG("GOOD");
+    // enter the main loop:
+    MSG msg;
+    while(true)
+    {
+        while(PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+        {
+            TranslateMessage(&msg);
+            DispatchMessage(&msg);
+        }
+
+        if(msg.message == WM_QUIT)
+            break;
+        xinput.Update();
+        for (unsigned int deviceIndex = 0; deviceIndex < xinput.GetDeviceCount();
+             deviceIndex ++)
+        {
+            Device * device = xinput.GetDevice(deviceIndex);
+
+            if (0 == deviceIndex)  // Show first controller only.
+            {
+                for (int index = 0; index < device->GetKeyCount(); index ++)
+                {
+
+                    LP3_LOG_SET(device->GetKeyName(index),
+                                (int) device->GetKeyState(index));
+                    const std::string name =
+                        str(boost::format("A_%s") % device->GetKeyName(index));
+                    LP3_LOG_SET(name.c_str(),
+                                (int) device->GetKeyAnalogState(index));
+                    //LP3_LOG_DEBUG_F(format("%d : %d : %d") % deviceIndex
+                    //        % index % device->GetKeyAnalogState(index));
+                }
+            }
+            int code = device->FindPressedKeyCode();
+            if (code >= 0)
+            {
+                LP3_LOG_DEBUG("%d : %s", deviceIndex, device->GetKeyName(code));
+            }
+            /*else
+            {
+                LP3_LOG_DEBUG_F(format("%d : ") % deviceIndex);
+            }*/
+        }
+
+        //gfx.render_frame();
+    }
+    _xinput = 0;
+    return msg.wParam;
+}
+
+
+// this is the main message handler for the program
+LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch(message)
+    {
+        case WM_DESTROY:
+            {
+                PostQuitMessage(0);
+                return 0;
+            } break;
+        case WM_SETFOCUS:
+            {
+                // No need to do anything. :)
+            } break;
+    }
+    return DefWindowProc (hWnd, message, wParam, lParam);
+}

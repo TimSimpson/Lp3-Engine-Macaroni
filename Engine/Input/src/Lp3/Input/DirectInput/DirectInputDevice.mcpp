@@ -1,0 +1,169 @@
+~import DIDATAFORMAT;
+~import DIDEVICEINSTANCE;
+~import Lp3::Exception;
+~import Lp3::Float32;
+~import HINSTANCE;
+~import HWND;
+~import LPDIRECTINPUT8;
+~import LPDIRECTINPUTDEVICE8;
+~import LP3_LOG_DEBUG;
+~import LP3_LOG_ERROR;
+~import Lp3::Engine::Input::PlatformDevice;
+~import std::vector;
+
+
+~namespace Lp3::Engine::Input::DirectInput;
+
+class DirectInputDevice : public PlatformDevice
+{
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+        #define DIRECTINPUT_VESRION 0x0800
+        #include <dinput.h>
+    }
+    ~block "bottom"
+    {
+        #endif // End LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    protected DIDEVICEINSTANCE deviceInstance;
+    protected LPDIRECTINPUTDEVICE8 device; // TODO: Not sure what this is.
+
+    public DirectInputDevice(DIDEVICEINSTANCE devInstance)
+    : deviceInstance(devInstance),
+      device(NULL)
+    {
+    }
+
+    public ~DirectInputDevice()
+    {
+        if (NULL != device)
+        {
+            device->Unacquire();
+            device->Release();
+            device = NULL;
+        }
+    }
+
+    // Call after update.  Calls first key code hit.
+    public virtual int FindPressedKeyCode() = 0;
+
+    /** Initializes a device- called by the constructor. */
+    protected static void initialize(
+      HWND hWnd,
+      LPDIRECTINPUT8 * di8,              // Precreated and passed in.
+      LPDIRECTINPUTDEVICE8 & device,
+      DIDEVICEINSTANCE & deviceInstance, // This is the var that is initialized.
+      const DIDATAFORMAT & deviceDataFormat, // This is a pre-defined global.
+      bool exclusive
+    ){
+        HRESULT hr = (*di8)->CreateDevice(deviceInstance.guidInstance,
+                                          &device, NULL);
+        if FAILED(hr)
+        {
+            LP3_LOG_ERROR("Could not create createDevice!");
+            throw Exception("DirectInputDevice", 1, "Could not create.");
+        }
+
+        hr = device->SetDataFormat(&deviceDataFormat);//diDataFormat);
+        if FAILED(hr){
+          LP3_LOG_ERROR("Could not set the data format?!!");
+          device->Release();
+          device = NULL;
+          throw Exception("DirectInputDevice", 1, "Could not set fmt.");
+        }
+
+        // Step 4: Set keyboard behavior
+        DWORD exclusiveCode = exclusive ? DISCL_EXCLUSIVE : DISCL_NONEXCLUSIVE;
+        hr = device->SetCooperativeLevel(hWnd, DISCL_FOREGROUND | exclusiveCode);
+        if FAILED(hr){
+          LP3_LOG_ERROR("WHAT?! Could not set cooperative level?! WHAT?!");
+          device->Release();
+          device = NULL;
+          throw Exception("DirectInputDevice", 1, "Could not set coop.");
+        }
+    }
+
+    // States if control device has analog joystick capabilities at the designated keycode.
+    public virtual bool IsAnalogKey(unsigned int keyCode)  = 0;
+
+    public virtual const char * GetName() const
+    {
+        return deviceInstance.tszInstanceName;
+    }
+
+    //void GetKeyCallBack(LPCDIDEVICEOBJECTINSTANCE objectInstance);
+    public virtual int GetKeyCount() = 0;
+
+    public virtual const char * GetKeyName(unsigned int keyCode) = 0;
+
+    public virtual bool GetKeyState(unsigned int keyCode) = 0;
+
+    // !Call! after Update.
+    // Retrieves analog version if available if useAnalog = true.
+    public virtual Lp3::Float32 GetKeyAnalogState(unsigned int keyCode) = 0;
+
+    public void SwitchWindow(HWND newHWnd)
+    {
+        HRESULT hr;
+        if (NULL != device)
+        {
+             device->Unacquire();
+             hr = device->SetCooperativeLevel(
+                newHWnd,
+                DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+             if FAILED(hr)
+             {
+                 LP3_LOG_ERROR("Failed to SetCooperativeLevel:");
+                 //writeDiError(hr);
+                 //ReleaseDevice();// To hell with it then.
+              }
+              else{
+                  LP3_LOG_DEBUG("DiControlDevice::SwitchWindow");
+                  //ErrOutWriteNumber(i);
+                  device->Acquire();
+                  LP3_LOG_DEBUG("Acquired quite well.");
+              }
+        }
+    }
+
+    public void Update()
+    {
+        if (NULL == device)
+        {
+            return;
+        }
+        HRESULT hr;
+        hr = device->Poll();
+        if (FAILED(hr))
+        {
+            hr = device->Acquire();
+            if (hr == DIERR_INPUTLOST)
+               return;
+        }
+        // Should have a good device at this point.
+        hr = device->Poll();
+        if (FAILED(hr))
+        {
+            if (DIERR_INPUTLOST == hr)
+            {
+                LP3_LOG_DEBUG("Lost input.");
+                return;
+            }
+            else if (DIERR_NOTACQUIRED == hr)
+            {
+                return;
+            }
+            else if (DIERR_NOTINITIALIZED == hr)
+            {
+                return;
+            }
+        }
+        update();
+    }
+
+    protected virtual void update() = 0;
+
+};

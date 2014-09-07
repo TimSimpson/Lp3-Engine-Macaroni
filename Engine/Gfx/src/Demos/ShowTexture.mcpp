@@ -1,0 +1,204 @@
+/**
+ *
+ *  Show Texture
+ *
+ *  This executable loads a bitmap and shows it using hardware textures.
+ *
+ */
+~unit ShowTexture type=exe;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::BitmapReader;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Engine::Gfx::ImageMemory;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import std::string;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import std::vector;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+
+
+const auto red = VertexPixel::Create(0xFF, 0x00, 0x00, 0xFF);
+const auto green = VertexPixel::Create(0x00, 0xFF, 0x00, 0xFF);
+const auto blue = VertexPixel::Create(0x00, 0x00, 0xFF, 0xFF);
+
+
+GfxManager * manager;
+TexturePtr textureHoppy;
+TexturePtr textureEarth;
+TexturePtr textureMoon;
+int x = 0;
+int x2 = 0;
+int y2 = 0;
+
+
+using namespace Lp3::Engine::Gfx::Geometry;
+
+inline const SpriteCoordinates Coord(ScreenPoint p, Size2d<float> size)
+{
+    return { p, {p.X + size.Width - 1, p.Y + size.Height - 1}};
+}
+
+
+void DrawPictureFrame(Renderer & renderer)
+{
+    renderer.UseNoTexture();
+
+
+    //renderer.UseTexture(textureMoon);
+    /*renderer.UseTexture(textureMoon);
+    TexturedQuadSrc box = { { 0, 0}, {255, 255} };
+    renderer.TexturedQuad(480, 320, 56, 56, 0.9f, box);
+    */
+
+    renderer.Quad(Coord({0, 0}, {639, 479}), 0.01f, green);
+    renderer.Quad(Coord({120, 90}, {400, 300}), 0.2f, blue);
+    renderer.Quad(Coord({160, 120}, {320, 240}), 0.4f, red);
+    renderer.Quad(Coord({310, 360}, {16, 120}), 0.2f, blue);
+
+
+    //renderer.TexturedQuad(0, 0, 640, 480, 0.0f);
+    //TexturedQuadSrc box = { {0, 0}, {255, 255}};
+    //renderer.TexturedQuad(500, 120, 56, 56, 0.9f, box);
+}
+
+//int losWidth = 16;
+
+void DrawManualBitMap(Renderer & renderer)
+{
+   // losWidth += 1;
+   // renderer.UseTexture(textureMoon);
+   // Box2d box = { 0, 0, 15, 15}; //255, 255};
+   // renderer.TexturedQuad(32, 32, losWidth, losWidth, 0.9f, box);
+   // if (losWidth > 600) {
+   //     losWidth = 15;
+   // }
+
+    renderer.UseTexture(textureMoon);
+    TexturedQuadSrc src = { {0, 0}, {255, 255} };
+    renderer.TexturedQuad(Coord({480, 320}, {56, 56}), 0.9f, src);
+
+    renderer.UseTexture(textureEarth);
+    renderer.TexturedQuad(Coord({0, 0}, {640, 480}), 0.1f);
+
+    renderer.UseTexture(textureHoppy);
+   // renderer.TexturedQuad(x, 130, 640, 240, 0.5f);
+    renderer.TexturedQuad({x2, y2}, {32, 32}, 0.6f);
+}
+
+class TexturedBlock : public ScreenObject
+{
+    virtual void DrawOpaque(Renderer & renderer)
+    {
+        DrawPictureFrame(renderer);
+    }
+
+    virtual void DrawTranslucent(Renderer & renderer)
+    {
+        DrawManualBitMap(renderer);
+    }
+};
+
+
+class Main
+{
+public:
+    Main(const vector<string> & arguments
+         #ifdef LP3_COMPILE_TARGET_WINDOWS
+           , HINSTANCE hInstance, HWND hWnd
+         #endif
+    )
+    {
+     /*   if (arguments.size() < 2)
+        {
+            LP3_LOG_ERROR("Expected a bitmap file as an argument.");
+            return 1;
+        }
+        const string & bitmapFilePath = arguments[1];*/
+
+        LP3_LOG_DEBUG("Initializing GFX...");
+
+        manager = new GfxManager(
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+                hWnd
+            #endif
+        );
+        Screen & screen = manager->GetScreen(0);
+        ImageMemory & memory = screen.GetImageMemory();
+        {
+            LP3_LOG_DEBUG("Creating textureHoppys...");
+            ReadStreamPtr input(new InputFileStream("Engine/Gfx/hoppy.bmp"));
+            const Pixel colorKey(255, 0, 220, 0);
+            textureHoppy = memory.LoadTexture(input, colorKey);
+            //textureHoppy = memory.CreateTexture(32, 32, red);
+        }
+        {
+            ReadStreamPtr input(new InputFileStream("Engine/Gfx/Earth.bmp"));
+            const Pixel colorKey(255, 255, 255, 0);
+            textureEarth = memory.LoadTexture(input, colorKey);
+            //textureEarth = memory.CreateTexture(32, 32, blue);
+            //textureEarth = memory.CreateTexture(256, 256, blue);
+        }
+         {
+            ReadStreamPtr input(new InputFileStream("Engine/Gfx/Moon.bmp"));
+            const Pixel colorKey(255, 255, 255, 0);
+            textureMoon = memory.LoadTexture(input, colorKey);
+            //textureMoon = memory.CreateTexture(16, 16, green);
+
+        }
+        ScreenObjectPtr obj(new TexturedBlock());
+        screen.SetObject(obj);
+
+        LP3_LOG_DEBUG("Finished initialization.");
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+        textureHoppy = textureEarth = textureMoon = nullptr;
+        delete manager;
+    }
+
+
+    void Iterate()
+    {
+        manager->Render();
+        x ++;
+        if (x > 640) {
+            x = -640;
+        }
+        x2 ++;
+        if (x2 > 640) {
+            x2 = -32;
+        }
+        y2 ++;
+        if (y2 > 480) {
+            y2 = -32;
+        }
+    }
+
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+        }
+    #endif
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::ShowTexture")

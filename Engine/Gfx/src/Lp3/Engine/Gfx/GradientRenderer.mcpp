@@ -1,0 +1,58 @@
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::PixelDiff;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
+~import Lp3::Engine::Gfx::VertexPixel;
+~import Lp3::Engine::Gfx::NonTexturedFlatQuad;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class GradientRenderer
+/* Render some gradients. Now the greatest special effects of Playstation 2D
+ * platformers from the year 1997 are yours to command! */
+{
+    Renderer & renderer;
+
+    public GradientRenderer(Renderer & renderer)
+    :   renderer(renderer)
+    {
+    }
+
+    public void PolyVerticalQuad(const ScreenPoint begin,
+                                 const ScreenPoint end, const float z,
+                                 const Pixel cBegin, const Pixel cEnd,
+                                 const int step)
+    {
+        ScreenPoint p = begin;
+        const auto diff = end.Y - begin.Y;
+        const auto count = diff / step;
+
+        const PixelDiff stepColor0(cBegin, cEnd);
+        const PixelDiff stepColor = stepColor0 / count;
+        PixelDiff currentColorDiff = stepColor;
+        Pixel currentColor = cBegin;
+        for (ScreenPoint p = begin; p.Y < end.Y; p.Y += step)
+        {
+            const VertexPixel vp = VertexPixel::Create(currentColor);
+            renderer.Quad({p, {end.X, p.Y + step}}, z, vp);
+            currentColor = currentColorDiff.Apply(cBegin);
+            currentColorDiff = currentColorDiff + stepColor;
+        }
+    }
+
+    public void VerticalQuad(const ScreenPoint begin,
+                             const ScreenPoint end, const float z,
+                             const VertexPixel cBegin, const VertexPixel cEnd)
+    {
+        const NonTexturedFlatQuad flatQuad = {
+            { begin.X, begin.Y }, cBegin,
+            { end.X,   begin.Y }, cBegin,
+            { begin.X, end.Y   }, cEnd,
+            { end.X,   end.Y   }, cEnd,
+            z
+        };
+        renderer.Quad(flatQuad);
+    }
+};

@@ -1,0 +1,81 @@
+~import Lp3::Engine::Gfx::BitmapReader;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlTexture;
+~import boost::optional;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import boost::shared_ptr;
+
+
+~namespace Lp3::Engine::Gfx::OpenGl;
+
+
+class OpenGlImageMemory
+{
+    ~block "cpp-include"
+    {
+        #include <Lp3/LE.h>
+        #ifndef LP3_COMPILE_TARGET_WINDOWS
+            #include <GL/glut.h>
+        #else
+            #pragma comment(lib, "Gdi32.lib")
+            #pragma comment (lib, "user32.lib")
+            #include <windows.h>
+            #include <GL/gl.h>
+            #include <gl/glu.h>
+        #endif
+    }
+
+    public virtual ~OpenGlImageMemory()
+    {
+    }
+
+    ~hidden TexturePtr createTexture(const unsigned int width,
+                                    const unsigned int height)
+    {
+        TexturePtr texture(new OpenGlTexture(width, height));
+        return texture;
+    }
+
+    public TexturePtr CreateTexture(const unsigned int width,
+                                    const unsigned int height,
+                                    const Pixel pixel)
+    {
+        TexturePtr texture = createTexture(width, height);
+        for (int j = 0; j < height; j ++)
+        {
+            for (int i = 0; i < width; i ++)
+            {
+                texture->SetPixel(i, j, pixel);
+            }
+        }
+        texture->Restore();
+        return texture;
+    }
+
+
+    public TexturePtr LoadTexture(ReadStreamPtr input,
+                                 const optional<Pixel> & colorKey = boost::none)
+    {
+        BitmapReader reader(input);
+        TexturePtr texture(new OpenGlTexture(reader.Width(), reader.Height()));
+        reader.Read(*texture, colorKey);
+        texture->Restore();
+        return texture;
+    }
+
+    ~block "top"
+    {
+        #ifndef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

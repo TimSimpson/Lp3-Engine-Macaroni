@@ -1,0 +1,379 @@
+~import LP3_ASSERT_FALSE;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::Geometry::CoordinatePair2d;
+~import boost::format;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::NonTexturedFlatQuad;
+~import Lp3::Engine::Gfx::NonTexturedQuad;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlManager;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlScreen;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::Geometry::PolyPoint;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import Lp3::Engine::Gfx::Geometry::SpriteCoordinates;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadUV;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+
+~namespace Lp3::Engine::Gfx::OpenGl;
+
+
+class OpenGlRenderer
+{
+	~block "cpp-include"
+	{
+		#include <Lp3/LE.h>
+		#ifndef LP3_COMPILE_TARGET_WINDOWS
+			#include <GL/glut.h>
+		#else
+			#pragma comment(lib, "Gdi32.lib")
+			#pragma comment (lib, "user32.lib")
+			#include <windows.h>
+			#include <GL/gl.h>
+			#include <gl/glu.h>
+		#endif
+		#include <Lp3/Engine/Gfx/PC/OpenGlFunctions.hpp>
+	}
+
+	private int code;
+	private TexturePtr colorTexture; // Used to show colors.
+	private Size2d<float> currentTextureSize;
+
+	friend OpenGlScreen;
+
+	public OpenGlRenderer(TexturePtr colorTexture)
+	:	code(-1),
+		colorTexture(),
+		currentTextureSize({16, 16})
+	{
+		// Additional work is done by OpenGlManager, since multiple display
+		// devices may be used.
+		setUpPvrLikeMapping();
+
+		LP3_ASSERT_FALSE(!colorTexture);
+		LP3_LOG_DEBUG("Getting the color texture.");
+		this->colorTexture = colorTexture;
+	}
+
+	private void beginFrame()
+	{
+		safeGlClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	}
+
+	private void endFrame()
+	{
+		//safeGlEnd();
+		code = -1;
+	}
+
+	private void doGlSwitch(int code)
+	{
+		//safeGlEnd();
+		//safeGlBegin(code);
+		this->code = code;
+	}
+
+	~hidden inline void glSwitch(int code)
+	{
+		if (code != code)
+		{
+			doGlSwitch(code);
+		}
+	}
+
+	public inline static const TexturedQuadUV Normal()
+	{
+		return {{0.0, 0.0}, {1.0, 1.0}};
+	}
+
+public:
+
+	void Quad(const float x, const float y, const float width, const float height,
+			  const float z, const VertexPixel & pixel)
+	{
+		const auto c = quadCoordinates(x, y, width, height);
+        Quad(c, z, pixel);
+	}
+
+	void Quad(const SpriteCoordinates & c, const float z,
+		      const VertexPixel & pixel)
+	{
+		glColor4f(pixel.r, pixel.g, pixel.b, pixel.a);
+		safeGlBegin(GL_QUADS);
+			safeGlTexCoord2f(0.0, 1.0);
+			safeGlVertex3f(c.A.X, c.B.Y, z);
+			safeGlTexCoord2f(1.0, 1.0);
+			safeGlVertex3f(c.B.X, c.B.Y, z);
+			safeGlTexCoord2f(1.0, 0.0);
+			safeGlVertex3f(c.B.X, c.A.Y, z);
+			safeGlTexCoord2f(0.0, 0.0);
+			safeGlVertex3f(c.A.X, c.A.Y, z);
+		safeGlEnd();
+	}
+/*
+    void Quad(const PolyPoint & a, const PolyPoint & b,
+              const PolyPoint & c, const PolyPoint & d,
+              const VertexPixel & pixel)
+    {
+        glColor4f(pixel.r, pixel.g, pixel.b, pixel.a);
+        safeGlBegin(GL_QUADS);
+            safeGlTexCoord2f(0.0, 1.0);
+            safeGlVertex3f(a.X, b.Y, c.Z);
+            safeGlTexCoord2f(1.0, 1.0);
+            safeGlVertex3f(b.X, b.Y, a.Z);
+            safeGlTexCoord2f(1.0, 0.0);
+            safeGlVertex3f(b.X, a.Y, b.Z);
+            safeGlTexCoord2f(0.0, 0.0);
+            safeGlVertex3f(a.X, a.Y, c.Z);
+        safeGlEnd();
+    }
+*/
+
+	void Quad(const NonTexturedQuad & q)
+	{
+		safeGlBegin(GL_QUADS);
+			glColor4f(q.CC.r, q.CC.g, q.CC.b, q.CC.a);
+			 safeGlTexCoord2f(0.0, 1.0);
+			 safeGlVertex3f(q.C.X, q.C.Y, q.C.Z);
+			glColor4f(q.CD.r, q.CD.g, q.CD.b, q.CD.a);
+			 safeGlTexCoord2f(1.0, 1.0);
+			 safeGlVertex3f(q.D.X, q.D.Y, q.D.Z);
+			glColor4f(q.CB.r, q.CB.g, q.CB.b, q.CB.a);
+			 safeGlTexCoord2f(1.0, 0.0);
+			 safeGlVertex3f(q.B.X, q.B.Y, q.B.Z);
+			glColor4f(q.CA.r, q.CA.g, q.CA.b, q.CA.a);
+			 safeGlTexCoord2f(0.0, 0.0);
+			 safeGlVertex3f(q.A.X, q.A.Y, q.A.Z);
+		safeGlEnd();
+	}
+
+	void Quad(const NonTexturedFlatQuad & q)
+	{
+		safeGlBegin(GL_QUADS);
+			glColor4f(q.CC.r, q.CC.g, q.CC.b, q.CC.a);
+			 safeGlTexCoord2f(0.0, 1.0);
+			 safeGlVertex3f(q.C.X, q.C.Y, q.Z);
+			glColor4f(q.CD.r, q.CD.g, q.CD.b, q.CD.a);
+			 safeGlTexCoord2f(1.0, 1.0);
+			 safeGlVertex3f(q.D.X, q.D.Y, q.Z);
+			glColor4f(q.CB.r, q.CB.g, q.CB.b, q.CB.a);
+			 safeGlTexCoord2f(1.0, 0.0);
+			 safeGlVertex3f(q.B.X, q.B.Y, q.Z);
+			glColor4f(q.CA.r, q.CA.g, q.CA.b, q.CA.a);
+			 safeGlTexCoord2f(0.0, 0.0);
+			 safeGlVertex3f(q.A.X, q.A.Y, q.Z);
+		safeGlEnd();
+	}
+
+
+	~hidden inline const SpriteCoordinates quadCoordinates(
+        const float x, const float y, const float width, const float height)
+    {
+        return {{x, y}, {x + width - 1, y + height - 1}};
+    }
+
+    ~hidden inline const SpriteCoordinates quadCoordinates(
+        const ScreenPoint p, const Size2d<float> size)
+    {
+        return {{p.X, p.Y}, {p.X + size.Width - 1, p.Y + size.Height - 1}};
+    }
+
+	private void setUpPvrLikeMapping()
+    {
+        //http://stackoverflow.com/questions/6151135/in-opengl-can-i-draw-a-pixel-that-exactly-at-the-coordinates-5-5
+        safeGlViewport(0, 0, 640, 480);
+        safeGlMatrixMode(GL_PROJECTION);
+        safeGlLoadIdentity();
+        safeGlOrtho(0, 640, 480, 0, -1, 1);
+        safeGlMatrixMode(GL_MODELVIEW);
+        safeGlLoadIdentity();
+        safeGlEnable(GL_DEPTH_TEST);
+        safeGlEnable(GL_TEXTURE_2D);
+        safeGlDisable(GL_CULL_FACE);
+        safeGlShadeModel(GL_SMOOTH);
+
+        /* We do our textured quads counter clockwise. */
+        safeGlFrontFace(GL_CCW);
+        // This is for alpha blending- the last color is alpha.
+        safeGlColor4f(1.0f,1.0f,1.0f, 1.0f);
+        // This is the normal scheme for transparencies...
+        safeGlBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+        /* Turn on blending. */
+        safeGlEnable(GL_BLEND);
+     //   glBlendFunc(GL_ONE,GL_ONE_MINUS_SRC_ALPHA);
+		//glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+        safeGlEnable(GL_ALPHA_TEST);
+        safeGlAlphaFunc(GL_GREATER, 0.0f);
+
+    }
+
+/*
+	void TexturedQuad(const int x, const int y, const int width,
+		              const int height, const float z)
+	{
+		// This is for alpha blending.  The last color is alpha.
+	    safeGlColor4f(1.0f,1.0f,1.0f, 1.0f);
+		safeGlBegin(GL_QUADS);
+			const auto x2 = x + width;
+			const auto y2 = y + height;
+			safeGlTexCoord2f(0.0, 1.0);
+			safeGlVertex3f(x, y2, z);
+			safeGlTexCoord2f(1.0, 1.0);
+			safeGlVertex3f(x2, y2, z);
+			safeGlTexCoord2f(1.0, 0.0);
+			safeGlVertex3f(x2, y, z);
+			safeGlTexCoord2f(0.0, 0.0);
+			safeGlVertex3f(x, y, z);
+		safeGlEnd();
+	}
+
+	void TexturedQuad(const int x, const int y, const int width,
+		              const int height, const float z,
+		              const float srcX1, const float srcY1,
+		              const float srcX2, const float srcY2)
+	{
+		// This is for alpha blending.  The last color is alpha.
+	    safeGlColor4f(1.0f,1.0f,1.0f, 1.0f);
+		safeGlBegin(GL_QUADS);
+			const auto x2 = x + width;
+			const auto y2 = y + height;
+			safeGlTexCoord2f(srcX1, srcY2);
+			safeGlVertex3f(x, y2, z);
+			safeGlTexCoord2f(srcX2, srcY2);
+			safeGlVertex3f(x2, y2, z);
+			safeGlTexCoord2f(srcX2, srcY1);
+			safeGlVertex3f(x2, y, z);
+			safeGlTexCoord2f(srcX1, srcY1);
+			safeGlVertex3f(x, y, z);
+		safeGlEnd();
+	}
+
+	void TexturedQuad(const int x, const int y, const int width,
+		              const int height, const float z, const Box2d & src)
+	{
+		const float srcX1 = (float) src.X1 / (float) currentTextureWidth,
+		            srcY1 = (float) src.Y1 / (float) currentTextureHeight,
+		            srcX2 = (float) src.X2 / (float) currentTextureWidth,
+		            srcY2 = (float) src.Y2 / (float) currentTextureHeight;
+		TexturedQuad(x, y, width, height, z, srcX1, srcY1, srcX2, srcY2);
+	}*/
+
+    void TexturedQuad(const ScreenPoint positionTL,
+                      const float z,
+                      const TexturedQuadSrc & src)
+    {
+        const Size2d<float> size = { src.B.X - src.A.X + 1,
+                                     src.B.Y - src.A.Y + 1 };
+        TexturedQuad(positionTL, size, z, src);
+    }
+
+	void TexturedQuad(const ScreenPoint positionTL,
+                      const Size2d<float> size, const float z,
+                      const TexturedQuadSrc & src)
+    {
+        const auto c = quadCoordinates(positionTL, size);
+        const TexturedQuadUV uv(src, currentTextureSize);
+        TexturedQuad(c, z, uv);
+    }
+
+    public void TexturedQuad(const SpriteCoordinates & c, const float z,
+                             const TexturedQuadSrc & src)
+    {
+        const TexturedQuadUV uv(src, currentTextureSize);
+        TexturedQuad(c, z, uv);
+    }
+
+    void TexturedQuad(const ScreenPoint positionTL,
+                      const Size2d<float> size, const float z,
+                      const TexturedQuadUV & uv=Normal())
+    {
+        const auto c = quadCoordinates(positionTL, size);
+        TexturedQuad(c, z, uv);
+    }
+
+
+	void TexturedQuad(const SpriteCoordinates & c, const float z,
+                      const TexturedQuadUV & uv=Normal())
+	{
+		/* This is for alpha blending.  The last color is alpha. */
+	    safeGlColor4f(1.0f,1.0f,1.0f, 1.0f);
+		safeGlBegin(GL_QUADS);
+			safeGlTexCoord2f(uv.A.X, uv.B.Y);
+			safeGlVertex3f(c.A.X, c.B.Y, z);
+			safeGlTexCoord2f(uv.B.X, uv.B.Y);
+			safeGlVertex3f(c.B.X, c.B.Y, z);
+			safeGlTexCoord2f(uv.B.X, uv.A.Y);
+			safeGlVertex3f(c.B.X, c.A.Y, z);
+			safeGlTexCoord2f(uv.A.X, uv.A.Y);
+			safeGlVertex3f(c.A.X, c.A.Y, z);
+		safeGlEnd();
+	}
+
+    void Triangle(const ScreenPoint p1, const ScreenPoint p2,
+                  const ScreenPoint p3, const float z,
+                  const VertexPixel & pixel)
+    {
+        glColor4f(pixel.r, pixel.g, pixel.b, pixel.a);
+        safeGlBegin(GL_TRIANGLES);
+            safeGlTexCoord2f(0.0, 1.0);
+            safeGlVertex3f(p1.X, p1.Y, z);
+            safeGlTexCoord2f(1.0, 1.0);
+            safeGlVertex3f(p2.X, p2.Y, z);
+            safeGlTexCoord2f(1.0, 0.0);
+            safeGlVertex3f(p3.X, p3.Y, z);
+        safeGlEnd();
+    }
+
+    void Triangle(const PolyPoint p1, const PolyPoint p2,
+                  const PolyPoint p3, const VertexPixel & pixel)
+    {
+        glColor4f(pixel.r, pixel.g, pixel.b, pixel.a);
+        safeGlBegin(GL_TRIANGLES);
+            safeGlTexCoord2f(0.0, 1.0);
+            safeGlVertex3f(p1.X, p1.Y, p1.Z);
+            safeGlTexCoord2f(1.0, 1.0);
+            safeGlVertex3f(p2.X, p2.Y, p2.Z);
+            safeGlTexCoord2f(1.0, 0.0);
+            safeGlVertex3f(p3.X, p3.Y, p3.Z);
+        safeGlEnd();
+    }
+
+	void UseNoTexture()
+    {
+    	UseTexture(colorTexture);
+    }
+
+	void UseTexture(TexturePtr texture)
+	{
+		LP3_ASSERT_FALSE(!texture);
+		//glEnable(GL_TEXTURE_2D);
+		currentTextureSize = { texture->GetWidth(), texture->GetHeight() };
+		//LP3_LOG_DEBUG("glBindTexture(GL_TEXTURE_2D, %d);", texture->textureId);
+		//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,GL_REPLACE);
+		safeGlBindTexture(GL_TEXTURE_2D, texture->textureId);
+
+		/* This is the normal scheme for transparencies... */
+		//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
+	}
+
+	~block "top"
+    {
+        #ifndef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

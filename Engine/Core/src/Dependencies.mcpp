@@ -1,0 +1,43 @@
+// Core Dependencies
+
+class HINSTANCE { ~hfile=<windows.h> };
+class HWND { ~hfile=<windows.h> };
+
+namespace Lp3
+{
+	namespace Engine
+	{
+		class ErrOut { ~hfile=<Lp3/Engine/ErrOut.h> };
+
+		namespace Misc
+		{
+			class GenerateVoidHash { ~hfile=<Lp3/Engine/Misc/Hash.h> };
+		}
+
+		namespace Threading
+		{
+			//class Mutex { ~hfile=<Lp3/Engine/Threading/Mutex.h> }
+			//class Semaphore { ~hfile=<Lp3/Engine/Threading/Semaphore.h> }
+			//class SharedFlag { ~hfile=<Lp3/Engine/Threading/SharedFlag.h> }
+			//class SharedFlagSet { ~hfile=<Lp3/Engine/Threading/SharedFlagSet.h> }
+			//class Thread { ~hfile=<Lp3/Engine/Threading/Thread.h> }
+		}
+
+	}
+
+	namespace Memory
+	{
+		//class GlobalHeap { ~hfile=<Lp3/Engine/Memory/GlobalHeap.h> }
+		//class Host { ~hfile=<Lp3/Engine/Memory/Host.h> }
+		//class HostObject { ~hfile=<Lp3/Engine/Memory/Host.h> }
+		class MemoryList { ~hfile=<Lp3/Engine/Memory/MemoryList.h> };
+		class MemorySpace { ~hfile=<Lp3/Engine/Memory/MemorySpace.h> };
+		class MemoryPool { ~hfile=<Lp3/Engine/Memory/MemoryPool.h> };
+		//class MemoryStack { ~hfile=<Lp3/Engine/Memory/MemoryStack.h> }
+		//class ScratchMemory { ~hfile=<Lp3/Engine/Memory/ScratchMemory.h> }
+	}
+
+}
+
+class std::unique_ptr { ~hfile=<memory> };
+class FILE { ~hfile=<kos.h> };

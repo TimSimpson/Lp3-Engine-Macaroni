@@ -1,0 +1,283 @@
+~import XINPUT_STATE;
+~import Lp3::Engine::Input::Device;
+~import LP3_FAIL;
+~import std::string;
+
+
+~namespace Lp3::Engine::Input::XInput;
+
+class XInputDevice : public Device
+{
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+    }
+    ~block "bottom"
+    {
+        #endif // End LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    ~block "cpp-include"
+    {
+        #pragma comment(lib, "xinput.lib")
+    }
+
+
+    private int index;
+    private string name;
+    private XINPUT_STATE state;
+
+    ~block "h"
+    {
+        friend class XInputDeviceSource;
+    }
+
+
+    protected XInputDevice()
+    :   index(-1),
+        name("XInput Mystery Controller")
+    {
+        ZeroMemory(&state, sizeof(XINPUT_STATE));
+    }
+
+    public ~XInputDevice()
+    {
+    }
+
+    // Call after update.  Calls first key code hit.
+    public virtual int FindPressedKeyCode()
+    {
+        for (int i = 0; i < GetKeyCount(); ++ i)
+        {
+            if (GetKeyState(i))
+            {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+
+    public virtual bool IsAnalogKey(unsigned int keyCode)
+    {
+        return keyCode >= 14;
+    }
+
+    public virtual const char * GetName() const
+    {
+        return "XInput Controller";
+    }
+
+    public virtual int GetKeyCount()
+    {
+        // 14 "buttons", 2 triggers, two analog sticks.
+        return 14 + 2 + 4 + 4;
+    }
+
+    public virtual const char * GetKeyName(unsigned int keyCode)
+    {
+        static const char * KEY_NAMES[] = {
+            "D-pad Up",
+            "D-pad Down",
+            "D-pad Left",
+            "D-pad Right",
+            "Start",
+            "Back",
+            "Left Analog Depress",
+            "Right Analog Depress",
+            "LB",
+            "RB",
+            "A",
+            "B",
+            "X",
+            "Y",
+            "LT",
+            "RT",
+            "Left Analog Up",
+            "Left Analog Down",
+            "Left Analog Left",
+            "Left Analog Right",
+            "Right Analog Up",
+            "Right Analog Down",
+            "Right Analog Left",
+            "Right Analog Right",
+        };
+        return KEY_NAMES[keyCode];
+    }
+
+    public virtual bool GetKeyState(unsigned int keyCode)
+    {
+        static const int BUTTON_BITMASKS[] = {
+            XINPUT_GAMEPAD_DPAD_UP,
+            XINPUT_GAMEPAD_DPAD_DOWN,
+            XINPUT_GAMEPAD_DPAD_LEFT,
+            XINPUT_GAMEPAD_DPAD_RIGHT,
+            XINPUT_GAMEPAD_START,
+            XINPUT_GAMEPAD_BACK,
+            XINPUT_GAMEPAD_LEFT_THUMB,
+            XINPUT_GAMEPAD_RIGHT_THUMB,
+            XINPUT_GAMEPAD_LEFT_SHOULDER,
+            XINPUT_GAMEPAD_RIGHT_SHOULDER,
+            XINPUT_GAMEPAD_A,
+            XINPUT_GAMEPAD_B,
+            XINPUT_GAMEPAD_X,
+            XINPUT_GAMEPAD_Y
+        };
+
+        if (keyCode >= 0 && keyCode < 14)
+        {
+            return 0 != (BUTTON_BITMASKS[keyCode] & state.Gamepad.wButtons);
+        }
+        else if (keyCode == 14)
+        {
+            return state.Gamepad.bLeftTrigger > 20;
+        }
+        else if (keyCode == 15)
+        {
+            return state.Gamepad.bRightTrigger > 20;
+        }
+        else if (keyCode == 16)  // L Up
+        {
+            return state.Gamepad.sThumbLY
+                   > (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+        }
+        else if (keyCode == 17)  // L Down
+        {
+            return state.Gamepad.sThumbLY
+                   < (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE * -1);
+        }
+        else if (keyCode == 18)  // L Left
+        {
+            return state.Gamepad.sThumbLX
+                   < (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE * -1);
+        }
+        else if (keyCode == 19)  // L Right
+        {
+            return state.Gamepad.sThumbLX
+                   > (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE);
+        }
+        else if (keyCode == 20)  // L Up
+        {
+            return state.Gamepad.sThumbRY
+                   > (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+        }
+        else if (keyCode == 21)  // L Down
+        {
+            return state.Gamepad.sThumbRY
+                   < (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE * -1);
+        }
+        else if (keyCode == 22)  // L Left
+        {
+            return state.Gamepad.sThumbRX
+                   < (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE * -1);
+        }
+        else if (keyCode == 23)  // L Right
+        {
+            return state.Gamepad.sThumbRX
+                   > (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE);
+        }
+        else
+        {
+            LP3_FAIL("Bad keycode!");
+            return 0.0f;
+        }
+    }
+
+    public virtual Lp3::Float32 GetKeyAnalogState(unsigned int keyCode)
+    {
+        static const float ANALOG_PMAX = 32767.0f;
+        static const float ANALOG_NMAX = -32768.0f;
+
+        if (keyCode < 14)
+        {
+            return GetKeyState(keyCode) ? 1.0f : 0.0f;
+        }
+        else if (keyCode == 14)
+        {
+            return state.Gamepad.bLeftTrigger / 255.0f;
+        }
+        else if (keyCode == 15)
+        {
+            return state.Gamepad.bRightTrigger / 255.0f;
+        }
+        else if (keyCode == 16)  // L Up
+        {
+            return state.Gamepad.sThumbLY > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE
+              ? state.Gamepad.sThumbLY / ANALOG_PMAX
+              : 0.0f;
+        }
+        else if (keyCode == 17)  // L Down
+        {
+            return (state.Gamepad.sThumbLY
+                    < (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE * -1))
+              ? state.Gamepad.sThumbLY / ANALOG_NMAX
+              : 0.0f;
+        }
+        else if (keyCode == 18)  // L Left
+        {
+            return (state.Gamepad.sThumbLX
+                    < (XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE * -1))
+              ? state.Gamepad.sThumbLX / ANALOG_NMAX
+              : 0.0f;
+        }
+        else if (keyCode == 19)  // L Right
+        {
+            return state.Gamepad.sThumbLX > XINPUT_GAMEPAD_LEFT_THUMB_DEADZONE
+              ? state.Gamepad.sThumbLX / ANALOG_PMAX
+              : 0.0f;
+        }
+        else if (keyCode == 20)  // L Up
+        {
+            return state.Gamepad.sThumbRY > XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE
+              ? state.Gamepad.sThumbRY / ANALOG_PMAX
+              : 0.0f;
+        }
+        else if (keyCode == 21)  // L Down
+        {
+            return (state.Gamepad.sThumbRY
+                    < (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE * -1))
+              ? state.Gamepad.sThumbRY / ANALOG_NMAX
+              : 0.0f;
+        }
+        else if (keyCode == 22)  // L Left
+        {
+            return (state.Gamepad.sThumbRX
+                    < (XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE * -1))
+              ? state.Gamepad.sThumbRX / ANALOG_NMAX
+              : 0.0f;
+        }
+        else if (keyCode == 23)  // L Right
+        {
+            return state.Gamepad.sThumbRX > XINPUT_GAMEPAD_RIGHT_THUMB_DEADZONE
+              ? state.Gamepad.sThumbRX / ANALOG_PMAX
+              : 0.0f;
+        }
+        else
+        {
+            LP3_FAIL("Bad keyCode!");
+            return 0.0f;
+        }
+    }
+
+    public bool IsConnected()
+    {
+        return ERROR_SUCCESS == XInputGetState(index, &state);
+    }
+
+    public void SwitchWindow(HWND newHWnd)
+    {
+          // ?!
+    }
+
+    public void Update()
+    {
+        const DWORD result = XInputGetState(index, &state);
+        if (ERROR_SUCCESS != result)
+        {
+            // Zero memory so all updates return nothing.
+            ZeroMemory(&state, sizeof(XINPUT_STATE));
+        }
+    }
+
+};

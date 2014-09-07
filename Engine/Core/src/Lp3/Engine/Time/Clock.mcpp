@@ -1,0 +1,199 @@
+~import Lp3::Float32;
+~import Lp3::Float64;
+~import LP3_LOG_DEBUG;
+~import boost::optional;
+~import Lp3::UInt64;
+~import RAND_MAX;
+
+~namespace Lp3::Engine::Time;
+
+/* Simple value representing the current ticks of the game clock.
+ * Current time is (hopefully) accurate to the millisecond.
+ * So possible 1000 ticks a second. */
+typedef UInt64 ClockTimeInt;
+
+
+/** Represents the game's clock. */
+class Clock
+{
+	private ~global ClockTimeInt currentTickCount;
+	private ~global ClockTimeInt startFrameTime;
+	private ~global Float32 speedMod; /* % of a second it took for last frame. */
+
+    ~block "cpp-include"
+    {
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            #include <kos.h>
+        #endif
+    }
+
+	~block "cpp"
+	{
+		#ifdef LP3_COMPILE_TARGET_WINDOWS
+		#include <windows.h>
+		namespace {
+			static bool useCrapTimer;       /* Use non high res timer. */
+			static double ticksPerMS;       /* High res ticks per MS. */
+			static Int64 initHighFreqTime; /* Time at initialization. */
+		}
+		#endif
+		namespace {
+            static Lp3::Float32 averageFps;
+            static Lp3::Float32 fps;
+            static int frameCount;
+			// The maximum difference between the start of one frame and the
+			// next for the purposes of game logic.
+			// For example, this keeps the "GetSpeedMod()" float from returning
+			// enormous values if the game is paused in Windows.
+			static optional<float> maxFrameDiff = boost::none;
+		}
+	}
+
+    public static Lp3::Float32 GetAverageFps()
+    {
+        return averageFps;
+    }
+
+    public static Lp3::Float32 GetFps()
+    {
+        return fps;
+    }
+
+	/** Gets some kind of timer that increments by milliseconds. */
+	public static ClockTimeInt GetTime()
+	{
+		return currentTickCount;
+	}
+
+	/** Returns a random number, from 0.0 to 1.0. */
+	public static Float32 GetRandom()
+	{
+		return (Float32) ((((float)rand()) / RAND_MAX));
+	}
+
+	/** Returns random number.
+	 * Value is 0.0 right up to but not including maxValue.  I think...? */
+	public static Float32 GetRandom(int maxValue)
+	{
+		return (Float32) (((((float)rand()) / RAND_MAX)) * maxValue);
+	}
+
+	/** Returns a random number, right up to but not including maxValue. I think? */
+	public static Float32 GetRandom(Float32 maxValue)
+	{
+		return (Float32) (((((float)rand()) / RAND_MAX)) * maxValue);
+	}
+
+	/** The % of a second the last frame took. */
+	public static Float32 GetSpeedMod()
+	{
+		return speedMod;
+	}
+
+	/** Initializes the high frequency timer.  This must only be called once.*/
+	public static void Init(const optional<float> frameDiffCap=boost::none) //250.0)
+	{
+        frameCount = 0;
+        averageFps = 60;
+		maxFrameDiff = frameDiffCap;
+#ifdef LP3_COMPILE_TARGET_WINDOWS
+		/* In Windows, the high resolution timers are nigh infinitely better
+		 * that the default timer, so we see if we can use those instead.
+		 * If we can't, we set "useCrapTimer" to true and use the GetTickCount
+		 * function.  If we can, we mark the initial time that this function is called
+		 * as "initTime".  The "QueryPerformanceCounter" function returns a timer
+		 * based in tick counts- to figure out how that relates to actual TIME,
+		 * we call QueryPerformanceFrequency (which also tells us if High res timers
+		 * are available), which returns ticks per second.  We convert this to
+		 * ticksPerMS since thats how the game will see this stuff. */
+		UInt64 ticksPerSecond;
+		LARGE_INTEGER li; /* This is a weird data type... */
+		LP3_LOG_DEBUG("Trying to call QueryPerformanceFrequency...");
+		while(!QueryPerformanceFrequency(&li))
+		{
+			LP3_LOG_ERROR("Could not get ticksPerSecond`!! Trying again...");
+		}
+		ticksPerSecond = li.QuadPart;
+		LP3_LOG_DEBUG("Successful.");
+		if (ticksPerSecond >= 1000){
+		  LP3_LOG_DEBUG("Goldie.");
+		  ticksPerMS = (Float64)ticksPerSecond / (Float64)1000;
+		  if (!QueryPerformanceCounter(&li)){
+			 useCrapTimer = true;
+		  }
+		  else{
+			 initHighFreqTime = li.QuadPart;
+			 useCrapTimer = false;
+		  }
+		}
+		else{
+		  useCrapTimer = true;
+		}
+		LP3_LOG_DEBUG("Init successful.");
+
+		// Seed timer.
+		Clock::NextFrame();
+		srand( (unsigned)GetTickCount() );//currentTickCount );
+#endif // END LP3_COMPILE_TARGET_WINDOWS
+#ifdef LP3_COMPILE_TARGET_DREAMCAST
+		// I guess one might say that working with the high resolution timer
+		// in KOS is a bit easier than in Windows.
+		startFrameTime = 0;
+#endif
+	}
+
+	/** Signals the next frame.  Must be called once per frame.
+	 *
+	 *	This actually updates the value in "currentTickCount" and returns the
+	 *  time difference between when it was called last and now.  We store
+	 * "currentTickCount" because accessing it a bunch causes slow downs.
+	 */
+	public static ClockTimeInt NextFrame()
+	{
+#ifdef LP3_COMPILE_TARGET_WINDOWS
+	if (useCrapTimer){ /* Crappy timer. */
+       currentTickCount = GetTickCount();
+    }
+    else{  /* High res timer. */
+       LARGE_INTEGER li;
+       Int64 currentHighFreqTime;
+       while(!QueryPerformanceCounter(&li)){
+          LP3_LOG_ERROR("Can't QueryPerformanceCounter "
+			            "in Clock::NextFrame!");
+       }
+       currentHighFreqTime = li.QuadPart - initHighFreqTime;
+       currentTickCount = (ClockTimeInt)
+		                  ((Float64)currentHighFreqTime / ticksPerMS);
+    }
+
+#endif // LP3_COMPILE_TARGET_WINDOWS
+#ifdef LP3_COMPILE_TARGET_DREAMCAST
+	long unsigned int secs;
+	long unsigned int msecs;
+    timer_ms_gettime(&secs, &msecs);
+    currentTickCount = ((ClockTimeInt)secs * 1000) + (ClockTimeInt)msecs;
+    //timer_ms_gettime64();
+#endif
+    /* Compute time since last call and return it. */
+    ClockTimeInt dif = currentTickCount - startFrameTime;
+    startFrameTime = currentTickCount;
+    if (maxFrameDiff && dif > maxFrameDiff.get()) // Ensure slow down happens instead of goofy errors.
+    {
+        fps = 1.0 / ( (Float32) dif / 1000.0f);
+        dif = maxFrameDiff.get();
+        speedMod = (Float32) dif / 1000.0f;
+    }
+    else
+    {
+        speedMod = (Float32) dif / 1000.0f;
+        fps = 1.0 / speedMod;
+    }
+    if (frameCount < (3600 - 1))
+    {   // If there are always 60 fps, then the average is based over that
+        // minute.
+        ++ frameCount;
+    }
+    averageFps = ((averageFps * (frameCount - 1)) + fps) / frameCount;
+    return dif;
+	}
+};

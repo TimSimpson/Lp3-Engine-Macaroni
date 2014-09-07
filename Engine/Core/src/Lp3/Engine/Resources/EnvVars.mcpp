@@ -1,0 +1,38 @@
+~import std::map;
+~import std::string;
+
+~namespace Lp3::Engine::Resources;
+
+class EnvVars
+{
+    ~block "cpp-include"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_PC
+            #include <stdlib.h>
+        #else
+            #include <string.h>
+        #endif
+    }
+
+
+    public static string Get(const char * name)
+    {
+        #if defined(LP3_COMPILE_TARGET_DREAMCAST)
+            #ifndef DREAMCAST_LP3_MEDIAPATH
+                #ifdef LP3_COMPILE_TARGET_DREAMCAST_CD
+                    #define DREAMCAST_LP3_MEDIAPATH "/cd/"
+                #else
+                    #define DREAMCAST_LP3_MEDIAPATH "/pc/Lp3-Media/"
+                #endif
+            #endif
+            if (0 == strncmp("LP3_ROOT_PATH", name, 13))
+            {
+                return ("" DREAMCAST_LP3_MEDIAPATH ""); //string(s);
+            }
+        #else
+            string value(getenv(name));
+            return value;
+        #endif
+    }
+};

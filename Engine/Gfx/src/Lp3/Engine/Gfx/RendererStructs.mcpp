@@ -1,0 +1,32 @@
+~import Lp3::Engine::Gfx::Geometry::PolyPoint;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class NonTexturedQuad
+{
+    public PolyPoint A;
+    public VertexPixel CA;
+    public PolyPoint B;
+    public VertexPixel CB;
+    public PolyPoint C;
+    public VertexPixel CC;
+    public PolyPoint D;
+    public VertexPixel CD;
+};
+
+class NonTexturedFlatQuad
+{
+    public ScreenPoint A;
+    public VertexPixel CA;
+    public ScreenPoint B;
+    public VertexPixel CB;
+    public ScreenPoint C;
+    public VertexPixel CC;
+    public ScreenPoint D;
+    public VertexPixel CD;
+    public float Z;
+};

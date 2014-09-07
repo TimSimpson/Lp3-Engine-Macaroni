@@ -1,0 +1,16 @@
+~import Lp3::Engine::Gfx::Pixel;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+class Image
+{
+    public virtual ~Image()
+    {
+    }
+
+    public virtual void SetPixel(size_t x, size_t y, const Pixel & pixel) = 0;
+
+    public virtual void SetPixel(int x, int y, const Pixel & pixel) = 0;
+};

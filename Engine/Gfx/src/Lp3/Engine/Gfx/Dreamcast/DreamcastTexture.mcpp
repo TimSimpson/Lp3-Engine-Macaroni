@@ -1,0 +1,138 @@
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import boost::intrusive_ptr;
+~import Lp3::Engine::Gfx::Texture;
+
+
+~namespace Lp3::Engine::Gfx::Dreamcast;
+
+class DreamcastTexture {};
+
+
+typedef boost::shared_ptr<DreamcastTexture> DreamcastTexturePtr;
+
+
+class DreamcastTexture : public Image
+{
+    ~block "h"
+    {
+        friend class DreamcastImageMemory;
+        friend class DreamcastRenderer;
+    }
+
+    int width;
+    int height;
+    pvr_ptr_t data;       // Pointer to tex memory of the stuff
+    int format;           // format of memory
+    const size_t minimum;
+    const size_t mask;
+
+//    int minimum;
+
+    ~block "h-predef"
+    {
+        #include <Lp3/Engine/Gfx/InternalPixel.h>
+    }
+
+    ~block "h"
+    {
+        #define TWIDTAB(x) ( (x&1)|((x&2)<<1)|((x&4)<<2)|((x&8)<<3)|((x&16)<<4)| \
+            ((x&32)<<5)|((x&64)<<6)|((x&128)<<7)|((x&256)<<8)|((x&512)<<9) )
+        #define TWIDOUT(x, y) ( TWIDTAB((y)) | (TWIDTAB((x)) << 1) )
+    }
+
+    private DreamcastTexture(int width, int height)
+    :   data(nullptr),
+        height(height),
+        width(width),
+        minimum(std::min(width, height)),
+        mask(minimum - 1)
+    {
+        data = pvr_mem_malloc(width * height * sizeof(InternalPixel));
+    }
+
+    public virtual ~DreamcastTexture()
+    {
+        pvr_mem_free(data);
+    }
+
+    public void CopyPixels(const unsigned int x, const unsigned int y,
+                           InternalPixel * pixels,
+                           const unsigned int srcWidth,
+                           const unsigned int srcHeight)
+    {
+        LP3_LOG_DEBUG("Not implemented.");
+    }
+
+    public unsigned int GetHeight() const
+    {
+        return height;
+    }
+
+    public unsigned int GetWidth() const
+    {
+        return width;
+    }
+
+    private inline size_t IndexOf(const size_t x, const size_t y) const
+    {
+        //return y * width + x;
+        return TWIDOUT(x & mask, y & mask) + (x/minimum + y / minimum) * minimum * minimum;
+    }
+
+    private inline InternalPixel * PixelArray()
+    {
+        return reinterpret_cast<InternalPixel *>(data);
+    }
+
+    public virtual void SetPixel(size_t x, size_t y, const Pixel & pixel)
+    {
+        const auto ip = InternalPixel::Create(pixel);
+        SetPixel(x, y, ip);
+    }
+
+    public virtual void SetPixel(int x, int y, const Pixel & pixel)
+    {
+        SetPixel(x, y, InternalPixel::Create(pixel));
+    }
+
+    inline void SetPixel(const size_t x, const size_t y,
+                         const InternalPixel & newValue)
+    {
+        LP3_ASSERT_TRUE_MESSAGE(x < width, "X must be less than width.");
+        LP3_ASSERT_TRUE_MESSAGE(y < height, "Y must be less than height.");
+        //InternalPixel & pixel = PixelArray()[IndexOf(x, y)];
+        // Lp3::UInt16 * array = reinterpret_cast<Lp3::UInt16 *>(data);
+        // Lp3::UInt16 nv = newValue.argb;
+        // //pixel = newValue;
+        // array[IndexOf(x, y)] = newValue.argb;
+        reinterpret_cast<Lp3::UInt16 *>(data)[IndexOf(x, y)] = newValue.argb;
+    }
+
+    inline void SetPixel(const size_t x, const size_t y,
+                         const Lp3::UInt16 & newValue)
+    {
+        LP3_ASSERT_TRUE_MESSAGE(x < width, "X must be less than width.");
+        LP3_ASSERT_TRUE_MESSAGE(y < height, "Y must be less than height.");
+        Lp3::UInt16 * array = reinterpret_cast<Lp3::UInt16 *>(data);
+        //InternalPixel & pixel = PixelArray()[IndexOf(x, y)];
+        //pixel = newValue;
+        array[IndexOf(x, y)] = newValue;
+    }
+
+    ~block "h"
+    {
+        #undef TWIDTAB
+        #undef TWIDOUT
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

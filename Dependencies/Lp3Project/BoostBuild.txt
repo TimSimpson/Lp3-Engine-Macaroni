@@ -1,0 +1,43 @@
+This is stuff I put in the jamroot.jam file trying to make things work.
+It may be out of date and silly by the time you read this;
+if it looks like cruft delete it.
+
+
+
+rule platform_libs ( properties * )
+{
+    echo "$(properties)" ;
+    local result ;
+    if <toolset-gcc:version>dreamcast  in $(properties)
+    {
+        echo "HI" ;
+        result += <define>USE_INLINE_ASSEMBLER ;
+        #result += /boost//unit_test_framework ;
+    }
+    #else
+    #{
+    #    #result += /boost//unit_test_framework ;
+    #}
+    return $(result) ;
+}
+
+rule hi_you_boost ( stuff * )
+{
+    echo "Here's some stuff:" ;
+    echo "$(stuff)" ;
+}
+
+
+hi_you_boost <conditional>@platform_libs ;
+
+#alias library_dependencies
+#    :  ../generated/Blah.cpp  ;
+
+alias pc_lib
+    : /boost//headers
+      /boost//unit_test_framework
+      /boost//test_exec_monitor
+      ../generated/Blah.cpp
+    #:   <toolset>gcc
+    ;
+

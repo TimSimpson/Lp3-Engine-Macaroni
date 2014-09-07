@@ -1,0 +1,194 @@
+~import Lp3::Engine::Input::DeviceSource;
+~import LP3_LOG_DEBUG;
+~import boost::format;
+~import HINSTANCE;
+~import HWND;
+~import LPDIRECTINPUT8;
+~import Lp3::Engine::Input::PlatformDevice;
+~import std::string;
+~import std::vector;
+
+~namespace Lp3::Engine::Input::DirectInput;
+
+class DirectInputDeviceSource : public DeviceSource
+{
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+    }
+    ~block "bottom"
+    {
+        #endif // End LP3_COMPILE_TARGET_WINDOWS
+    }
+
+    ~block "h-predef"
+    {
+        // Forward declaration of hidden class.
+        namespace Lp3 { namespace Engine { namespace Input {
+            namespace DirectInput {
+            struct Pimpl;
+        }}}}
+    }
+    ~block "h"
+    {
+        ::Lp3::Engine::Input::DirectInput::Pimpl * me;
+    }
+    ~block "cpp-include"
+    {
+        #define DIRECTINPUT_VESRION 0x0800
+        #include <dinput.h>
+        #pragma comment (lib, "dinput8.lib")
+        #pragma comment (lib, "dxguid.lib")
+
+        // Include these files here rather than use a Macaroni import so that
+        // they remain semi-hidden.
+        #include <Lp3/Engine/Input/DirectInput/DirectInputDevice.h>
+        #include <Lp3/Engine/Input/DirectInput/DiJoyPadDevice.h>
+        #include <Lp3/Engine/Input/DirectInput/DiKeyboardDevice.h>
+
+        #include <Lp3/Input/DirectInput/XInputChecker.h>
+
+        using ::Lp3::Engine::Input::DirectInput::DirectInputDevice;
+        using ::Lp3::Engine::Input::DirectInput::DiJoyPadDevice;
+        using ::Lp3::Engine::Input::DirectInput::DiKeyboardDevice;
+    }
+
+    ~block "cpp"
+    {
+        #define LP3_INPUT_THROW(msg) /*LP3_LOG_ERROR(m); //throw LpInputException(m); */
+
+        struct Pimpl
+        {
+            // HWnd to the window that has focus.  Yep - each time we go to the
+            // options window to change controls, we have to reget all the
+            // devices. JOY!
+            HWND currentHWnd;
+            vector<PlatformDevice *> devices;
+            LPDIRECTINPUT8 di8;
+            int globalIndex;
+        };
+
+        namespace {
+            const int UNUSED_DEVICE = -1;
+            const size_t MAX_CONTROLS = 4;
+            const size_t MAX_DEVICES = 4;
+            static ::Lp3::Int32 currentGlobalIndex = 0;
+
+            const size_t MAX_SYSTEM_INSTANCES = 10;
+
+            // Why do these evil static callbacks have to litter system APIs?
+            // Because of it, and the fact only a 32 bit int can be passed, I
+            // have to create a callback table (because a pointer can't fit in
+            // a 32 bit anymore :p).
+            static DirectInputDeviceSource * activeInstances[MAX_SYSTEM_INSTANCES];
+
+            static BOOL CALLBACK DIEnumDevicesCallback(
+                  LPCDIDEVICEINSTANCE ptrDeviceInstance,
+                  LPVOID pvRef)
+            {
+                const ::Lp3::Int32 index = reinterpret_cast<::Lp3::Int32>(pvRef);
+                LP3_LOG_DEBUG("Calling back LpInput #%d.", index);
+                return activeInstances[index]->diCallBack(ptrDeviceInstance)
+                       ? TRUE : FALSE;
+            }
+        } // end anonymous namespace
+    } // end cpp block
+
+    public DirectInputDeviceSource(HINSTANCE hInstance, HWND hWnd)
+    : me(0)
+    {
+        LP3_LOG_DEBUG("Initializing Direct Input.");
+        me = new Pimpl();
+        me->globalIndex = currentGlobalIndex;
+        currentGlobalIndex ++;
+        activeInstances[me->globalIndex] = this;
+        me->currentHWnd = hWnd;
+
+        LP3_LOG_DEBUG("Creating Direct Input 8 object.");
+        if (DI_OK != DirectInput8Create(hInstance,
+                                        DIRECTINPUT_VESRION,
+                                        IID_IDirectInput8A,
+                                        (VOID**)&(me->di8),
+                                        NULL))
+        {
+            LP3_INPUT_THROW("Error occured creating DirectInput8.");
+        }
+
+        LP3_LOG_DEBUG("DirectInput 2");
+        //GUID KeyboardGUID = GUID_SysKeyboard;
+
+        if (DI_OK != me->di8->EnumDevices((DWORD)NULL , //DI8DEVCLASS_GAMECTRL, // for all devices try NULL.
+                                          DIEnumDevicesCallback,
+                                          reinterpret_cast<LPVOID>(me->globalIndex),
+                                          DIEDFL_ATTACHEDONLY // Only get what's attatched.
+                                          ))
+        {
+            LP3_INPUT_THROW("Error during EnumDevices.");
+        }
+
+        LP3_LOG_DEBUG("Direct Input initialization successful.");
+    }
+
+    ~hidden public bool diCallBack(LPCDIDEVICEINSTANCE ptrDeviceInstance)
+    {
+        LP3_LOG_DEBUG("Device count: %d", me->devices.size());
+        // We don't give a crap about the mouse or some other stuff.
+        if (DI8DEVTYPE_MOUSE == (0xff & ptrDeviceInstance->dwDevType))
+        {
+           return true; //keep enumerating, but don't add this one.
+        }
+        // Also ignore XInput devices, as the XInput API handles them better.
+        if (IsXInputDevice(&ptrDeviceInstance->guidProduct))
+        {
+            return true; // Keep enumerating, but don't add this one.
+        }
+        PlatformDevice * newDevice = 0;
+        DIDEVICEINSTANCE didi = *(ptrDeviceInstance);
+        if (DI8DEVTYPE_KEYBOARD == (0xff & ptrDeviceInstance->dwDevType))
+        {
+            newDevice = new DiKeyboardDevice(didi, &(me->di8), me->currentHWnd);
+        }
+        if (DI8DEVTYPE_JOYSTICK == (0xff & ptrDeviceInstance->dwDevType))
+        {
+            newDevice = new DiJoyPadDevice(didi, &(me->di8), me->currentHWnd);
+        }
+
+        if (0 != newDevice)
+        {
+            //TODO: Implement other device types.
+            me->devices.push_back(newDevice);
+        }
+        return true;
+    }
+
+    public virtual Device * GetDevice(unsigned int index)
+    {
+        return me->devices[index];
+    }
+
+    public virtual unsigned int GetDeviceCount() const
+    {
+        return me->devices.size();
+    }
+
+    public virtual void SwitchWindow(HWND newHwnd)
+    {
+        me->currentHWnd = newHwnd;
+        LP3_LOG_DEBUG("size = %d", me->devices.size());
+        for(size_t i = 0; i < me->devices.size(); i ++)
+        {
+            me->devices[i]->SwitchWindow(newHwnd);
+            LP3_LOG_DEBUG("OK!");
+        }
+        LP3_LOG_DEBUG("The end.");
+    }
+
+    public virtual void Update()
+    {
+        for(size_t i = 0; i < me->devices.size(); i ++)
+        {
+            me->devices[i]->Update();
+        }
+    }
+};

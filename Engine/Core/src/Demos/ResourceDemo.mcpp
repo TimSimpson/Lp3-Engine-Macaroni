@@ -1,0 +1,132 @@
+/**
+ *
+ *  Resource Demo
+ *
+ *  Load stuff.
+ *
+ */
+~unit ResourceDemo type=exe;
+
+~block "top"
+{
+    #define LP3_TEST_MODULE ResourceDemo
+    #include <Lp3/Test.h>
+}
+
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Memory::GlobalHeap;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Resources::MemoryStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+~import std::string;
+~import std::vector;
+
+~block "cpp" :=
+
+
+LP3_TEST(testOne)
+{
+    auto globalHeap = GlobalHeap::GetGlobalHeap();
+
+    ResettableReadStreamPtr memory = MemoryStream::Create(
+        *globalHeap, 256);
+
+    ReadStreamPtr file = InputFileStream::Create("Engine/Resources/story.txt");
+
+    const auto load = [&memory, &file]() {
+        // Read only 16 bytes altogether, 8 bytes at a time.
+        static_cast<MemoryStream *>(memory.get())->Load(file, 16, 8);
+    };
+
+    const auto read = [&memory](size_t size) {
+        char letters[1024];
+        const auto result = memory->Read(letters, size);
+        letters[result] = '\0';
+        return string(letters, result);
+    };
+
+    LP3_ASSERT_TRUE(memory->Eof());
+    load();
+    LP3_ASSERT_FALSE(memory->Eof());
+    {
+        const auto s = read(32);
+        LP3_LOG_DEBUG(s.c_str());
+        LP3_ASSERT_EQUAL(s, "Romulus and Remu");
+        LP3_ASSERT_TRUE(memory->Eof());
+    }
+
+    {
+        // Can't read.
+        const auto s = read(32);
+        LP3_ASSERT_EQUAL(s, "");
+    }
+
+    load();
+    LP3_ASSERT_FALSE(memory->Eof());
+
+    load();  // Get a whole 'nother 32 bytes.
+    {
+        const auto s = read(32);  // This time, the request will be honored.
+        LP3_LOG_DEBUG(s.c_str());
+        LP3_ASSERT_EQUAL(s,                   "s, two brothers,\r\n"
+                            "a she-wolf nou");
+    }
+
+    load();
+    load();
+    load();
+    load();
+    {
+        const auto s = read(256);  // Read the rest of the file.
+        LP3_LOG_DEBUG(s.c_str());
+        LP3_ASSERT_EQUAL(s,                "rished them in Rome,\r\n"
+                            "far from their native land.");
+    }
+
+    LP3_ASSERT_TRUE(memory->Eof());
+    memory->Reset();
+
+    {
+        const auto s = read(1024);  // Read entire file again.
+        LP3_LOG_DEBUG(s.c_str());
+        LP3_ASSERT_EQUAL(s, "Romulus and Remus, two brothers,\r\n"
+                            "a she-wolf nourished them in Rome,\r\n"
+                            "far from their native land.");
+    }
+
+    LP3_ASSERT_TRUE(memory->Eof());
+}
+
+LP3_TEST(testTwo)
+{
+    const auto fileName = "Engine/Sfx/c.wav";
+    const size_t memoryFileSize = 1024 * 128;
+    auto globalHeap = GlobalHeap::GetGlobalHeap();
+
+    ResettableReadStreamPtr memory = MemoryStream::Create(
+        *globalHeap, memoryFileSize);
+    ReadStreamPtr memFile = InputFileStream::Create(fileName);
+    // Read entire file.
+    static_cast<MemoryStream *>(memory.get())->Load(memFile, boost::none, 256);
+
+    ReadStreamPtr file = InputFileStream::Create(fileName);
+
+    char buffer1[1024];
+    char buffer2[1024];
+    int index = 0;
+    while(!memory->Eof())
+    {
+        LP3_LOG_DEBUG("Iteration %d", index);
+        const auto r2 = memory->Read(buffer2, 1023);
+        const auto r1 = file->Read(buffer1, memory->Eof() ? r2 : 1023);
+        buffer1[r1] = '\0';
+        buffer2[r2] = '\0';
+        LP3_ASSERT_EQUAL(string(buffer1), string(buffer2));
+        LP3_ASSERT_EQUAL(r1, r2);
+        ++ index;
+    }
+
+    LP3_ASSERT_EQUAL(128, index);
+
+}

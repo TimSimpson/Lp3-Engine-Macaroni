@@ -1,0 +1,357 @@
+~import LP3_ASSERT_TRUE_MESSAGE;
+~import Lp3::Byte;
+~import Lp3::Exception;
+~import Lp3::Engine::Memory::Host;
+~import boost::intrusive_ptr;
+~import LP3_LOG_ERROR;
+~import Lp3::Engine::Memory::MemoryStackException;
+~import Lp3::Engine::Memory::SharedHost;
+~import LP3_THROW;
+~import Lp3::UInt32;
+
+~namespace Lp3::Engine::Memory;
+
+class MemoryStack {};
+
+typedef intrusive_ptr<MemoryStack> MemoryStackPtr;
+
+class MemoryStackException : public Exception
+{
+
+    public const size_t actualEntryCount;
+    public const size_t reservedEntryCount;
+
+    public MemoryStackException(const char * message,
+                                const size_t reservedEntryCount,
+                                const size_t actualEntryCount) BOOST_NOEXCEPT
+    :   Exception(message),
+        actualEntryCount(actualEntryCount),
+        reservedEntryCount(reservedEntryCount)
+    {
+    }
+};
+
+class MemoryStackEntryFooter
+    /* One of these is appended to every allocation we make in a MemoryStack. */
+{
+    /** The prior entry in this list... confusingly enough, it doesn't
+     * point to an entryHeader, but to the preceding block of used memory. */
+    public void * previous;
+    /** Bool determining if it is in use. */
+    public Lp3::UInt32 flag;
+};
+
+~import Lp3::Engine::Memory::MemoryStackEntryFooter;
+
+/** This class owns a stack of Memory.  Memory can be deallocated in any order
+ * in order to keep compatability with Host, but the available memory
+ * does not count "holes" in the stack - freed memory that is not at the end
+ * of currently allocated memory. */
+class MemoryStack : public virtual SharedHost
+{
+    ~block "h-predef"
+    {
+        //TODO: Invent a way for Macaroni to declare "heavy" imports, which
+        // force the use of a header file.
+        #include <Lp3/Engine/Memory/MemoryStackEntryFooter.h>
+    }
+
+    private size_t actualEntryCount
+        /* Number of allocations currently in use. */;
+
+    private Lp3::Byte * const endMem
+        /** Where memory ends, NON-INCLUSIVE. */;
+
+    private Lp3::Byte * lastEntry
+        /** Where to store the next entry. */ ;
+
+    // When memory is allocated its set to this.
+    ~hidden ~global const Lp3::UInt32 MEMORYSTACK_FOOTER_INUSE = 0x830C;
+
+    // Freed memory is set to this.
+    ~hidden ~global const Lp3::UInt32 MEMORYSTACK_FOOTER_FREE  = 0xAC41;
+
+    // Intrusive pointers use to know when to deallocate it. */
+    private int referenceCount;
+
+    private const size_t reservedEntryCount
+        /** The number of allocations we'll put into this stack. */;
+
+    private size_t stuckEntryCount
+        /** Entries which may or may not be in use but can't be reclaimed. */;
+
+    private Lp3::Byte * const startMem
+        /** Start of memory stack. */;
+
+    protected MemoryStack
+        /* Constructor, which is passed the chunk of memory which will be
+         * managed. This is private because a static function will allocate
+         * space for it and the memory it manages in one clean allocation
+         * so that a call to delete will wipe it and its resources. */
+    (
+        void * ptr /* The address where the managed memory starts. */,
+        size_t entryCount /* the number of planned allocations.*/,
+        size_t extraSpace /* The size of ptr. */
+    )
+    :  actualEntryCount(0),
+       endMem(static_cast<Lp3::Byte *>(ptr) + extraSpace),
+       lastEntry(nullptr),
+       reservedEntryCount(entryCount),
+       startMem(static_cast<Lp3::Byte *>(ptr)),
+       stuckEntryCount(0)
+    {
+    }
+
+    private MemoryStack(const MemoryStack& obj)
+        /* We do not want a copy constructor. */;
+
+    public virtual ~MemoryStack()
+        /* Deletes the MemoryStack. Because the Create method allocates a big
+         * chunk of memory for not just this object but the space it controls
+         * and the constructor is private, we can rest assured delete will
+         * clear the chunk of memory we control. */
+    {
+    }
+
+    private MemoryStack & operator=(const MemoryStack& obj)
+        /* Do not allow. */;
+
+    public void * Alloc(const size_t size)
+        /* Allocates some memory at the top of the stack. */
+    {
+        if (actualEntryCount >= reservedEntryCount)
+        {
+            LP3_THROW(MemoryStackException,
+                      "Allocations excede reservedEntryCount.",
+                      reservedEntryCount, actualEntryCount)
+        }
+        // lastEntry always points to the last valid entry,
+        // so set it first.
+        // PreviousHeader is what the new header will point to.
+
+        // Compute where to put this alloc.
+        Lp3::Byte * startOfMem;
+        if (lastEntry == nullptr) // If no footer was set, next space is start.
+        {
+            startOfMem = startMem;
+        }
+        else // If set, the next space occurs after the footer.
+        {
+            startOfMem = lastEntry + sizeof(MemoryStackEntryFooter);
+        }
+
+        // Uh-oh, it is TOO BIG!
+        const size_t neededSize = size + sizeof(MemoryStackEntryFooter);
+        if ((startOfMem + neededSize) > endMem)
+        {
+            LP3_LOG_ERROR("The desired allocation size would exceed the size "
+                          "of this MemoryStack.  Throwing exception...");
+            LP3_THROW(std::bad_alloc);
+        }
+
+        lastEntry = startOfMem + size;
+        MemoryStackEntryFooter & lastEntryHeader =
+            *(static_cast<MemoryStackEntryFooter *>(
+                static_cast<void *>(lastEntry)));
+
+        lastEntryHeader.previous = startOfMem;
+        lastEntryHeader.flag = MEMORYSTACK_FOOTER_INUSE;
+
+        actualEntryCount ++;
+        stuckEntryCount ++;
+        LP3_ASSERT_NOT_EQUAL(nullptr, lastEntry)
+        return static_cast<void *>(startOfMem);
+    }
+
+    public static MemoryStackPtr Create
+        /* Creates a new MemoryStack in the specified Host capable of
+         * holding entryCount number of entries and whose overall size
+         * (not including the data structures needed to store entries) is
+         * "size." Every allocation in the MemoryStack requires additional
+         * information to be stored. Because of that, the MemoryStack has to
+         * know at creation how many allocations will be used.  Since the size
+         * of this additional data may fluctuate during portage, its important
+         * to be accurate. */
+    (
+        Host * const host
+            /* The memory host which this host is itself a guest within. */,
+        const size_t entryCount
+            /* The number of allocations that will be made on this
+             * host.  Note that this number had damn well better be precise to
+             * avoid wasting memory and ensuring portability - don't flub this
+             * and simply give yourself extra space by padding "size." */,
+        const size_t size
+            /* The overall size of all allocations. */
+    )
+    {
+        const size_t totalSize = MemoryStack::GetSize(entryCount, size);
+        void * const ptr = host->Alloc(totalSize);
+        void * const memPtr = static_cast<void *>
+            (static_cast<char *>(ptr) + sizeof(MemoryStack));
+        const size_t memPtrSize = totalSize - sizeof(MemoryStack);
+        MemoryStack * const instance =
+            new (ptr) MemoryStack(memPtr, entryCount, memPtrSize);
+        return MemoryStackPtr(instance);
+    }
+
+    public void Free(void * ptr)
+        /* Frees the allocated block pointed to by ptr. */
+    {
+        // Cycle through the previous entries until you find the ptr.
+        Lp3::Byte * itr = lastEntry;
+        LP3_ASSERT_TRUE_MESSAGE(lastEntry == nullptr || lastEntry > startMem,
+            "lastEntry, if not nullptr, must be greater than startMem.");
+        while(itr != nullptr)
+        {
+            LP3_ASSERT_TRUE_MESSAGE(itr > this->startMem,
+                "We've iterated past the beginning of owned memory!");
+            MemoryStackEntryFooter & currentItr =
+                *(static_cast<MemoryStackEntryFooter *>(
+                    static_cast<void *>(itr)));
+            if (currentItr.previous == ptr)
+            {
+                currentItr.flag = MEMORYSTACK_FOOTER_FREE;
+                actualEntryCount --;
+                refreshLastEntry();
+                return; // quit.
+            }
+            itr = static_cast<Lp3::Byte *>(currentItr.previous);
+            itr -= sizeof(MemoryStackEntryFooter);
+        }
+
+        LP3_LOG_ERROR("Could not find free'd ptr in MemoryStack!");
+        LP3_THROW(std::bad_alloc);
+    }
+
+    public size_t GetBytesAvailable() const
+        /** The size of this Host's usable memory. */
+    {
+        return (endMem - startMem)
+               - getEntryBookkeepingMemSize(reservedEntryCount);
+    }
+
+    /** The bytes available for use. */
+    public size_t GetBytesFree() const
+    {
+        if (lastEntry != nullptr)
+        {   // This counts space available to the user, and not the
+            // space that will be taken up by book keeping footers.
+            const size_t spaceAtEnd = endMem - lastEntry;
+            const size_t footers = reservedEntryCount - (stuckEntryCount - 1);
+            const size_t footerSpace = getEntryBookkeepingMemSize(footers);
+            return (endMem - (lastEntry)) - footerSpace;
+        }
+        else
+        {
+            return this->GetBytesAvailable();
+        }
+    }
+
+    public size_t GetBytesUsed() const
+        /** The Bytes used by this Host. */
+    {
+        if (lastEntry == nullptr)
+        {
+            return 0;
+        }
+        else
+        {
+            return (lastEntry - startMem)
+                - getEntryBookkeepingMemSize(stuckEntryCount - 1);
+        }
+    }
+
+    /** Size take up by book keeping. */
+    private static size_t getEntryBookkeepingMemSize(const size_t entryCount)
+    {
+        return sizeof(MemoryStackEntryFooter) * entryCount;
+    }
+
+    /** The size of this Host's usuable memory plus the sizeof() it's
+     * type. */
+    public size_t GetSize() const
+    {
+        return sizeof(MemoryStack) + (endMem - startMem);
+    }
+
+
+    public static size_t GetSize(size_t entryCount, size_t size)
+    {
+        return (sizeof(MemoryStackEntryFooter) * entryCount) + size
+                + sizeof(MemoryStack);
+    }
+
+    ~block "h"
+    {
+        /** Gets the size of a structure with this number of entries, and the
+         * size for entryMemory, should such a structure be created. Also
+         * includes size of the class object itself. */
+        /*template<size_t entryCount, size_t size>
+        struct Size
+        {
+            static const size_t Value = sizeof(MemoryStack)
+                + size + (sizeof(MemoryStackEntryFooter) * entryCount);
+        };*/
+
+        public: static std::size_t Size(size_t entryCount, size_t size)
+        {
+            return sizeof(MemoryStack)
+                + size + (sizeof(MemoryStackEntryFooter) * entryCount);
+        }
+    }
+
+
+    private void refreshLastEntry()
+        /* While lastEntry is not nullptr, move it down so long as the entry
+         * it points to has its flag marked as free. */
+    {
+        // Now change lastEntry to make it good.
+        while(lastEntry != nullptr) // also breaks if the flag is not FREE.
+        {
+            MemoryStackEntryFooter & lastEntryFooter =
+                *(static_cast<MemoryStackEntryFooter *>(
+                    static_cast<void *>(lastEntry)));
+            // If the lastEntry is set to free, then move it to the
+            // previous one.
+            if (lastEntryFooter.flag == MEMORYSTACK_FOOTER_INUSE)
+            {
+                break;
+            }
+            else if (lastEntryFooter.flag == MEMORYSTACK_FOOTER_FREE)
+            {
+                stuckEntryCount --;
+                lastEntry = static_cast<Lp3::Byte *>(lastEntryFooter.previous);
+                if (lastEntry == startMem)
+                {
+                    lastEntry = nullptr;
+                }
+                else
+                {
+                    lastEntry -= sizeof(MemoryStackEntryFooter);
+                }
+            }
+            else
+            {
+                LP3_THROW(Lp3::Exception, "lastEntryFooter.flag was garbage!")
+            }
+        } // end last entry while.
+    }
+
+    ~block "h-postdef"
+    {
+        template<size_t entryCount, size_t size>
+        class MemoryStack2 : public MemoryStack
+        /* This memory stack actually lives on the stack! */
+        {
+        public:
+            static const size_t BufferSize =
+                (sizeof(MemoryStackEntryFooter) * entryCount) + size;
+            char Buffer[BufferSize];
+
+            MemoryStack2()
+            :   MemoryStack(Buffer, entryCount, BufferSize)
+            {}
+        };
+    }
+
+};

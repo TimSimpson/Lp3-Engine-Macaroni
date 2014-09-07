@@ -1,0 +1,203 @@
+~unit DreamcastDevice type=obj;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+
+~import Lp3::Engine::Input::Device;
+
+~namespace Lp3::Engine::Input;
+
+
+~block "top" {
+#include <Lp3/LE.h>
+#ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom" {
+#endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+~block "cpp" :=
+
+#include <kos.h>
+
+
+const char DreamcastKeyName[17][21] =
+{
+          "DPAD UP             ", //0
+          "DPAD DOWN           ",
+          "DPAD LEFT           ",
+          "DPAD RIGHT          ",
+          "A                   ",
+          "B                   ", //5
+          "C                   ",
+          "X                   ",
+          "Y                   ",
+          "Z                   ",
+          "START               ", //10
+          "L                   ",
+          "R                   ",
+          "ANALOG UP           ",
+          "ANALOG DOWN         ",
+          "ANALOG LEFT         ",
+          "ANALOG RIGHT        "  //16
+};
+
+
+#define CONTROLLER ((cont_state_t * ) this->state)
+
+Device::Device(unsigned int index)
+: index(index), state(nullptr)
+{
+
+    //impl->dev = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+}
+
+int Device::FindPressedKeyCode()
+{
+    for (int index = 0; index < GetKeyCount(); index ++)
+    {
+        if (GetKeyState(index))
+        {
+            return index;
+        }
+    }
+    return -1;
+}
+
+bool Device::IsAnalogKey(unsigned int keycode)
+{
+    return false;
+}
+
+const char * Device::GetName() const
+{
+    return "Controller";
+}
+
+int Device::GetKeyCount()
+{
+    return 17;
+}
+
+const char * Device::GetKeyName(unsigned int keyCode)
+{
+    return (char *)DreamcastKeyName[keyCode];
+}
+
+bool Device::GetKeyState(unsigned int keyCode)
+{
+    switch(keyCode)
+    {
+        case 0:
+            return (CONTROLLER->buttons & CONT_DPAD_UP) != 0;
+        case 1:
+            return (CONTROLLER->buttons & CONT_DPAD_DOWN) != 0;
+        case 2:
+            return (CONTROLLER->buttons & CONT_DPAD_LEFT) != 0;
+        case 3:
+            return (CONTROLLER->buttons & CONT_DPAD_RIGHT) != 0;
+        case 4:
+            return (CONTROLLER->buttons & CONT_A) != 0 ;
+        case 5:
+            return (CONTROLLER->buttons & CONT_B) != 0 ;
+        case 6:
+            return (CONTROLLER->buttons & CONT_C) != 0 ;
+        case 7:
+            return (CONTROLLER->buttons & CONT_X) != 0 ;
+        case 8:
+            return (CONTROLLER->buttons & CONT_Y) != 0 ;
+        case 9:
+            return (CONTROLLER->buttons & CONT_Z) != 0 ;
+        case 10:
+            return (CONTROLLER->buttons & CONT_START) != 0 ;
+        case 11:
+            return CONTROLLER->ltrig > 10 ;
+        case 12:
+            return CONTROLLER->rtrig > 10 ;
+        case 13:
+            return CONTROLLER->joyy < -10 ;
+        case 14:
+            return CONTROLLER->joyy > 10 ;
+        case 15:
+            return CONTROLLER->joyx < -10 ;
+        case 16:
+            return CONTROLLER->joyx > 10 ;
+        default:
+            return false;
+    }
+}
+
+Lp3::Float32 Device::GetKeyAnalogState(unsigned int keyCode)
+{
+    switch(keyCode)
+    {
+        case 0:
+            return (CONTROLLER->buttons & CONT_DPAD_UP) ? 1.0f : 0.0f;
+        case 1:
+            return (CONTROLLER->buttons & CONT_DPAD_DOWN) ? 1.0f : 0.0f;
+        case 2:
+            return (CONTROLLER->buttons & CONT_DPAD_LEFT) ? 1.0f : 0.0f;
+        case 3:
+            return (CONTROLLER->buttons & CONT_DPAD_RIGHT) ? 1.0f : 0.0f;
+        case 4:
+            return (CONTROLLER->buttons & CONT_A) ? 1.0f : 0.0f ;
+        case 5:
+            return (CONTROLLER->buttons & CONT_B) ? 1.0f : 0.0f ;
+        case 6:
+            return (CONTROLLER->buttons & CONT_C) ? 1.0f : 0.0f ;
+        case 7:
+            return (CONTROLLER->buttons & CONT_X) ? 1.0f : 0.0f ;
+        case 8:
+            return (CONTROLLER->buttons & CONT_Y) ? 1.0f : 0.0f ;
+        case 9:
+            return (CONTROLLER->buttons & CONT_Z) ? 1.0f : 0.0f ;
+        case 10:
+            return (CONTROLLER->buttons & CONT_START) ? 1.0f : 0.0f ;
+        case 11:
+            return CONTROLLER->ltrig > 10 ?
+                        (CONTROLLER->ltrig / 128.0f)
+                   :
+                        0.0f;
+        case 12:
+            return CONTROLLER->rtrig > 10 ?
+                        (CONTROLLER->rtrig / 128.0f)
+                    :
+                        0.0f;
+        case 13:
+            return CONTROLLER->joyy < -10 ?
+                        ((CONTROLLER->joyy * -1) / 128.0f)
+                    :
+                        0.0f;
+        case 14:
+            return CONTROLLER->joyy > 10 ?
+                        (CONTROLLER->joyy / 128.0f)
+                    :
+                        0.0f;
+        case 15:
+            return CONTROLLER->joyx < -10 ?
+                        ((CONTROLLER->joyx * -1) / 128.0f)
+                    :
+                        0.0f;
+        case 16:
+            return CONTROLLER->joyx > 10 ?
+                        (CONTROLLER->joyx / 128.0f)
+                    :
+                        0.0f;
+        default:
+            return 0.0f;
+    }
+}
+
+void Device::Update()
+{
+    //TODO: Enumerating the maple devices here is bad. It should happen in
+    //      DreamcastDeviceSource instead. For now, just support one controller.
+    maple_device_t * cont = maple_enum_type(0, MAPLE_FUNC_CONTROLLER);
+    if(cont) {
+        cont_state_t * _state = (cont_state_t *)maple_dev_status(cont);
+        this->state = _state;
+    } else {
+        this->state = nullptr;
+    }
+}
+

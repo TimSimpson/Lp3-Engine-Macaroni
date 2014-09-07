@@ -1,0 +1,42 @@
+~namespace Lp3::Engine::Gfx::Geometry;
+
+class Box2d
+{
+    public int X1;
+    public int Y1;
+    public int X2;
+    public int Y2;
+
+    public inline int Height() const
+    {
+        return Y2 - Y1;
+    }
+
+    public void Set(int X1, int Y1, int X2, int Y2)
+    {
+        this->X1 = X1;
+        this->Y1 = Y1;
+        this->X2 = X2;
+        this->Y2 = Y2;
+    }
+
+    public inline int Width() const
+    {
+        return X2 - X1;
+    }
+
+};
+
+
+class Coordinates2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class Size2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class NormalizedCoordinates2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class CoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class NormalizedCoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+
+class ScreenPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class PolyPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+
+class SpriteCoordinates { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class TexturedQuadUV { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class TexturedQuadSrc { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };

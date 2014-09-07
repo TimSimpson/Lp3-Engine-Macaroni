@@ -1,0 +1,67 @@
+~import Lp3::Exception;
+
+
+/*
+ * Simple Coroutines
+ * -----------------
+ *
+ * This code allows for coroutines that are crappier than Lua (and Boost)
+ * coroutines, but about as good as Python's and portable.
+ *
+ * Rules for using coroutines:
+ *
+ *  - Function variables will not retain values in between calls, so always
+ *    use class variables instead.
+ *  - Use independent CoroutineState variables for each coroutine. Don't muck
+ *    with the internal variables of CoroutineState.
+ *  - Only use one pair of begin / end coroutine macros per function.
+ *
+ * See the unit tests for examples.
+ *
+ * The ideas which led to this are fairly well known and based on independent
+ * research; however I feel the need to credit Simon Tatham for writing a paper
+ * that details a method nearly identical to what is used here.
+ *
+ * http://www.chiark.greenend.org.uk/~sgtatham/coroutines.html
+ */
+class LP3_COROUTINE { ~hfile=<Lp3/Engine/Coroutine/CoroutineMacros.h> };
+
+
+~namespace Lp3::Engine::Coroutine;
+
+class CoroutineState
+{
+    // This is declared public, but only because there was no other (simple)
+    // choice. It's best to leave this alone.
+    public int codePointer;
+
+    public CoroutineState()
+    :   codePointer(0)
+    {
+    }
+
+    // Returns true if the coroutine is still running.
+    ~block "h"
+    {
+        public: explicit inline operator bool() const {
+            return codePointer != -1;
+        }
+    }
+};
+
+class CoroutineFinishedException : public Exception
+{
+    public CoroutineFinishedException() BOOST_NOEXCEPT
+    :   Exception("Coroutine was called again after completing.")
+    {
+    }
+};
+
+class CoroutineInvalidStateException : public Exception
+{
+    public CoroutineInvalidStateException() BOOST_NOEXCEPT
+    :   Exception("The Coroutine is in a corrupted or invalid state.")
+    {
+    }
+};
+

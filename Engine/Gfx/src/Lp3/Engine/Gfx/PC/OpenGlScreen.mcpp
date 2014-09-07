@@ -1,0 +1,87 @@
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::ImageMemory;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlImageMemory;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+
+
+~namespace Lp3::Engine::Gfx::OpenGl;
+
+
+
+class OpenGlScreen : public Screen
+{
+    ~block "cpp-include"
+    {
+        #include <Lp3/LE.h>
+        #ifndef LP3_COMPILE_TARGET_WINDOWS
+            #include <GL/glut.h>
+        #else
+            #pragma comment(lib, "Gdi32.lib")
+            #pragma comment (lib, "user32.lib")
+            #include <windows.h>
+            #include <GL/gl.h>
+            #include <gl/glu.h>
+        #endif
+    }
+
+    ~block "h"
+    {
+        friend class OpenGlManager;
+    }
+
+    ~block "cpp"
+    {
+        namespace { static const Pixel white(0xFF, 0xFF, 0xFF, 0xFF); }
+    }
+
+    // Texture used to display colors.
+    private OpenGlImageMemory memory;
+    private ScreenObjectPtr object;
+    private OpenGlRenderer renderer;
+
+    public OpenGlScreen()
+    :   memory(),
+        object(),
+        renderer(memory.CreateTexture(32, 32, white))
+    {
+    }
+
+    public virtual ~OpenGlScreen()
+    {
+    }
+
+    public ImageMemory & GetImageMemory()
+    {
+        return memory;
+    }
+
+    // Consider making this a friend method somehow.
+    public void render()
+    {
+        renderer.beginFrame();
+        object->DrawOpaque(renderer);
+        object->DrawTranslucent(renderer);
+        renderer.endFrame();
+    }
+
+    public virtual void SetObject(ScreenObjectPtr object)
+    {
+        this->object = object;
+    }
+
+    ~block "top"
+    {
+        #ifndef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};
+

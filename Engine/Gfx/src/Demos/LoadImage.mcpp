@@ -1,0 +1,166 @@
+/**
+ *
+ *  Load Image
+ *
+ *  This executable loads a bitmap and shows it, using colored quads.
+ *
+ */
+~unit LoadImage type=exe; // platform=windows;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::BitmapReader;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import std::string;
+~import std::vector;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+
+
+const auto red = VertexPixel::Create(0xFF, 0x00, 0x00, 0x00);
+const auto green = VertexPixel::Create(0x00, 0xFF, 0x00, 0x00);
+const auto blue = VertexPixel::Create(0x00, 0x00, 0xFF, 0x00);
+
+
+
+
+class RealImage : public Image
+{
+public:
+    InternalPixel * data;
+    const size_t height;
+    const size_t width;
+public:
+    RealImage(const size_t width, const size_t height)
+    :   data(new InternalPixel[width * height]),
+        height(height),
+        width(width)
+    {
+    }
+
+    ~RealImage()
+    {
+        delete[] data;
+    }
+
+    virtual void SetPixel(size_t x, size_t y, const Pixel & pixel)
+    {
+        data[(y * width) + x].Set(pixel);
+    }
+
+    virtual void SetPixel(int x, int y, const Pixel & pixel)
+    {
+        data[(y * width) + x].Set(pixel);
+    }
+};
+
+RealImage * image;
+GfxManager * manager;
+
+
+void DrawPictureFrame(Renderer & renderer)
+{
+    renderer.Quad(0, 0, 640, 480, 0.0f, green);
+    renderer.Quad(120, 90, 400, 300, 0.01f, blue);
+    renderer.Quad(160, 120, 320, 240, 0.1f, red);
+    renderer.Quad(310, 360, 16, 120, 0.2f, blue);
+}
+
+void DrawManualBitMap(Renderer & renderer)
+{
+    // Create a frame for the texture to sit in.
+    for (Lp3::UInt32 y = 0; y < image->height; y ++) {
+        for (Lp3::UInt32 x = 0; x < image->width; x ++) {
+            const InternalPixel & pixel =
+                image->data[(y * image->width) + x];
+            renderer.Quad(x * 8 + 170, y * 8 + 130, 5, 5, 0.5f,
+                          VertexPixel::Create(pixel.ToPixel()));
+        }
+    }
+}
+
+class TexturedBlock : public ScreenObject {
+    virtual void DrawOpaque(Renderer & renderer)
+    {
+        DrawPictureFrame(renderer);
+        DrawManualBitMap(renderer);
+    }
+
+    virtual void DrawTranslucent(Renderer & renderer)
+    {
+    }
+};
+
+
+
+class Main
+{
+
+private:
+
+public:
+    Main(const vector<string> & arguments
+         #ifdef LP3_COMPILE_TARGET_WINDOWS
+           , HINSTANCE hInstance, HWND hWnd
+         #endif
+    )
+    {
+        if (arguments.size() < 2)
+        {
+            LP3_LOG_ERROR("Expected a bitmap file as an argument.");
+            LP3_THROW(Lp3::Exception, "Expected a bitmap file as an argument.");
+        }
+        const string & bitmapFilePath = arguments[1];
+
+        manager = new GfxManager(
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+                hWnd
+            #endif
+        );
+        Screen & screen = manager->GetScreen(0);
+
+        ReadStreamPtr input(new InputFileStream(bitmapFilePath.c_str()));
+        BitmapReader reader(input);
+        LP3_LOG_DEBUG("Bitmap dimensions = %d x %d", 
+                      reader.Width(), reader.Height());
+        image = new RealImage(reader.Width(), reader.Height());
+        reader.Read(*image);
+        ScreenObjectPtr obj(new TexturedBlock());
+        screen.SetObject(obj);
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+        delete image;
+        delete manager;
+    }
+
+    void Iterate()
+    {
+        manager->Render();
+    }
+
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+        }
+    #endif
+
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::LoadImage");

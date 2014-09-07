@@ -1,0 +1,14 @@
+~import Lp3::Engine::Memory::Host;
+
+~namespace Lp3::Engine::Memory;
+
+class HostObject
+{
+    ~hfile=<Lp3/Memory/ManagedPointer.h>
+};
+
+class ManagedPointer
+{
+    ~hfile=<Lp3/Memory/ManagedPointer.h>
+    //TODO: Put the other stuff in here
+};

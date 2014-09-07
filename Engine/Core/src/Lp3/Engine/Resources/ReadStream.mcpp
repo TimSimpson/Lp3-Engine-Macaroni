@@ -1,0 +1,52 @@
+~import boost::shared_ptr;
+
+
+~namespace Lp3::Engine::Resources;
+
+
+// This extremely simple class just presents a source to read bytes from.
+// The expectation is, baring "Eof()" being set, the source is always in a
+// good state.
+class ReadStream
+{
+    ~block "h-predef"
+    {
+        #include <Lp3/Assert.h>
+    }
+
+    public virtual ~ReadStream()
+    {
+    }
+
+    /** Check this before reading. */
+    public virtual bool Eof() const = 0;
+
+    /** Reads requested number of bytes into the buffer. Returns bytes read. */
+    public virtual size_t Read(char * buffer, size_t bytes) = 0;
+
+    ~block "h"
+    {
+    public:
+        template<typename T>
+        inline void ReadPod(T & data)
+        {
+            #ifndef LP3_COMPILE_WITH_DEBUGGING
+                const size_t bytesRead =
+            #endif
+            Read(reinterpret_cast<char *>(&data), sizeof(T));
+            #ifndef LP3_COMPILE_WITH_DEBUGGING
+            LP3_ASSERT_TRUE_MESSAGE(sizeof(T) == bytesRead,
+                                    "Unable to read all bytes for struct!");
+            #endif
+        }
+    }
+};
+
+class ResettableReadStream : public ReadStream
+{
+    // Go back to the start of the file.
+    public virtual void Reset(size_t position=0) = 0;
+};
+
+typedef shared_ptr<ReadStream> ReadStreamPtr;
+typedef shared_ptr<ResettableReadStream> ResettableReadStreamPtr;

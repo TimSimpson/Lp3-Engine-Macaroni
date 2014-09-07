@@ -1,0 +1,161 @@
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
+
+
+~namespace Lp3::Engine::Gfx::OpenGl;
+
+~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::OpenGl::OpenGlScreen;
+~import std::unique_ptr;
+
+
+class OpenGlManager
+{
+    ~block "h-predef"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            #include <windows.h>
+        #endif
+    }
+    ~block "cpp-include"
+    {
+        #include <Lp3/LE.h>
+        #ifndef LP3_COMPILE_TARGET_WINDOWS
+            #include <GL/glut.h>
+        #else
+            #pragma comment(lib, "Gdi32.lib")
+            #pragma comment (lib, "user32.lib")
+            #include <windows.h>
+            #include <GL/gl.h>
+            #include <gl/glu.h>
+        #endif
+        #include <Lp3/Engine/Gfx/PC/OpenGlFunctions.hpp>
+    }
+
+    ~block "h"
+    {
+    private:
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            struct WindowsDetails;
+            std::unique_ptr<WindowsDetails> windowsDetails;
+        #endif
+    public:
+        OpenGlManager(
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+                HWND hWnd
+            #endif
+            );
+
+        virtual ~OpenGlManager();
+    }
+
+    private OpenGlScreen screen;
+
+    ~block "cpp"
+    {
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            struct OpenGlManager::WindowsDetails
+            {
+                HDC deviceContext;
+                HGLRC openGlRenderContext;
+                HWND hWnd;
+
+                WindowsDetails(HWND hWnd)
+                {
+                    LP3_LOG_DEBUG("Initializing OpenGL...");
+
+                    this->hWnd = hWnd;
+                    deviceContext = GetDC(hWnd);
+                    PIXELFORMATDESCRIPTOR pixelDescription;
+
+                    // set the pixel pixelDescription for the DC
+                    ZeroMemory( &pixelDescription, sizeof(pixelDescription));
+                    pixelDescription.nSize = sizeof(pixelDescription);
+                    pixelDescription.nVersion = 1;
+                    pixelDescription.dwFlags =
+                        PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+                    pixelDescription.iPixelType = PFD_TYPE_RGBA;
+                    pixelDescription.cColorBits = 24;
+                    pixelDescription.cDepthBits = 16;
+                    pixelDescription.iLayerType = PFD_MAIN_PLANE;
+                    const int format = ChoosePixelFormat(deviceContext,
+                                                         &pixelDescription);
+                    SetPixelFormat(deviceContext, format, &pixelDescription);
+
+                    // create and enable the render context (RC)
+                    openGlRenderContext = wglCreateContext(deviceContext);
+                    wglMakeCurrent(deviceContext, openGlRenderContext);
+                }
+
+                ~WindowsDetails()
+                {
+                    wglMakeCurrent(NULL, NULL);
+                    wglDeleteContext(openGlRenderContext);
+                    ReleaseDC(hWnd, deviceContext);
+                }
+            };
+
+            OpenGlManager::OpenGlManager(HWND hWnd)
+            :   windowsDetails(new WindowsDetails(hWnd)),
+                screen()
+            {
+            }
+
+            OpenGlManager::~OpenGlManager()
+            {
+            }
+        #else
+            OpenGlManager::OpenGlManager()
+            :   screen()
+            {
+            }
+
+            OpenGlManager::~OpenGlManager()
+            {
+            }
+        #endif
+    } // end ~block
+
+    public virtual Screen & GetScreen(const unsigned int index)
+    {
+        return screen;
+    }
+
+    public virtual unsigned int GetScreenCount()
+    {
+        return 1;
+    }
+
+    public virtual void Render()
+    {
+        screen.render();
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            SwapBuffers(windowsDetails->deviceContext);
+        #endif
+        #ifdef LP3_COMPILE_TARGET_LINUX
+            glutSwapBuffers();
+        #endif
+    }
+
+    public void Resize(const Size2d<unsigned int> size)
+    {
+        glViewport(0, 0, size.Width, size.Height);
+    }
+
+    ~block "top"
+    {
+        #ifndef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

@@ -1,0 +1,29 @@
+class nullptr { ~hfile=<Lp3/LE.h> };
+
+namespace Lp3
+{
+	typedef char            Byte   ~hfile=<Lp3/LE.h> ;
+	/** An unsigned eight bit integer. */
+	typedef unsigned char   UInt8  ~hfile=<Lp3/LE.h> ;
+	/** A signed eight bit integer. */
+	typedef signed char      Int8  ~hfile=<Lp3/LE.h> ;
+	/** An unsigned 16 bit integer. */
+	typedef unsigned short  UInt16 ~hfile=<Lp3/LE.h> ;
+	/** A signed 16 bit integer. */
+	typedef signed short     Int16 ~hfile=<Lp3/LE.h> ;
+	/** An unsigned 32 bit integer. */
+	typedef unsigned int    UInt32 ~hfile=<Lp3/LE.h> ;
+	/** A signed 32 bit integer. */
+	typedef signed int       Int32 ~hfile=<Lp3/LE.h> ;
+	/** An unsigned 64 bit integer. */
+	typedef unsigned long   UInt64 ~hfile=<Lp3/LE.h> ;
+	/** A signed 64 bit integer. */
+	typedef signed long      Int64 ~hfile=<Lp3/LE.h> ;
+
+	typedef float          Float32 ~hfile=<Lp3/LE.h> ;
+	typedef double         Float64 ~hfile=<Lp3/LE.h> ;
+}
+
+class LP3_THROW { ~hfile=<Lp3/LE.h> };
+class LP3_THROW2 { ~hfile=<Lp3/LE.h> };
+class LP3_THROW3 { ~hfile=<Lp3/LE.h> };

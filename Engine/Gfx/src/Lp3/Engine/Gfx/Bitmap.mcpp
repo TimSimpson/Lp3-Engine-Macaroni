@@ -1,0 +1,154 @@
+~import boost::format;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Int32;
+~import LP3_LOG_DEBUG;
+~import boost::optional;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Resources::ReadStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import LP3_ASSERT_TRUE_MESSAGE;
+
+~namespace Lp3::Engine::Gfx;
+
+
+class BitmapReader
+{
+    private ReadStreamPtr stream;
+    private Lp3::UInt32 height;
+    private Lp3::UInt32 width;
+
+    ~block "cpp" { namespace {
+
+        struct FileHeader
+        {
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(push, 1)
+            #endif
+                    Lp3::UInt16   bfType;
+                    Lp3::UInt32   bfSize;
+                    Lp3::UInt16   bfReserved1;
+                    Lp3::UInt16   bfReserved2;
+                    Lp3::UInt32   bfOffBits;
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(pop)
+            #endif
+        } //; <-- Appeasing Sublime Text
+        #if defined(LP3_COMPILE_TARGET_LINUX) || defined(LP3_COMPILE_TARGET_DREAMCAST)
+        // WARNING: This GCC macro can potentially be unsafe except on x86 if
+        // a pointer to this struct is dereferenced.
+        __attribute__((packed));
+        #endif
+        ;
+
+        static_assert(sizeof(FileHeader) == 14, "FileHeader is wrong size.");
+
+        struct InfoHeader
+        {
+            #pragma pack(push, 1)
+                Lp3::UInt32  biSize;
+                Lp3::Int32  biWidth;
+                Lp3::Int32  biHeight;
+                Lp3::UInt16  biPlanes;
+                Lp3::UInt16  biBitCount;
+                Lp3::UInt32  biCompression;
+                Lp3::UInt32  biSizeImage;
+                Lp3::Int32  biXPelsPerMeter;
+                Lp3::Int32  biYPelsPerMeter;
+                Lp3::UInt32  biClrUsed;
+                Lp3::UInt32  biClrImportant;
+            #pragma pack(pop)
+        };
+
+        static_assert(sizeof(InfoHeader) == 40, "InfoHeader is wrong size.");
+
+        struct BitmapHeader {
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(push, 1)
+            #endif
+                    FileHeader file;
+                    InfoHeader info;
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(pop)
+            #endif
+        } //; <-- Appeasing Sublime Text
+        #if defined(LP3_COMPILE_TARGET_LINUX) || defined(LP3_COMPILE_TARGET_DREAMCAST)
+        // WARNING: This GCC macro can potentially be unsafe except on x86 if
+        // a pointer to this struct is dereferenced.
+        __attribute__((packed))
+        #endif
+        ;
+
+        static_assert(sizeof(BitmapHeader) == 54, "BitmapHeader is wrong size.");
+
+        struct BitmapPixel
+        {
+            #pragma pack(push, 1)
+            Lp3::UInt8 blue;
+            Lp3::UInt8 green;
+            Lp3::UInt8 red;
+            #pragma pack(pop)
+        };
+
+        static_assert(sizeof(BitmapPixel) == 3, "BitmapHeader is wrong size.");
+
+    } }  // end anonymous namespace
+
+    public BitmapReader(ReadStreamPtr stream)
+    :   stream(stream)
+    {
+        BitmapHeader header;
+        stream->ReadPod(header);
+        //const FileHeader & fileHeader = header.file;
+        const InfoHeader & infoHeader = header.info;
+        LP3_ASSERT_TRUE_MESSAGE(24 == infoHeader.biBitCount,
+                                "Can only read 24 bit bitmaps.");
+        width   = infoHeader.biWidth;
+        height  = infoHeader.biHeight;
+    }
+
+    public inline Lp3::UInt32 Height() const
+    {
+        return height;
+    }
+
+    public void Read(Image & image,
+                     const optional<Pixel> & colorKey = boost::none)
+    {
+        BitmapPixel srcPixel;
+        Pixel pixel;
+        pixel.Alpha = 255;  // Set default alpha.
+
+        size_t bytesRead = 0;
+        //char padding[4]; // Used to reading padding at the end of bitmaps.
+
+        for (int lk = height - 1; lk >= 0 && lk < height; lk --)
+        {
+            bytesRead = 0;
+            for (int lj = 0; lj < width; lj ++)
+            {
+                stream->ReadPod(srcPixel);
+                pixel.Red = srcPixel.red;
+                pixel.Blue = srcPixel.blue;
+                pixel.Green = srcPixel.green;
+                if (colorKey && pixel.Red   == colorKey.get().Red
+                             && pixel.Green == colorKey.get().Green
+                             && pixel.Blue  == colorKey.get().Blue)
+                {
+                    // Make invisible.
+                    pixel.Alpha = colorKey.get().Alpha;
+                }
+                else
+                {
+                    pixel.Alpha = 255;
+                }
+                image.SetPixel(lj, lk, pixel);
+            }
+        }
+    }
+
+    public inline Lp3::UInt32 Width() const
+    {
+        return width;
+    }
+
+};

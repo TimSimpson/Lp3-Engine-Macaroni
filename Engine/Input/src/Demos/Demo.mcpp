@@ -1,0 +1,87 @@
+/**
+ *
+ *  Lp3_Engine_Input_Demo
+ *
+ *  This demo shows how to load a platform agnostic interface and use it.
+ *
+ */
+~unit Lp3_Engine_Input_Demo type=exe;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Input::Control;
+~import Lp3::Engine::Input::Controls;
+~import std::string;
+~import std::stringstream;
+~import std::vector;
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_NAME "Lp3::Engine::Input::Demo"
+#include <Lp3/Engine/MicroMain.h>
+
+
+void * debugText() {
+    LP3_LOG_DEBUG("LP3::Engine::Input Example");
+    LP3_LOG_DEBUG("This demo shows off the (mostly) platform agnostic "
+                  "interface, which allows a game to easily consume a "
+                  "logical 'Control' style interface.");
+    return nullptr;
+}
+
+class Main
+{
+    void * debug;
+    Controls controls;
+
+public:
+    Main(const vector<string> & arguments
+         LP3_COMPILE_TARGET_WINDOWS_THEN(, HINSTANCE hInstance, HWND hWnd))
+    :   debug(debugText()),
+        controls(
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+                hInstance, hWnd
+            #endif
+            )
+    {
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+    }
+
+    void Iterate()
+    {
+        controls.Update();
+        Control & control = controls.GetControl(0);
+        stringstream buf;
+        if (control.State(0))
+        {
+            buf << "UP! ";
+        }
+        else if (control.State(1))
+        {
+            buf << "DOWN! ";
+        }
+        else if (control.State(2))
+        {
+            buf << "LEFT! ";
+        }
+        else if (control.State(3))
+        {
+            buf << "RIGHT! ";
+        }
+        LP3_LOG_DEBUG(buf.str().c_str());
+    }
+
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+        }
+    #endif
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Input::Demo");
+

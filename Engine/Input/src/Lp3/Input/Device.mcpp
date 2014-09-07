@@ -1,0 +1,74 @@
+~import Lp3::Float32;
+
+~namespace Lp3::Engine::Input;
+
+class Device
+/** A control device represents a physical means of input.
+ *  Devices and keycodes are mapped to a player action, such as "JUMP".
+ *  This class offers a common interface for devices from DirectInput and
+ *  XInput to the Dreamcast controller. */
+{
+    ~block "h-predef"
+    {
+        #include <Lp3/LE.h>
+    }
+    ~block "h"
+    {
+        /** Make the Dreamcast non-virtual. */
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            #define LP3_INPUT_DEVICE_ATTR /* */
+            #define LP3_INPUT_DEVICE_PROTO /* */
+        #else
+            #define LP3_INPUT_DEVICE_ATTR virtual
+            #define LP3_INPUT_DEVICE_PROTO = 0
+        #endif
+
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            public: Device(unsigned int index);
+
+            private: unsigned int index;
+
+            private: void * state;
+        #endif
+
+        public: ~Device() { }
+
+        /* Call after update.  Calls first key code hit.
+         * useful for option screens where the player selects a button. */
+        public: LP3_INPUT_DEVICE_ATTR int FindPressedKeyCode()
+            LP3_INPUT_DEVICE_PROTO;
+
+        /* States if control device has analog joystick capabilities at the
+         * designated keycode. */
+        public: LP3_INPUT_DEVICE_ATTR bool IsAnalogKey(unsigned int keyCode)
+            LP3_INPUT_DEVICE_PROTO;
+
+        /* Name of the Device. */
+        public: LP3_INPUT_DEVICE_ATTR const char * GetName() const
+                LP3_INPUT_DEVICE_PROTO;
+
+        /* Number of keys on a device. */
+        public: LP3_INPUT_DEVICE_ATTR int GetKeyCount() LP3_INPUT_DEVICE_PROTO;
+
+        /* Name of a key on a device. */
+        public: LP3_INPUT_DEVICE_ATTR
+            const char * GetKeyName(unsigned int keyCode)
+                LP3_INPUT_DEVICE_PROTO;
+
+        /* For boolean buttons, returns whether or not a key was pressed. */
+        public: LP3_INPUT_DEVICE_ATTR bool GetKeyState(unsigned int keyCode)
+            LP3_INPUT_DEVICE_PROTO;
+
+        /* For analog keys, gets a floating point number representing how
+         * intensely a key is held down. */
+        public: LP3_INPUT_DEVICE_ATTR
+            Lp3::Float32 GetKeyAnalogState(unsigned int keyCode)
+                LP3_INPUT_DEVICE_PROTO;
+
+        /* Updates the device. This must be called once per frame. */
+        public: LP3_INPUT_DEVICE_ATTR void Update() LP3_INPUT_DEVICE_PROTO;
+
+        #undef LP3_INPUT_DEVICE_ATTR
+        #undef LP3_INPUT_DEVICE_PROTO
+    }
+};

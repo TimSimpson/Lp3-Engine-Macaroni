@@ -1,0 +1,6 @@
+~namespace Lp3::Engine::Gfx;
+
+class GfxManager
+{
+    ~hfile=<Lp3/Engine/Gfx/GfxManager.hpp>
+};

@@ -1,0 +1,79 @@
+~import LP3_ABORT;
+~import LP3_ASSERT_FALSE_MESSAGE;
+~import LP3_LOG_DEBUG;
+~import boost::format;
+~import std::fstream;
+~import std::string;
+
+~import Lp3::Engine::Resources::EnvVars;
+~import std::fstream;
+~import Lp3::Engine::Resources::ResettableReadStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+
+~namespace Lp3::Engine::Resources;
+
+
+// Maps a file to the basic stream concept.
+// If *ANYTHING* goes wrong, abort is called. Remember, this is for a very
+// controlled environment where files should always be present.
+class PcInputFileStream : public ResettableReadStream
+{
+    private bool eof;
+    fstream file;
+
+    public PcInputFileStream(const char * filePath)
+    :   eof(false),
+        file()
+    {
+        string fullPath = str(format("%s/%s") % EnvVars::Get("LP3_ROOT_PATH")
+                                              % filePath);
+        LP3_LOG_DEBUG("Opening file %s...", fullPath);
+        file.open(fullPath.c_str(), std::ios::in | std::ios::binary);
+        if (file.bad() || file.fail())
+        {
+            LP3_ABORT("Error opening file %s!", fullPath);
+        }
+    }
+
+    public static ResettableReadStreamPtr Create(const char * filePath)
+    {
+        ResettableReadStreamPtr ptr(new PcInputFileStream(filePath));
+        return ptr;
+    }
+
+    public virtual bool Eof() const
+    {
+        return eof;
+    }
+
+    public virtual size_t Read(char * buffer, size_t bytes)
+    {
+        file.read(buffer, bytes);
+        LP3_ASSERT_FALSE_MESSAGE(file.bad(),
+            "Bad bit set! Stream integrity compromised.");
+        //LP3_ASSERT_FALSE_MESSAGE(file.fail(),
+        //    "Fail bit set! Stream integrity compromised.");
+        eof = file.eof();
+        return file.gcount();
+    }
+
+    public virtual void Reset(size_t position=0)
+    {
+        LP3_ASSERT_FALSE_MESSAGE(file.bad(), "Can't reset, file is bad!");
+        LP3_ASSERT_TRUE_MESSAGE(file.is_open(), "Can't reset, file not open!");
+        file.clear(); // Clear eof flags.
+        file.seekg(position, std::ios::beg);
+        eof = file.eof();
+    }
+/*
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_PC
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_PC
+    }*/
+};

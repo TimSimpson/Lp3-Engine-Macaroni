@@ -1,0 +1,84 @@
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::Dreamcast::DreamcastImageMemory;
+~import Lp3::Engine::Gfx::Dreamcast::DreamcastRenderer;
+~import Lp3::Engine::Gfx::Screen;
+
+~namespace Lp3::Engine::Gfx::Dreamcast;
+
+
+class DreamcastScreen : public Screen
+{
+    private DreamcastImageMemory memory;
+    private ScreenObjectPtr object;
+    private DreamcastRenderer renderer;
+
+    ~block "h"
+    {
+        friend class DreamcastGfxManager;
+    }
+
+
+    private DreamcastScreen()
+    :   memory(),
+        object(),
+        renderer()
+    {
+
+
+    }
+
+    private virtual ~DreamcastScreen()
+    {
+    }
+
+    public virtual ImageMemory & GetImageMemory()
+    {
+        return memory;
+    }
+
+    public void render()
+    {
+        renderer.beginFrame();
+
+        object->DrawOpaque(renderer);
+
+        renderer.beginTranslucent();
+
+        object->DrawTranslucent(renderer);
+
+        renderer.endFrame();
+        //renderOpaque();// Do opaque drawing here!
+
+        //pvr_list_finish();
+
+        //pvr_list_begin(PVR_LIST_TR_POLY);
+
+        //renderTranslucent();
+
+    }
+
+    ~hidden void renderOpaque()
+    {
+
+    }
+
+    ~hidden void renderTranslucent()
+    {
+
+    }
+
+    public virtual void SetObject(ScreenObjectPtr object)
+    {
+        this->object = object;
+    }
+
+    ~block "top"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom"
+    {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+};

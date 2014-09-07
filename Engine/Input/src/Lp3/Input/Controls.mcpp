@@ -1,0 +1,212 @@
+~import Lp3::Engine::Input::Control;
+~import Lp3::Engine::Input::ControlKey;
+~import Lp3::Engine::Input::Device;
+~import Lp3::Engine::Input::DeviceSource;
+~import LP3_FAIL;
+~import LP3_LOG_DEBUG;
+~import boost::format;
+~import std::string;
+~import std::vector;
+
+
+~namespace Lp3::Engine::Input;
+
+
+class Controls
+{
+    ~block "cpp-include"
+    {
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            #include <Lp3/Engine/Input/Dreamcast/DreamcastDeviceSource.h>
+        #else
+            #include <Lp3/Engine/Input/Windows/WindowsDeviceSource.h>
+        #endif
+    }
+
+    private vector<Control> controls;
+    private DeviceSource * deviceSource;
+
+    ~block "h-predef"
+    {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            #include <windows.h>
+        #endif
+    }
+    ~block "h"
+    {
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            public: Controls();
+        #else
+            public: Controls(HINSTANCE hInstance, HWND hWnd);
+        #endif
+    }
+
+    ~block "cpp"
+    {
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            using namespace Lp3::Engine::Input::Dreamcast;
+
+            Controls::Controls()
+            : controls(4),
+              deviceSource(new DreamcastDeviceSource())
+            {
+                for (unsigned int i = 0; i < 4; i ++)
+                {
+                    controls.push_back(Control());
+                }
+                setDefaults();
+            }
+        #else
+            using ::Lp3::Engine::Input::Windows::WindowsDeviceSource;
+
+            Controls::Controls(HINSTANCE hInstance, HWND hWnd)
+            : controls(4),
+              deviceSource(new WindowsDeviceSource(hInstance, hWnd))
+            {
+                for (unsigned int i = 0; i < 4; i ++)
+                {
+                    controls.push_back(Control());
+                }
+                setDefaults();
+            }
+        #endif
+    }
+
+    public ~Controls()
+    {
+        delete deviceSource;
+    }
+
+    private void configureButton(unsigned int controlIndex,
+                                 unsigned int buttonIndex,
+                                 Device * const device,
+                                 unsigned int keyIndex)
+    {
+        Control & control = GetControl(controlIndex);
+        ButtonMapping mapping;
+        mapping.Device = device;
+        mapping.DeviceName = device->GetName();
+        mapping.KeyIndex = keyIndex;
+        control.ConfigureButtonMapping(buttonIndex, mapping);
+    }
+
+    public void ConfigureButton(unsigned int controlIndex,
+                                unsigned int buttonIndex,
+                                const std::string & deviceName,
+                                const std::string & keyName)
+    {
+        //Control & control = controls[controlIndex];
+        for (unsigned int index = 0; index < deviceSource->GetDeviceCount();
+             ++ index)
+        {
+            Device * const device = deviceSource->GetDevice(index);
+            if (deviceName == device->GetName())
+            {
+                for (int keyIndex = 0;
+                     keyIndex < device->GetKeyCount(); ++ keyIndex)
+                {
+                    const char * const name = device->GetKeyName(keyIndex);
+                    if (keyName == name)
+                    {
+                        configureButton(controlIndex, buttonIndex,
+                                        device, keyIndex);
+                        return;
+                    }
+                }
+            }
+        }
+        LP3_LOG_ERROR("Can't configure button: device name %s / key "
+                      "name %s not found!", deviceName, keyName);
+        LP3_FAIL("Bad arguments to configure button.");
+    }
+
+    // Assigns the current key pressed on any device to the given contoller and
+    // key index.
+    public void ConfigureButtonToCurrentPressedKey(unsigned int controlIndex,
+                                                   unsigned int buttonIndex)
+    {
+        for (unsigned int index = 0; index < deviceSource->GetDeviceCount();
+             ++ index)
+        {
+            Device * const device = deviceSource->GetDevice(index);
+            const int keyIndex = device->FindPressedKeyCode();
+            if (keyIndex >= 0)
+            {
+                configureButton(controlIndex, buttonIndex, device, keyIndex);
+                return;
+            }
+        }
+    }
+
+    public inline Control & GetControl(unsigned int index)
+    {
+        return controls[index];
+    }
+
+    ~hidden void setDefaults()
+    // Sets defaults to use a basic game pad (directions, face buttons, start)
+    {
+        LP3_LOG_DEBUG("Setting defaults.");
+        #ifdef LP3_COMPILE_TARGET_WINDOWS
+            if (deviceSource->GetDeviceCount() <= 0) {
+                LP3_LOG_DEBUG("No device returned? Aborting default init.");
+                return;
+            }
+            const auto xDeviceIndex = static_cast<WindowsDeviceSource *>(
+                deviceSource)->FindXInputDevice();
+            if (!xDeviceIndex)  // Use the stinky old keyboard.
+            {
+                const Device * const device = deviceSource->GetDevice(0);
+                const string deviceName(device->GetName());
+                ConfigureButton(0,  0, deviceName, "up arrow            ");
+                ConfigureButton(0,  1, deviceName, "down arrow          ");
+                ConfigureButton(0,  2, deviceName, "left arrow          ");
+                ConfigureButton(0,  3, deviceName, "right arrow         ");
+                ConfigureButton(0,  4, deviceName, "S                   ");
+                ConfigureButton(0,  5, deviceName, "D                   ");
+                ConfigureButton(0,  6, deviceName, "A                   ");
+                ConfigureButton(0,  7, deviceName, "W                   ");
+                ConfigureButton(0,  8, deviceName, "Q                   ");
+                ConfigureButton(0,  9, deviceName, "E                   ");
+                ConfigureButton(0, 10, deviceName, "R                   ");
+            }
+            else  // Use the controller.
+            {
+                const Device * const device =
+                    deviceSource->GetDevice(xDeviceIndex.get());
+                const string deviceName(device->GetName());
+                ConfigureButton(0,  0, deviceName, "Left Analog Up");
+                ConfigureButton(0,  1, deviceName, "Left Analog Down");
+                ConfigureButton(0,  2, deviceName, "Left Analog Left");
+                ConfigureButton(0,  3, deviceName, "Left Analog Right");
+                ConfigureButton(0,  4, deviceName, "A");
+                ConfigureButton(0,  5, deviceName, "B");
+                ConfigureButton(0,  6, deviceName, "X");
+                ConfigureButton(0,  7, deviceName, "Y");
+                ConfigureButton(0,  8, deviceName, "LT");
+                ConfigureButton(0,  9, deviceName, "RT");
+                ConfigureButton(0, 10, deviceName, "Start");
+            }
+        #elif LP3_COMPILE_TARGET_DREAMCAST
+            ConfigureButton(0,  0, "Controller", "ANALOG UP           ");
+            ConfigureButton(0,  1, "Controller", "ANALOG DOWN         ");
+            ConfigureButton(0,  2, "Controller", "ANALOG LEFT         ");
+            ConfigureButton(0,  3, "Controller", "ANALOG RIGHT        ");
+            ConfigureButton(0,  4, "Controller", "A                   ");
+            ConfigureButton(0,  5, "Controller", "B                   ");
+            ConfigureButton(0,  6, "Controller", "X                   ");
+            ConfigureButton(0,  7, "Controller", "Y                   ");
+            ConfigureButton(0,  8, "Controller", "L                   ");
+            ConfigureButton(0,  9, "Controller", "R                   ");
+            ConfigureButton(0, 10, "Controller", "START               ");
+        #endif
+    }
+
+    // Call this once per frame to update devices.
+    public void Update()
+    {
+        deviceSource->Update();
+    }
+
+};

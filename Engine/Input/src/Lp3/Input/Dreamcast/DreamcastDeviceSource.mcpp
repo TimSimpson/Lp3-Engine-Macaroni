@@ -1,0 +1,47 @@
+~namespace Lp3::Engine::Input::Dreamcast;
+
+
+~import Lp3::Engine::Input::Device;
+~import Lp3::Engine::Input::DeviceSource;
+
+/** A source for devices. */
+class DreamcastDeviceSource : public DeviceSource
+{
+    ~block "top" {
+        #include <Lp3/LE.h>
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+    }
+    ~block "bottom" {
+        #endif // LP3_COMPILE_TARGET_DREAMCAST
+    }
+
+    private Device * device;
+
+    public DreamcastDeviceSource()
+    :   device(nullptr)
+    {
+        device = new Device(0);
+    }
+
+    public ~DreamcastDeviceSource()
+    {
+        delete device;
+    }
+
+    public virtual Device * GetDevice(unsigned int index)
+    {
+        return device;
+    }
+
+    public virtual unsigned int GetDeviceCount() const
+    {
+        //TODO: Support all four controllers. This gets a bit complex as it
+        //      you have to scan them as they're plugged in.
+        return 1;
+    }
+
+    public virtual void Update()
+    {
+        device->Update();
+    }
+};

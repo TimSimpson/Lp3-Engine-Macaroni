@@ -1,0 +1,42 @@
+~unit MicroMainDemo type=exe;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+
+~block "cpp" :=
+
+#include <Lp3/Engine/MicroMain.h>
+
+
+class Main
+{
+public:
+    Main(const std::vector<std::string> & arguments
+         LP3_COMPILE_TARGET_WINDOWS_THEN(, HINSTANCE hInstance, HWND hWnd)
+        )
+    {
+        LP3_LOG_DEBUG("Greetings from the MicroMain Demo.");
+        for(const std::string & element : arguments)
+        {
+            LP3_LOG_DEBUG(element.c_str());
+        }
+    }
+
+    ~Main()
+    {
+    }
+
+    void Iterate()
+    {
+    }
+
+    LP3_COMPILE_TARGET_WINDOWS_THEN(
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+        }
+    );
+
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Core::MicorMainDemo");
