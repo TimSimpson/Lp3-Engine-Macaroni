@@ -24,6 +24,7 @@ Lp3Project{
     "Demos/AssertDemo.cpp",
     "Demos/Demo.cpp",
   },
+  --docs="docs",
   tests={
      "Lp3/PrimitivesTest.cpp",
      "Lp3/Engine/Memory/AllocatorTest.cpp",

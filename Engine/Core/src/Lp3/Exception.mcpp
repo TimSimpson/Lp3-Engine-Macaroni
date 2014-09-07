@@ -7,61 +7,24 @@
 ~namespace Lp3;
 
 
-/**
- * The base class of LP3 style exceptions.
- * This link is a good reference on designing exception classes:
- * http://www.boost.org/community/error_handling.html
- */
 class Exception : public virtual exception
 {
-	//TODO: Get rid of this filename / lineNumber stuff. It has *NEVER* been
-	//      useful, ever.
-	private optional<const char *> fileName;
-	private optional<int> lineNumber;
 	private const char * message;
 
-	public Exception(const char * message)
-	:	exception(),
-		fileName(boost::none),
-		lineNumber(boost::none),
+	public Exception(const char * message) BOOST_NOEXCEPT
+	: 	exception(message),
 		message(message)
 	{
 	}
 
-	public Exception(const char * fileName, const int lineNumber,
-                     const char * message) BOOST_NOEXCEPT
-	: exception(),
-		  fileName(fileName),
-		  lineNumber(lineNumber),
-		  message(message)
+	public virtual ~Exception() BOOST_NOEXCEPT
 	{
 	}
 
-	public ~Exception() BOOST_NOEXCEPT
+	public Exception & operator =(const Exception & other)
 	{
-	}
-
-	public Exception & operator =(const Exception & other) // Copy assignment.
-	{
-		this->fileName = other.fileName;
-		this->lineNumber = other.lineNumber;
 		this->message = other.message;
 		return *this;
-	}
-
-	public const optional<const char *> FileName() const
-	{
-		return fileName;
-	}
-
-	public const optional<int> LineNumber() const
-	{
-		return lineNumber;
-	}
-
-	public virtual const char * Message() const
-	{
-		return what();
 	}
 
 	public virtual const char * what() const BOOST_NOEXCEPT

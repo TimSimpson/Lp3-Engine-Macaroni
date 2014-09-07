@@ -64,7 +64,7 @@ class DirectInputDevice : public PlatformDevice
         if FAILED(hr)
         {
             LP3_LOG_ERROR("Could not create createDevice!");
-            throw Exception("DirectInputDevice", 1, "Could not create.");
+            throw Exception("Could not create.");
         }
 
         hr = device->SetDataFormat(&deviceDataFormat);//diDataFormat);
@@ -72,7 +72,7 @@ class DirectInputDevice : public PlatformDevice
           LP3_LOG_ERROR("Could not set the data format?!!");
           device->Release();
           device = NULL;
-          throw Exception("DirectInputDevice", 1, "Could not set fmt.");
+          throw Exception("Could not set fmt.");
         }
 
         // Step 4: Set keyboard behavior
@@ -82,7 +82,7 @@ class DirectInputDevice : public PlatformDevice
           LP3_LOG_ERROR("WHAT?! Could not set cooperative level?! WHAT?!");
           device->Release();
           device = NULL;
-          throw Exception("DirectInputDevice", 1, "Could not set coop.");
+          throw Exception("Could not set coop.");
         }
     }
 

@@ -2,6 +2,7 @@
 #define LE_H
 
 /*******************************************************************************
+//MDOC-BEGIN CompilerFlags
   Custom flags I defined for this project years ago.
 
   Note that the tricks below which determine the platform may need to be
@@ -20,7 +21,7 @@
   LP3_COMPILE_WITHOUT_LOGGING
     If true, don't use logging even if in debug mode.
 
-
+//MDOC-END CompilerFlags
  ******************************************************************************/
 
 #define COMPILE_TARGET_WINDOWS syntax_error
