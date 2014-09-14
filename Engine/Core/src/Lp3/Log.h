@@ -8,6 +8,16 @@
 
 #include <Lp3/LE.h>
 
+    namespace Lp3 { namespace Log {
+        enum class LogLevel
+        {
+            Critical,
+            Debug,
+            Error,
+            Info,
+            Warning
+        };
+    } } // end Lp3::Log
 
 #ifdef LP3_COMPILE_LOG_DISABLE
 
@@ -22,14 +32,6 @@
     #include <boost/format.hpp>
 
     namespace Lp3 { namespace Log {
-        enum class LogLevel
-        {
-            Critical,
-            Debug,
-            Error,
-            Info,
-            Warning
-        };
 
         template<typename HeadType, typename... TailTypes>
         void feedToFormat(boost::format & format, const HeadType & head,

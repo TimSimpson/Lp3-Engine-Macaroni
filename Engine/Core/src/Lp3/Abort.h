@@ -23,7 +23,6 @@
 #else
     #define LP3_ABORT(m, ...)    \
     {   \
-        const std::string message(str(m)); \
         LP3_LOG_CRITICAL(m, #__VA_ARGS__); \
         LP3_THROW(Lp3::Exception, m); \
     }
