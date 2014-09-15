@@ -1,9 +1,11 @@
 ~import Lp3::Engine::Gfx::Pixel;
 
-
 ~namespace Lp3::Engine::Gfx;
 
 
+// Base class, used by code which needs to write to an image.
+// For example the Bitmap reader uses this, which allows it to write to a
+// different pixel format instead.
 class Image
 {
     public virtual ~Image()
@@ -13,4 +15,110 @@ class Image
     public virtual void SetPixel(size_t x, size_t y, const Pixel & pixel) = 0;
 
     public virtual void SetPixel(int x, int y, const Pixel & pixel) = 0;
+};
+
+
+// Simple subclass of image that just stores everything as a pixel.
+class PixelImage : public Image
+{
+    ~import LP3_ASSERT_TRUE;
+
+    private Pixel * data;
+    private size_t height;
+    private size_t width;
+
+    public PixelImage(const size_t width, const size_t height)
+    :   data(new Pixel[width * height]),
+        height(height),
+        width(width)
+    {
+    }
+
+    public PixelImage(PixelImage && other)
+    :   data(other.data),
+        height(other.height),
+        width(other.width)
+    {
+        other.data = nullptr;
+    }
+
+    PixelImage & operator =(const PixelImage & other)
+    {
+        LP3_ASSERT_FALSE(this->data == other.data);
+        if (this->data == other.data)
+        {
+            return *this;
+        }
+        destroyData();
+        this->width = other.width;
+        this->height = other.height;
+        this->data = new Pixel[width * height];
+        for (size_t i = 0; i < width * height; ++ i)
+        {
+            this->data[i] = other.data[i];
+        }
+        return *this;
+    }
+
+    PixelImage & operator =(PixelImage && other)
+    {
+        LP3_ASSERT_FALSE(this->data == other.data);
+        if (this->data == other.data)
+        {
+            return *this;  // Is this even possible?
+        }
+
+        destroyData();
+
+        this->data = other.data;
+        this->height = other.height;
+        this->width = other.width;
+
+        return *this;
+    }
+
+    public virtual ~PixelImage()
+    {
+        destroyData();
+    }
+
+    ~hidden void destroyData()
+    {
+        if (nullptr != data)
+        {
+            delete[] data;
+        }
+        data = nullptr;
+    }
+
+    public Pixel GetPixel(size_t x, size_t y) const
+    {
+        LP3_ASSERT_TRUE(x < width && x >= 0);
+        LP3_ASSERT_TRUE(y < height && y >= 0);
+        return data[(y * width) + x];
+    }
+
+    public size_t Height() const
+    {
+        return height;
+    }
+
+    public virtual void SetPixel(size_t x, size_t y, const Pixel & pixel)
+    {
+        LP3_ASSERT_TRUE(x < width && x >= 0);
+        LP3_ASSERT_TRUE(y < height && y >= 0);
+        data[(y * width) + x] = pixel;
+    }
+
+    public virtual void SetPixel(int x, int y, const Pixel & pixel)
+    {
+        LP3_ASSERT_TRUE(x < width && x >= 0);
+        LP3_ASSERT_TRUE(y < height && y >= 0);
+        data[(y * width) + x] = pixel;
+    }
+
+    public size_t Width() const
+    {
+        return width;
+    }
 };
