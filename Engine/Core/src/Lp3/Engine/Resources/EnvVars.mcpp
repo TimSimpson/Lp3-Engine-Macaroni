@@ -1,3 +1,4 @@
+~import LP3_FAIL;
 ~import std::map;
 ~import std::string;
 
@@ -5,6 +6,12 @@
 
 class EnvVars
 {
+    ~block "h-predef"
+    {
+        #include <Lp3/LE.h>
+        #include <map>
+    }
+
     ~block "cpp-include"
     {
         #include <Lp3/LE.h>
@@ -15,6 +22,59 @@ class EnvVars
         #endif
     }
 
+    ~block "cpp"
+    {
+        #ifdef LP3_COMPILE_TARGET_PC
+        namespace {
+            struct Settings
+            {
+                string MediaPath;
+            };
+
+            bool & IsInitialized()
+            {
+                static bool initialized;
+                return initialized;
+            }
+
+            Settings & settings()
+            {
+                static Settings s;
+                return s;
+            }
+
+            void ensureInit()
+            {
+                if (!IsInitialized())
+                {
+                    const char * const s = getenv("LP3_ROOT_PATH");
+                    LP3_ASSERT_FALSE(nullptr == s);
+                    string mediaPath(s);
+                    settings() = { mediaPath };
+                    IsInitialized() = true;
+                }
+            }
+        }
+        #endif
+    }
+
+    ~block "h"
+    {
+        #ifdef LP3_COMPILE_TARGET_PC
+            public: static void Initialize(const std::string & mediaPath);
+        #endif
+    }
+
+    ~block "cpp"
+    {
+        #ifdef LP3_COMPILE_TARGET_PC
+            void EnvVars::Initialize(const string & mediaPath)
+            {
+                LP3_ASSERT_FALSE(IsInitialized());
+                settings() = { mediaPath };
+            }
+        #endif
+    }
 
     public static string Get(const char * name)
     {
@@ -31,8 +91,12 @@ class EnvVars
                 return ("" DREAMCAST_LP3_MEDIAPATH ""); //string(s);
             }
         #else
-            string value(getenv(name));
-            return value;
+            if (0 == strncmp("LP3_ROOT_PATH", name, 13))
+            {
+                return settings().MediaPath;
+            }
         #endif
+        LP3_FAIL("Unknown env var name!");
     }
+
 };
