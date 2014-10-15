@@ -91,6 +91,7 @@ class EnvVars
                 return ("" DREAMCAST_LP3_MEDIAPATH ""); //string(s);
             }
         #else
+            ensureInit();
             if (0 == strncmp("LP3_ROOT_PATH", name, 13))
             {
                 return settings().MediaPath;
