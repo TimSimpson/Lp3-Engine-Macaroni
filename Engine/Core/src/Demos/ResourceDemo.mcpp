@@ -5,7 +5,7 @@
  *  Load stuff.
  *
  */
-~unit ResourceDemo type=exe;
+~unit ResourceDemo type=test;
 
 ~block "top"
 {

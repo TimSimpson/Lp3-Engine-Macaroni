@@ -7,7 +7,7 @@ import path ;
 import gcc ;
 using testing ;
 
-boost.use-project 1.55 ;
+boost.use-project 1.57 ;
 
 project
     Lp3___TestPG___DEV
@@ -26,7 +26,7 @@ alias Lp3Test
     :  /boost//headers
        /boost//unit_test_framework
        /boost//test_exec_monitor
-    :   <define>BOOST_TEST_DYN_LINK
+    :
     ;
 
 # Alternative 2 - Compiling on the Dreamcast.
