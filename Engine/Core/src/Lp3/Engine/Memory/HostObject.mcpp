@@ -1,0 +1,13 @@
+~import Lp3::Engine::Memory::Host;
+
+
+~namespace Lp3::Engine::Memory;
+
+template<typename T>
+class HostObject
+{
+public:
+    T * ptr;
+    int refCount;
+    Host * memHost;
+};

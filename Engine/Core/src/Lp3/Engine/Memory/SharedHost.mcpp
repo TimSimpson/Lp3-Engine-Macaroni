@@ -39,27 +39,25 @@ class SharedHost : public Host
     {
     }
 
+    template<typename T>
+    struct Deleter
+    {
+        SharedHostPtr host;
+
+        Deleter(SharedHostPtr host)
+        :   host(host)
+        {
+        }
+
+        void operator() (T * nakedPointer) {
+            LP3_ASSERT_FALSE_MESSAGE(!host, "Deleter using no host!");
+            host->Delete(nakedPointer);
+        }
+    };
+
     ~block "h"
     {
     public:
-
-        template<typename T>
-        struct Deleter
-        {
-            SharedHostPtr host;
-
-            Deleter(SharedHostPtr host)
-            :   host(host)
-            {
-            }
-
-            void operator() (T * nakedPointer) {
-                LP3_ASSERT_FALSE_MESSAGE(!host, "Deleter using no host!");
-                host->Delete(nakedPointer);
-            }
-        };
-
-
         template<typename T>
         using unique_ptr = ::std::unique_ptr<T, Deleter<T>>;
 

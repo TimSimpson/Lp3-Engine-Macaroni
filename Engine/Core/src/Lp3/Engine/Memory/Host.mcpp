@@ -21,24 +21,6 @@ class Host
         memory->Free(ptr);
     }
 
-/*    public ~global ~friend void intrusive_ptr_add_ref(Host * host)
-    {
-        ++ host->reference_count;
-    }
-
-    public ~global ~friend void intrusive_ptr_release(Host * host)
-    {
-        -- host->reference_count;
-        if (host->reference_count <= 0)
-        {
-            delete host;
-        }
-    }*/
-
-    ~block "cpp"
-    {
-    }
-
     public Host() {}
 
     public virtual inline ~Host(){}
@@ -46,43 +28,41 @@ class Host
     /** Allocates some memory. */
     public virtual void * Alloc(const size_t size) = 0;
 
-    ~block "h"
+    template<typename T>
+    public T * New()
     {
-    public:
-        template<class T> T * New()
-        {
-            return new (this) T();
-        }
+        return new (this) T();
+    }
 
-        template<typename T, typename... Parameters>
-        T * New(Parameters... arguments)
-        {
-            return new (this) T{std::forward<Parameters>(arguments)...};
-        }
+    template<typename T, typename... Parameters>
+    public T * New(Parameters ... arguments)
+    {
+        return new (this) T{std::forward<Parameters>(arguments)...};
+    }
 
-        template<typename T, typename... Parameters>
-        T & NewRef(Parameters... arguments)
-        {
-            T * ptr = new (this) T{std::forward<Parameters>(arguments)...};
-            return *ptr;
-        }
+    template<typename T, typename... Parameters>
+    public T & NewRef(Parameters... arguments)
+    {
+        T * ptr = new (this) T{std::forward<Parameters>(arguments)...};
+        return *ptr;
+    }
 
-        template<typename T>
-        void Delete(T * p)
+    template<typename T>
+    public void Delete(T * p)
+    {
+        if (p)
         {
-            if (p)
-            {
-                p->~T();
-                this->Free(p);
-            }
-        }
-
-        template<typename T>
-        void Delete(T & p)
-        {
-            Delete(&p);
+            p->~T();
+            this->Free(p);
         }
     }
+
+    template<typename T>
+    public void Delete(T & p)
+    {
+        Delete(&p);
+    }
+
 
     /** Frees some memory. */
     public virtual void Free(void * ptr) = 0;
