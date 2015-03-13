@@ -20,7 +20,7 @@ class ManagedPointer // ManagedPointer or HostPointer
     public typedef HostObject<T> HostObjectT;
 
     /** Creates a new ManagedPointer. */
-    ManagedPointer(Host * host, T * tPtr)
+    public ManagedPointer(Host * host, T * tPtr)
     {
         void * ptr = host->Alloc(sizeof(HostObjectT));//<T>));
         objPtr = static_cast<HostObjectT *>(ptr);//<T> *>(ptr);
@@ -31,21 +31,21 @@ class ManagedPointer // ManagedPointer or HostPointer
 
     /** Not for normal use - this creates a pointer looking
      * directly at the HostObject. */
-    ManagedPointer(HostObjectT * object)
+    public ManagedPointer(HostObjectT * object)
     {
         objPtr = object;
         objPtr->refCount ++;
     }
 
     /** Default constructor initializes to nullptr. */
-    ManagedPointer()
+    public ManagedPointer()
     {
         objPtr = nullptr;
     }
 
     /** Copy ctor.
      * The rhs object is assumed to be in a good state. */
-    ManagedPointer(const ManagedPointer & rhs)
+    public ManagedPointer(const ManagedPointer & rhs)
     {
         objPtr = rhs.objPtr;
         if (objPtr != nullptr)
@@ -54,7 +54,7 @@ class ManagedPointer // ManagedPointer or HostPointer
         }
     }
 
-    T * GetAddress()
+    public T * GetAddress()
     {
         if (this->objPtr != nullptr)
         {
@@ -65,7 +65,7 @@ class ManagedPointer // ManagedPointer or HostPointer
 
     /** Assignment equals operator.
      * Like copy ctor BUT "this" already exists... so we must DEREF! */
-    ManagedPointer<T> & operator = (const ManagedPointer & rhs)
+    public ManagedPointer<T> & operator = (const ManagedPointer & rhs)
     {
         if (this == &rhs) return *this; // Handle self assignment.
 
@@ -91,24 +91,24 @@ class ManagedPointer // ManagedPointer or HostPointer
     }
 
     /** Access via the -> operator. */
-    T * operator ->()
+    public T * operator ->()
     {
         return static_cast<T *>(objPtr->ptr);
     }
 
     /** Access via the dereference operator. */
-    T &operator * ()
+    public T &operator * ()
     {
         return *(static_cast<T *>(objPtr->ptr));
     }
 
-    T * Get() const // never throws
+    public T * Get() const // never throws
     {
         return objPtr->ptr;
     }
 
     /** The number of references to this object. */
-    inline int GetRefCount() const
+    public inline int GetRefCount() const
     {
         if (objPtr == nullptr)
         {
@@ -119,7 +119,7 @@ class ManagedPointer // ManagedPointer or HostPointer
 
     /** Deletes only the pointer, will only delete what is pointed to if
      * the ref count is below zero. */
-    ~ManagedPointer()
+    public ~ManagedPointer()
     {
         if (objPtr != nullptr)
         {
@@ -133,12 +133,12 @@ class ManagedPointer // ManagedPointer or HostPointer
         return objPtr != nullptr;
     } }
 
-    bool operator! () const // never throws
+    public bool operator! () const // never throws
     {
         return objPtr == nullptr;
     }
 
-    bool operator== (T * other) const // never throws
+    public bool operator== (T * other) const // never throws
     {
         if (objPtr == nullptr)
         {
@@ -149,7 +149,7 @@ class ManagedPointer // ManagedPointer or HostPointer
         return static_cast<T *>(objPtr->Ptr) == other;
     }
 
-    bool operator!= (T * other) const // never throws
+    public bool operator!= (T * other) const // never throws
     {
         if (objPtr == nullptr)
         {

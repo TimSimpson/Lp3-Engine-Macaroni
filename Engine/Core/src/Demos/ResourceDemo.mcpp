@@ -127,6 +127,6 @@ LP3_TEST(testTwo)
         ++ index;
     }
 
-    LP3_ASSERT_EQUAL(128, index);
+    LP3_ASSERT_EQUAL(129, index);
 
 }
