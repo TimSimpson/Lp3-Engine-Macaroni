@@ -72,6 +72,8 @@ class EnvVars
             {
                 LP3_ASSERT_FALSE(IsInitialized());
                 settings() = { mediaPath };
+                IsInitialized() = true;
+                LP3_ASSERT_TRUE(IsInitialized());
             }
         #endif
     }
