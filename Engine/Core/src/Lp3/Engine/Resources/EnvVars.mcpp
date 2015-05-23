@@ -1,5 +1,4 @@
 ~import LP3_FAIL;
-~import std::map;
 ~import std::string;
 
 ~namespace Lp3::Engine::Resources;

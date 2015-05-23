@@ -1,4 +1,3 @@
-~import Macaroni::Doc;
 ~import std::exception;
 ~import boost::optional;
 ~import std::string;
