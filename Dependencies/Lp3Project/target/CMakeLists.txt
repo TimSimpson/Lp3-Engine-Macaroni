@@ -16,6 +16,9 @@ project (Lp3Project)
 #     on the PC and other goodies elsewhere.
 #-------------------------------------------------------------------------------
 
+#set(Boost_USE_STATIC_LIBS ON)
+#set(Boost_USE_MULTITHREADED ON)
+
 find_package(Boost COMPONENTS unit_test_framework REQUIRED)
 
 add_library(Lp3Test ../src/Lp3CMakeAppeasement.cpp )

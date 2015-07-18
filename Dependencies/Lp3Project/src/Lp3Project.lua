@@ -53,7 +53,7 @@ function Lp3Project(args)
     if properties.invoke_cmake then
         newArgs.cmakeFlags.invoke = true;
     end
-    newArgs.cmakeFlags.preBuildCommand = { name='cavatappi', args={"generateLess"}}
+    newArgs.cmakeFlags.preBuildCommand = { name='macaroni', args={"--generateLess"}}
     local p = SimpleProject(newArgs);
     -- Save functions created by SimpleProject.
     -- local simpleGenerate = generate;
