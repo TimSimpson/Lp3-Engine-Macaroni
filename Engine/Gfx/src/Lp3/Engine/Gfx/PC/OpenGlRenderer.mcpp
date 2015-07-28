@@ -55,7 +55,7 @@ class OpenGlRenderer
 	public OpenGlRenderer(TexturePtr colorTexture)
 	:	code(-1),
 		colorTexture(),
-		currentTextureSize({16, 16})
+		currentTextureSize({16.0f, 16.0f})
 	{
 		// Additional work is done by OpenGlManager, since multiple display
 		// devices may be used.
@@ -359,7 +359,8 @@ public:
 	{
 		LP3_ASSERT_FALSE(!texture);
 		//glEnable(GL_TEXTURE_2D);
-		currentTextureSize = { texture->GetWidth(), texture->GetHeight() };
+		currentTextureSize = { static_cast<float>(texture->GetWidth()),
+                               static_cast<float>(texture->GetHeight()) };
 		//LP3_LOG_DEBUG("glBindTexture(GL_TEXTURE_2D, %d);", texture->textureId);
 		//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,GL_REPLACE);
 		safeGlBindTexture(GL_TEXTURE_2D, texture->textureId);

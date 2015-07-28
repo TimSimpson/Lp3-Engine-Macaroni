@@ -43,9 +43,9 @@ GfxManager * manager;
 TexturePtr textureHoppy;
 TexturePtr textureEarth;
 TexturePtr textureMoon;
-int x = 0;
-int x2 = 0;
-int y2 = 0;
+float x = 0;
+float x2 = 0;
+float y2 = 0;
 
 
 using namespace Lp3::Engine::Gfx::Geometry;
@@ -99,7 +99,7 @@ void DrawManualBitMap(Renderer & renderer)
 
     renderer.UseTexture(textureHoppy);
    // renderer.TexturedQuad(x, 130, 640, 240, 0.5f);
-    renderer.TexturedQuad({x2, y2}, {32, 32}, 0.6f);
+    renderer.TexturedQuad(Coord({x2, y2}, {32, 32}), 0.6f);
 }
 
 class TexturedBlock : public ScreenObject

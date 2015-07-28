@@ -28,11 +28,13 @@ class TileSet
     public TileSet(const TexturePtr texture,
                    const Size2d<Lp3::UInt8> singleTileSize,
                    const Size2d<Lp3::UInt8> textureSizeInTiles)
-    :   normalizedSingleTileSize({singleTileSize.Width / texture->GetWidth(),
-                                  singleTileSize.Height / texture->GetHeight()}),
+    :   normalizedSingleTileSize({singleTileSize.Width
+                                    / (float) texture->GetWidth(),
+                                  singleTileSize.Height
+                                    / (float) texture->GetHeight()}),
         normalizedSingleTileSizeNI({
-            (singleTileSize.Width - 1) / texture->GetWidth(),
-            (singleTileSize.Height - 1) / texture->GetHeight()}),
+            (singleTileSize.Width - 1) / (float) texture->GetWidth(),
+            (singleTileSize.Height - 1) / (float) texture->GetHeight()}),
         singleTileSize(singleTileSize),
         texture(texture),
         textureSizeInTiles(textureSizeInTiles)
