@@ -1,0 +1,17 @@
+~import Lp3::Engine::Resources::EnvVars;
+~import boost::format;
+~import std::string;
+
+
+~namespace Lp3::Engine::Resources;
+
+
+class MediaPath
+{
+    public static string Get(const char * filePath)
+    {
+        string fullPath = str(format("%s/%s") % EnvVars::Get("LP3_ROOT_PATH")
+                                              % filePath);
+        return fullPath;
+    }
+};
