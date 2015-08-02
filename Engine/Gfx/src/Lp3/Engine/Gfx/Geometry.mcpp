@@ -34,6 +34,12 @@ class NormalizedCoordinates2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
 class CoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
 class NormalizedCoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
 
+class Coordinates3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class Size3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class NormalizedCoordinates3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class CoordinatePair3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+class NormalizedCoordinatePair3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+
 class ScreenPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
 class PolyPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
 

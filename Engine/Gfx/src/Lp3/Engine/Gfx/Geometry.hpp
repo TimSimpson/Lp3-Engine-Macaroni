@@ -84,14 +84,15 @@ struct NormalizedCoordinates3d
     Number Y;
     Number Z;
 
-    inline NormalizedCoordinates3d(Number X, Number Y)
-    :   X(X), Y(Y)
+    inline NormalizedCoordinates3d(Number X, Number Y, Number Z)
+    :   X(X), Y(Y), Z(Z)
     {}
 
     template<typename ArgNumberC, typename ArgNumberS>
     inline NormalizedCoordinates3d(Coordinates3d<ArgNumberC> c,
                                    Size3d<ArgNumberS> d)
-    :   X(c.X / (NumberType) d.Width), Y(c.Y / (NumberType) d.Height)
+    :   X(c.X / (NumberType) d.Width), Y(c.Y / (NumberType) d.Height),
+        Z(c.Z / (NumberType) d.Length)
     {}
 };
 
