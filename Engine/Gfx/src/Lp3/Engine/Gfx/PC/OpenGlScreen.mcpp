@@ -6,6 +6,7 @@
 ~import Lp3::Engine::Gfx::ScreenObjectPtr;
 ~import Lp3::Engine::Gfx::OpenGl::OpenGlImageMemory;
 ~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
 ~import Lp3::Engine::Gfx::Texture;
 ~import Lp3::Engine::Gfx::TexturePtr;
 
@@ -45,10 +46,10 @@ class OpenGlScreen : public Screen
     private ScreenObjectPtr object;
     private OpenGlRenderer renderer;
 
-    public OpenGlScreen()
+    public OpenGlScreen(Size2d<unsigned int> virtualResolution)
     :   memory(),
         object(),
-        renderer(memory.CreateTexture(32, 32, white))
+        renderer(virtualResolution, memory.CreateTexture(32, 32, white))
     {
     }
 

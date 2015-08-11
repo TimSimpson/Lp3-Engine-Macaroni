@@ -1,6 +1,7 @@
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::InternalPixel;
+~import boost::optional;
 ~import Lp3::Engine::Gfx::Pixel;
 ~import Lp3::Engine::Gfx::Renderer;
 ~import Lp3::Engine::Gfx::Screen;
@@ -50,8 +51,11 @@ class OpenGlManager
     public:
         OpenGlManager(
             #ifdef LP3_COMPILE_TARGET_WINDOWS
-                HWND hWnd
+                HWND hWnd,
             #endif
+            boost::optional<
+                    Lp3::Engine::Gfx::Geometry::Size2d<unsigned int>
+                >   virtualResolution = boost::none
             );
 
         virtual ~OpenGlManager();
@@ -103,9 +107,12 @@ class OpenGlManager
                 }
             };
 
-            OpenGlManager::OpenGlManager(HWND hWnd)
+            OpenGlManager::OpenGlManager(
+                HWND hWnd,
+                optional<Size2d<unsigned int>> virtualResolution
+            )
             :   windowsDetails(new WindowsDetails(hWnd)),
-                screen()
+                screen(virtualResolution.get_value_or({640, 480}))
             {
             }
 
@@ -113,8 +120,10 @@ class OpenGlManager
             {
             }
         #else
-            OpenGlManager::OpenGlManager()
-            :   screen()
+            OpenGlManager::OpenGlManager(
+                optional<Size2d<unsigned int>> virtualResolution
+            )
+            :   screen(virtualResolution.get_value_or({640, 480}))
             {
             }
 

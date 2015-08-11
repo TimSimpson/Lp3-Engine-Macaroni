@@ -1,0 +1,195 @@
+/**
+ *
+ *  Resize Window
+ *
+ *  This executable has the ability to resize the Gfx to fit the window (this
+ *  only matters in Windows of course).
+ *
+ */
+~unit HighResolution type=exe;
+
+~import Lp3::Engine::Time::Clock;
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::BitmapReader;
+~import LP3_COROUTINE;
+~import Lp3::Engine::Coroutine::CoroutineState;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::GradientRenderer;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Engine::Gfx::ImageMemory;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::NonTexturedFlatQuad;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Gfx::PixelDiff;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import std::string;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import Lp3::Engine::Gfx::TileRenderer;
+~import Lp3::Engine::Gfx::TileSet;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import std::vector;
+~import Lp3::Engine::Gfx::VertexPixel;
+~import std::vector;
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+
+
+const auto red = VertexPixel::Create(0xFF, 0x00, 0x00, 0xFF);
+const auto green = VertexPixel::Create(0x00, 0xFF, 0x00, 0xFF);
+const auto blue = VertexPixel::Create(0x00, 0x00, 0xFF, 0xFF);
+//const auto textBg = VertexPixel::Create(0x22, 0x22, 0x55, 0x11);
+//const auto textBgEnd = VertexPixel::Create(0x00, 0x00, 0x00, 0x11);
+const auto textBg = VertexPixel::Create(64, 64, 255, 0xFF);
+const auto textBgEnd = VertexPixel::Create(0x00, 0x00, 0x00, 0x88);
+const auto orange = VertexPixel::Create(255, 132, 0, 0xFF);
+
+
+GfxManager * manager;
+
+
+using namespace Lp3::Engine::Gfx::Geometry;
+
+
+class GraphicsObject : public ScreenObject
+{
+    TexturePtr textureText;
+    std::unique_ptr<TileSet> tileSet;
+
+    public: GraphicsObject(ImageMemory & memory)
+    {
+        LP3_LOG_DEBUG("Creating textureTexts...");
+        ReadStreamPtr input(new InputFileStream("Engine/text.bmp"));
+        const Pixel colorKey(0, 0, 0, 0);
+        textureText = memory.LoadTexture(input, colorKey);
+        tileSet.reset(new TileSet(textureText, {16, 16}, {16, 16}));
+    }
+
+    public: virtual void DrawOpaque(Renderer & renderer)
+    {
+        renderer.UseNoTexture();
+        GradientRenderer gr(renderer);
+
+        gr.VerticalQuad({0, 0}, {1919, 1079},
+                        0.05f,
+                        VertexPixel::Create(0, 0, 255, 255),
+                        VertexPixel::Create(255, 0, 255, 255));
+
+        gr.VerticalQuad({0, 0}, {639, 479},
+                        0.1f,
+                        VertexPixel::Create(255, 0, 255, 255),
+                        VertexPixel::Create(0, 255, 0, 255));
+        //renderer.Quad({{0, 0}, {639, 479}}, 0.1f, green);
+
+        gr.VerticalQuad({16, 304 + 24},
+                        {16 + (16 * 34), 304 + 24 + (6 * 16)},
+                        0.2f, textBg, textBgEnd);
+
+        renderer.Triangle({ 320, 200}, {480, 430}, {39, 467}, 0.15f, orange);
+    }
+
+    public: virtual void DrawTranslucent(Renderer & renderer)
+    {
+        TileRenderer tr = tileSet->StartRenderer(renderer);
+
+        tr.Write({32, 304 + 32}, 0.5f,
+            "\"Resize the window, \n"
+            " then watch in awe,\n"
+            " for the effect will not\n"
+            " look embarassingly bad.\"\n"
+            "            ~Ancient Proverb");
+
+        tr.Write({640 + 320, 480 + 240}, 0.5f,
+            R"EOS(
+
+    In Egypt's sandy silence, all alone
+    stands a gigantic statue that far off throws
+    the only shadow that the desert knows.
+
+    "I AM GREAT OZYMANDIAS"
+    sayeth the stone
+    "KING OF KINGS
+    "THIS CITY SHOWS THE WONDERS OF MY HAND."
+        -the city's gone;
+    not but the leg remaining to disclose
+    the site of this forgotten Babylon...
+
+    we wonder; and some future hunter may express
+    wonder like ours, when throw the wilderness
+    where London stood
+    the wolf in chase, he stops
+    upon some fragment huge
+    and marvels at what forgotten race
+    once dwelt in that annhilated place.
+
+)EOS");
+
+        const int fps = 1.0 / Clock::GetSpeedMod();
+        std::string fpsString = str(boost::format("FPS:%d") % fps);
+        tr.Write({32, 32}, 0.5f, fpsString.c_str());
+    }
+};
+
+
+class Main
+{
+private:
+    GfxManager manager;
+
+public:
+    Main(const vector<string> & arguments
+         LP3_COMPILE_TARGET_WINDOWS_THEN(, HINSTANCE hInstance, HWND hWnd))
+    :   manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd,)
+                Size2d<unsigned int>{1920, 1080})
+    {
+        LP3_LOG_DEBUG("Initializing GFX...");
+        Screen & screen = manager.GetScreen(0);
+        ImageMemory & memory = screen.GetImageMemory();
+
+        ScreenObjectPtr obj(new GraphicsObject(memory));
+        screen.SetObject(obj);
+
+        Clock::Init(1000.0f / 30.0f); // slow down if under 30fps
+
+        LP3_LOG_DEBUG("Finished initialization.");
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+    }
+
+
+    void Iterate()
+    {
+        Clock::NextFrame();
+        manager.Render();
+    }
+
+    LP3_COMPILE_TARGET_WINDOWS_THEN(
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+            switch(message){
+                case WM_SIZE:
+                    /* Tell Gfx the size of our window. This
+                     * does not affect the game's resolution. */
+                    manager.Resize({ LOWORD(lParam), HIWORD(lParam) });
+                    break;
+                default:
+                    break;
+            }
+        }
+    )
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::HighResolution")

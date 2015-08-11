@@ -52,14 +52,15 @@ class OpenGlRenderer
 
 	friend OpenGlScreen;
 
-	public OpenGlRenderer(TexturePtr colorTexture)
+	public OpenGlRenderer(Size2d<unsigned int> virtualResolution,
+                          TexturePtr colorTexture)
 	:	code(-1),
 		colorTexture(),
 		currentTextureSize({16.0f, 16.0f})
 	{
 		// Additional work is done by OpenGlManager, since multiple display
 		// devices may be used.
-		setUpPvrLikeMapping();
+		setUpPvrLikeMapping(virtualResolution);
 
 		LP3_ASSERT_FALSE(!colorTexture);
 		LP3_LOG_DEBUG("Getting the color texture.");
@@ -189,13 +190,15 @@ public:
         return {{p.X, p.Y}, {p.X + size.Width - 1, p.Y + size.Height - 1}};
     }
 
-	private void setUpPvrLikeMapping()
+	private void setUpPvrLikeMapping(Size2d<unsigned int> virtualResolution)
     {
         //http://stackoverflow.com/questions/6151135/in-opengl-can-i-draw-a-pixel-that-exactly-at-the-coordinates-5-5
-        safeGlViewport(0, 0, 640, 480);
+        safeGlViewport(0, 0, virtualResolution.Width, virtualResolution.Height);
         safeGlMatrixMode(GL_PROJECTION);
         safeGlLoadIdentity();
-        safeGlOrtho(0, 640, 480, 0, -1, 1);
+        safeGlOrtho(0,
+                    virtualResolution.Width, virtualResolution.Height,
+                    0, -1, 1);
         safeGlMatrixMode(GL_MODELVIEW);
         safeGlLoadIdentity();
         safeGlEnable(GL_DEPTH_TEST);
