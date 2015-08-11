@@ -13,6 +13,13 @@ struct Coordinates2d
     typedef Number NumberType;
     Number X;
     Number Y;
+
+    template<typename Archive>
+    void serialize(Archive & archive)
+    {
+        archive(cereal::make_nvp("X", X));
+        archive(cereal::make_nvp("Y", Y));
+    }
 };
 
 template<typename Number>
@@ -116,6 +123,13 @@ struct CoordinatePair
     inline CoordinatePair()
     :   A(), B()
     {}
+
+    template<typename Archive>
+    void serialize(Archive & archive)
+    {
+        archive(cereal::make_nvp("A", A));
+        archive(cereal::make_nvp("B", B));
+    }
 
     inline void Set(CoordType a, CoordType b)
     {
