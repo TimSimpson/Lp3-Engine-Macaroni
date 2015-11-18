@@ -33,7 +33,7 @@
     // Sometimes this is needed, sometimes not.
     // Boost Test is the hardest libary to link with in the world.
     #ifdef LP3_COMPILE_TARGET_WINDOWS
-        //#define BOOST_TEST_DYN_LINK
+        #define BOOST_TEST_DYN_LINK
     #endif
     #define BOOST_TEST_MODULE LP3_TEST_MODULE
     #include <boost/test/unit_test.hpp>

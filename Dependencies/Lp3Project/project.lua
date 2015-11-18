@@ -47,8 +47,8 @@ end
 function install()
     sinstall(project, filePath("./"))
     local installPath = findInstallPath(project):NewPathForceSlash("target");
-    local cmakeListTxt = installPath:NewPathForceSlash("CMakeLists.txt");
-    runCMake('cmake ' .. cmakeListTxt.AbsolutePathForceSlash
-             .. ' -B' .. installPath.AbsolutePathForceSlash);
-    runCMake('cmake --build ' .. installPath.AbsolutePathForceSlash);
+    -- local cmakeListTxt = installPath:NewPathForceSlash("CMakeLists.txt");
+    -- runCMake('cmake ' .. cmakeListTxt.AbsolutePathForceSlash
+    --          .. ' -B' .. installPath.AbsolutePathForceSlash);
+    -- runCMake('cmake --build ' .. installPath.AbsolutePathForceSlash);
 end
