@@ -1,20 +1,21 @@
-~namespace Lp3::Engine::Input::Dreamcast;
-
+~unit "Lp3/Engine/Input/Dreamcast/DreamcastDeviceSource";
 
 ~import Lp3::Engine::Input::Device;
 ~import Lp3::Engine::Input::DeviceSource;
 
+~block "top" {
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+~namespace Lp3::Engine::Input::Dreamcast;
+
 /** A source for devices. */
 class DreamcastDeviceSource : public DeviceSource
 {
-    ~block "top" {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom" {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
-    }
-
     private Device * device;
 
     public DreamcastDeviceSource()

@@ -1,10 +1,22 @@
+~unit "Lp3/Engine/Input/DirectInput/DirectInputDeviceSource";
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+}
+~block "bottom"
+{
+    #endif // End LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~import Lp3::Engine::Input::DeviceSource;
 ~import LP3_LOG_DEBUG;
 ~import boost::format;
 ~import HINSTANCE;
 ~import HWND;
 ~import LPDIRECTINPUT8;
-~import Lp3::Engine::Input::PlatformDevice;
+~import Lp3::Engine::Input::DirectInput::PlatformDevice;
 ~import std::string;
 ~import std::vector;
 
@@ -12,16 +24,6 @@
 
 class DirectInputDeviceSource : public DeviceSource
 {
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-    }
-    ~block "bottom"
-    {
-        #endif // End LP3_COMPILE_TARGET_WINDOWS
-    }
-
     ~block "h-predef"
     {
         // Forward declaration of hidden class.

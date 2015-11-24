@@ -1,6 +1,6 @@
 ~namespace Lp3::Engine::Input;
 
-~import Lp3::Engine::Input::Device::Device;
+~import Lp3::Engine::Input::Device;
 
 /** A source for devices. */
 class DeviceSource

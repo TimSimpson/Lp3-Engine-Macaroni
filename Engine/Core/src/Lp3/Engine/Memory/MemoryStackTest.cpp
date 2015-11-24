@@ -6,13 +6,9 @@
 #include <Lp3/Exception.h>
 
 #include <Lp3/Engine/Memory/GlobalHeap.h>
-#include <Lp3/Engine/Memory/GlobalHeapPtr.h>
 #include <Lp3/Engine/Memory/Host.h>
 #include <Lp3/Engine/Memory/ManagedPointer.h>
-#include <Lp3/Engine/Memory/MemoryStackPtr.h>
 #include <Lp3/Engine/Memory/MemoryStack.h>
-#include <Lp3/Engine/Memory/MemoryStackEntryFooter.h>
-#include <Lp3/Engine/Memory/MemoryStackException.h>
 #include <string>
 
 using namespace Lp3::Engine::Memory;

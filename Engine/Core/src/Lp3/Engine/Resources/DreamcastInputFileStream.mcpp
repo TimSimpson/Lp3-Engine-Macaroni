@@ -13,6 +13,18 @@
 ~import FILE;
 
 
+~unit "Lp3/Engine/Resources/DreamcastInputFileStream";
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~namespace Lp3::Engine::Resources;
 
 
@@ -89,15 +101,5 @@ class DreamcastInputFileStream : public ResettableReadStream
             LP3_ASSERT_TRUE(ferror(file) == 0,
                             "ferror returned bad result!");
         }
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

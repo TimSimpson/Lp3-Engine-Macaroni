@@ -1,88 +1,86 @@
+~unit "Lp3/DreamcastTestAsserts";
+
+~block "top" {
+    #include <Lp3/LE.h>
+    #if defined(LP3_COMPILE_TARGET_DREAMCAST) || defined(LP3_COMPILE_TARGET_EMSCRIPTEN)
+}
+
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+~import iostream;
+~import jmp_buf;
+
 ~namespace Lp3;
 
-class DreamcastTestAsserts
+~block "cpp"
 {
-    ~block "top" {
-        #include <Lp3/LE.h>
-        #if defined(LP3_COMPILE_TARGET_DREAMCAST) || defined(LP3_COMPILE_TARGET_EMSCRIPTEN)
-    }
-
-    ~block "bottom" {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
-    }
-
-    ~block "h-predef"
-    {
-        #include <iostream>
-        #include <setjmp.h>
-    }
-
-    ~block "h"
-    {
-    public:
-        static jmp_buf buf;
-        static const char * lastExceptionType;
-    public:
-        template<typename TypeA, typename TypeB>
-        static void AssertEqual(const char * fileName, int lineNumber,
-                                TypeA a, TypeB b,
-                                const char * message=nullptr)
-        {
-            if (a == b) {
-                return;
-            }
-            std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
-                      << " : \n\t" << a << " != " << b;
-            if (message)
-            {
-                std::cout << " : " << message;
-            }
-            std::cout << std::endl;
-        }
-
-        template<typename TypeA, typename TypeB>
-        static void AssertNotEqual(const char * fileName, int lineNumber,
-                                   TypeA a, TypeB b,
-                                   const char * message=nullptr)
-        {
-            if (a != b) {
-                return;
-            }
-            std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
-                      << " : \n\t" << a << " == " << b;
-            if (message)
-            {
-                std::cout << " : " << message;
-            }
-            std::cout << std::endl;
-        }
-
-        template<typename T>
-        static void AssertTrue(const char * fileName, int lineNumber,
-                               T var, const char * message=nullptr)
-        {
-            if (var) {
-                return;
-            }
-            std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
-                      << " : \n\t";
-            if (message)
-            {
-                std::cout  << message;
-            }
-            else
-            {
-                std::cout << "Actual value was false.";
-            }
-            std::cout << std::endl;
-        }
-
-    }
-
-    ~block "cpp"
+    namespace
     {
         jmp_buf DreamcastTestAsserts::buf;
         const char * DreamcastTestAsserts::lastExceptionType;
+    }
+}
+
+
+class DreamcastTestAsserts
+{
+    static jmp_buf buf;
+    static const char * lastExceptionType;
+
+    template<typename TypeA, typename TypeB>
+    public static void AssertEqual(const char * fileName, int lineNumber,
+                                   TypeA a, TypeB b,
+                                   const char * message=nullptr)
+    {
+        if (a == b) {
+            return;
+        }
+        std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
+                  << " : \n\t" << a << " != " << b;
+        if (message)
+        {
+            std::cout << " : " << message;
+        }
+        std::cout << std::endl;
+    }
+
+    template<typename TypeA, typename TypeB>
+    public static void AssertNotEqual(const char * fileName, int lineNumber,
+                                      TypeA a, TypeB b,
+                                      const char * message=nullptr)
+    {
+        if (a != b) {
+            return;
+        }
+        std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
+                  << " : \n\t" << a << " == " << b;
+        if (message)
+        {
+            std::cout << " : " << message;
+        }
+        std::cout << std::endl;
+    }
+
+    template<typename T>
+    public static void AssertTrue(const char * fileName, int lineNumber,
+                                  T var, const char * message=nullptr)
+    {
+        if (var) {
+            return;
+        }
+        std::cout << "@DC_TEST_ERROR : " << fileName << ":" << lineNumber
+                  << " : \n\t";
+        if (message)
+        {
+            std::cout  << message;
+        }
+        else
+        {
+            std::cout << "Actual value was false.";
+        }
+        std::cout << std::endl;
     }
 
 };

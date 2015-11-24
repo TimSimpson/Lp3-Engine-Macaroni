@@ -2,23 +2,3 @@
 
 
 ~namespace Lp3::Engine::Input;
-
-
-class PlatformDevice : public Device
-/* This is used internally by the input system. */
-{
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-    }
-
-    ~block "h"
-    {
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-        //public: virtual int ReleaseDevice() = 0;
-        public: virtual void SwitchWindow(HWND newHwnd) = 0;
-        #endif
-    }
-
-
-};

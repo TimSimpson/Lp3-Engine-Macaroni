@@ -40,4 +40,9 @@ namespace Lp3
 }
 
 class std::unique_ptr { ~hfile=<memory> };
-class FILE { ~hfile=<kos.h> };
+
+~extern FILE include=<kos.h>;
+~extern iostream include=<iostream>;
+~extern jmp_buf include=<setjmp.h>;
+~extern map;
+~extern memory include=<memory>;

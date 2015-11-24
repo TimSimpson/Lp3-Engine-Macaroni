@@ -1,3 +1,17 @@
+~unit "Lp3/Engine/Input/DirectInput/DiKeyboardDevice";
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #define DIRECTINPUT_VESRION 0x0800
+    #include <dinput.h>
+}
+~block "bottom"
+{
+    #endif // End LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~import Lp3::Engine::Input::DirectInput::DirectInputDevice;
 ~import Lp3::Exception;
 ~import LPDIRECTINPUT8;
@@ -11,18 +25,6 @@
 
 class DiKeyboardDevice : public DirectInputDevice
 {
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-        #define DIRECTINPUT_VESRION 0x0800
-        #include <dinput.h>
-    }
-    ~block "bottom"
-    {
-        #endif // End LP3_COMPILE_TARGET_WINDOWS
-    }
-
     ~block "h"
     {
         private: char kbBuffer[256];

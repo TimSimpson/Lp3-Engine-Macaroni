@@ -3,18 +3,24 @@
 ~import Lp3::Engine::Memory::Host;
 ~import Lp3::Engine::Memory::SharedHost;
 
+~unit "Lp3/Engine/Memory/GlobalHeap" ;
+
 ~namespace Lp3::Engine::Memory;
+
+~block "cpp"
+{
+    const size_t MaxMemory = (sizeof(size_t) * 8) ^ 2;
+}
+
 
 class GlobalHeap {};
 
-typedef intrusive_ptr<GlobalHeap> GlobalHeapPtr;
+typedef intrusive_ptr<GlobalHeap ~l> GlobalHeapPtr;
 
 /** A Host compliant wrapper for the boring old global heap
  * (global operator new and operator delete functions). */
 class GlobalHeap : public virtual SharedHost
 {
-    ~hidden ~global const size_t MaxMemory = (sizeof(size_t) * 8) ^ 2;
-
     private GlobalHeap()
     {
     }

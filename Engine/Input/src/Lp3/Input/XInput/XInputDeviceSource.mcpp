@@ -1,7 +1,18 @@
+~unit "Lp3/Engine/Input/XInput/XInputDeviceSource";
+
+~block "top" {
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #include <windows.h>  // Errors happen if other stuff is included first...
+}
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~namespace Lp3::Engine::Input::XInput;
 
 
-~import Lp3::Engine::Input::XInput::XInputDevice;
+~import-h Lp3::Engine::Input::XInput::XInputDevice;
 ~import Lp3::Engine::Input::DeviceSource;
 ~import boost::format;
 ~import boost::optional;
@@ -9,19 +20,6 @@
 
 class XInputDeviceSource : public DeviceSource
 {
-    ~block "top" {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-    }
-    ~block "bottom" {
-        #endif // LP3_COMPILE_TARGET_WINDOWS
-    }
-
-    ~block "h-predef"
-    {
-        #include <Lp3/Engine/Input/XInput/XInputDevice.h>
-    }
-
     ~block "h"
     {
         private: XInputDevice devices[4];

@@ -16,6 +16,7 @@
 ~block "top" {
 #include <Lp3/LE.h>
 #ifdef LP3_COMPILE_TARGET_WINDOWS
+#include <windows.h>
 }
 ~block "bottom" {
 #endif // LP3_COMPILE_TARGET_WINDOWS
@@ -30,7 +31,7 @@
 #pragma comment(linker, "/SUBSYSTEM:WINDOWS")
 
 //#include <LpInput.h>
-#include <windows.h>
+
 
 // the WindowProc function prototype
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);

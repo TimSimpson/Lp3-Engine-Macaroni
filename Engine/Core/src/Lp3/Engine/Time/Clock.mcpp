@@ -5,6 +5,10 @@
 ~import Lp3::UInt64;
 ~import RAND_MAX;
 
+
+~unit "Lp3/Engine/Time/Clock";
+
+
 ~namespace Lp3::Engine::Time;
 
 /* Simple value representing the current ticks of the game clock.
@@ -12,13 +16,18 @@
  * So possible 1000 ticks a second. */
 typedef UInt64 ClockTimeInt;
 
+~block "cpp" {
+    namespace {
+        ClockTimeInt currentTickCount;
+        ClockTimeInt startFrameTime;
+        Float32 speedMod; // % of a second it took for last frame.
+    }
+}
+
 
 /** Represents the game's clock. */
 class Clock
 {
-	private ~global ClockTimeInt currentTickCount;
-	private ~global ClockTimeInt startFrameTime;
-	private ~global Float32 speedMod; /* % of a second it took for last frame. */
 
     ~block "cpp-include"
     {

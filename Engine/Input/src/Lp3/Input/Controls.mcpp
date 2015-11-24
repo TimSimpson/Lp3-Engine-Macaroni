@@ -1,5 +1,4 @@
 ~import Lp3::Engine::Input::Control;
-~import Lp3::Engine::Input::ControlKey;
 ~import Lp3::Engine::Input::Device;
 ~import Lp3::Engine::Input::DeviceSource;
 ~import LP3_FAIL;

@@ -1,3 +1,17 @@
+~unit "Lp3/Engine/Input/DirectInput/DiJoyPadDevice";
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #define DIRECTINPUT_VESRION 0x0800
+    #include <dinput.h>
+}
+~block "bottom"
+{
+    #endif // End LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~import Lp3::Engine::Input::DirectInput::DirectInputDevice;
 ~import Lp3::Exception;
 ~import boost::format;
@@ -12,18 +26,6 @@
 
 class DiJoyPadDevice : public DirectInputDevice
 {
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-        #define DIRECTINPUT_VESRION 0x0800
-        #include <dinput.h>
-    }
-    ~block "bottom"
-    {
-        #endif // End LP3_COMPILE_TARGET_WINDOWS
-    }
-
     ~block "cpp-include"
     {
         #include <limits>

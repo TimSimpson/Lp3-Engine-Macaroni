@@ -9,11 +9,9 @@
 ~import LP3_THROW;
 ~import Lp3::UInt32;
 
+~unit "Lp3/Engine/Memory/MemoryStack" ;
+
 ~namespace Lp3::Engine::Memory;
-
-class MemoryStack {};
-
-typedef intrusive_ptr<MemoryStack> MemoryStackPtr;
 
 class MemoryStackException : public Exception
 {
@@ -41,7 +39,22 @@ class MemoryStackEntryFooter
     public Lp3::UInt32 flag;
 };
 
-~import Lp3::Engine::Memory::MemoryStackEntryFooter;
+
+~block "cpp" {
+    namespace {
+        // When memory is allocated its set to this.
+        const Lp3::UInt32 MEMORYSTACK_FOOTER_INUSE = 0x830C;
+
+        // Freed memory is set to this.
+        const Lp3::UInt32 MEMORYSTACK_FOOTER_FREE  = 0xAC41;
+    }
+}
+
+
+class MemoryStack {};
+
+typedef intrusive_ptr<MemoryStack ~l> MemoryStackPtr;
+
 
 /** This class owns a stack of Memory.  Memory can be deallocated in any order
  * in order to keep compatability with Host, but the available memory
@@ -49,13 +62,6 @@ class MemoryStackEntryFooter
  * of currently allocated memory. */
 class MemoryStack : public virtual SharedHost
 {
-    ~block "h-predef"
-    {
-        //TODO: Invent a way for Macaroni to declare "heavy" imports, which
-        // force the use of a header file.
-        #include <Lp3/Engine/Memory/MemoryStackEntryFooter.h>
-    }
-
     private size_t actualEntryCount
         /* Number of allocations currently in use. */;
 
@@ -64,12 +70,6 @@ class MemoryStack : public virtual SharedHost
 
     private Lp3::Byte * lastEntry
         /** Where to store the next entry. */ ;
-
-    // When memory is allocated its set to this.
-    ~hidden ~global const Lp3::UInt32 MEMORYSTACK_FOOTER_INUSE = 0x830C;
-
-    // Freed memory is set to this.
-    ~hidden ~global const Lp3::UInt32 MEMORYSTACK_FOOTER_FREE  = 0xAC41;
 
     // Intrusive pointers use to know when to deallocate it. */
     private int referenceCount;
@@ -281,25 +281,11 @@ class MemoryStack : public virtual SharedHost
                 + sizeof(MemoryStack);
     }
 
-    ~block "h"
+    public: static size_t Size(size_t entryCount, size_t size)
     {
-        /** Gets the size of a structure with this number of entries, and the
-         * size for entryMemory, should such a structure be created. Also
-         * includes size of the class object itself. */
-        /*template<size_t entryCount, size_t size>
-        struct Size
-        {
-            static const size_t Value = sizeof(MemoryStack)
-                + size + (sizeof(MemoryStackEntryFooter) * entryCount);
-        };*/
-
-        public: static std::size_t Size(size_t entryCount, size_t size)
-        {
-            return sizeof(MemoryStack)
-                + size + (sizeof(MemoryStackEntryFooter) * entryCount);
-        }
+        return sizeof(MemoryStack)
+            + size + (sizeof(MemoryStackEntryFooter) * entryCount);
     }
-
 
     private void refreshLastEntry()
         /* While lastEntry is not nullptr, move it down so long as the entry
@@ -337,21 +323,22 @@ class MemoryStack : public virtual SharedHost
         } // end last entry while.
     }
 
-    ~block "h-postdef"
-    {
-        template<size_t entryCount, size_t size>
-        class MemoryStack2 : public MemoryStack
-        /* This memory stack actually lives on the stack! */
-        {
-        public:
-            static const size_t BufferSize =
-                (sizeof(MemoryStackEntryFooter) * entryCount) + size;
-            char Buffer[BufferSize];
-
-            MemoryStack2()
-            :   MemoryStack(Buffer, entryCount, BufferSize)
-            {}
-        };
-    }
-
 };
+
+~block "h"
+{
+    template<size_t entryCount, size_t size>
+    class MemoryStack2 : public MemoryStack
+    /* This memory stack actually lives on the stack! */
+    {
+    public:
+        static const size_t BufferSize =
+            (sizeof(MemoryStackEntryFooter) * entryCount) + size;
+        char Buffer[BufferSize];
+
+        MemoryStack2()
+        :   MemoryStack(Buffer, entryCount, BufferSize)
+        {}
+    };
+}
+

@@ -1,3 +1,20 @@
+~unit "Lp3/Engine/Input/DirectInput/DirectInputDevice";
+
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #define DIRECTINPUT_VESRION 0x0800
+    #include <dinput.h>
+}
+~block "bottom"
+{
+    #endif // End LP3_COMPILE_TARGET_WINDOWS
+}
+
+
+~import Lp3::Engine::Input::Device;
 ~import DIDATAFORMAT;
 ~import DIDEVICEINSTANCE;
 ~import Lp3::Exception;
@@ -8,26 +25,20 @@
 ~import LPDIRECTINPUTDEVICE8;
 ~import LP3_LOG_DEBUG;
 ~import LP3_LOG_ERROR;
-~import Lp3::Engine::Input::PlatformDevice;
 ~import std::vector;
 
 
 ~namespace Lp3::Engine::Input::DirectInput;
 
+
+class PlatformDevice : public Device
+{
+    public virtual void SwitchWindow(HWND newHwnd) = 0;
+};
+
+
 class DirectInputDevice : public PlatformDevice
 {
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-        #define DIRECTINPUT_VESRION 0x0800
-        #include <dinput.h>
-    }
-    ~block "bottom"
-    {
-        #endif // End LP3_COMPILE_TARGET_WINDOWS
-    }
-
     protected DIDEVICEINSTANCE deviceInstance;
     protected LPDIRECTINPUTDEVICE8 device; // TODO: Not sure what this is.
 
