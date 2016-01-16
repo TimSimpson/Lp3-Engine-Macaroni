@@ -114,6 +114,16 @@ class BitmapReader
     public void Read(Image & image,
                      const optional<Pixel> & colorKey = boost::none)
     {
+        if (colorKey) {
+            return Read(image, &(colorKey.get()), 1);
+        } else {
+            return Read(image, nullptr, 0);
+        }
+    }
+
+    public void Read(Image & image,
+                     const Pixel * const colorKeys, const int colorKeyCount)
+    {
         BitmapPixel srcPixel;
         Pixel pixel;
         pixel.Alpha = 255;  // Set default alpha.
@@ -130,16 +140,17 @@ class BitmapReader
                 pixel.Red = srcPixel.red;
                 pixel.Blue = srcPixel.blue;
                 pixel.Green = srcPixel.green;
-                if (colorKey && pixel.Red   == colorKey.get().Red
-                             && pixel.Green == colorKey.get().Green
-                             && pixel.Blue  == colorKey.get().Blue)
+                pixel.Alpha = 255;
+                for (int ci = 0; ci < colorKeyCount; ++ ci)
                 {
-                    // Make invisible.
-                    pixel.Alpha = colorKey.get().Alpha;
-                }
-                else
-                {
-                    pixel.Alpha = 255;
+                    const Pixel & colorKey = colorKeys[ci];
+                    if (pixel.Red   == colorKey.Red
+                        && pixel.Green == colorKey.Green
+                        && pixel.Blue  == colorKey.Blue)
+                    {
+                        // Make invisible.
+                        pixel.Alpha = colorKey.Alpha;
+                    }
                 }
                 image.SetPixel(lj, lk, pixel);
             }

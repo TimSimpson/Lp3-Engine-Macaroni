@@ -70,6 +70,17 @@ class OpenGlImageMemory
         return texture;
     }
 
+    public TexturePtr LoadTexture(ReadStreamPtr input,
+                                  const Pixel * const colorKeys,
+                                  const int colorKeyCount)
+    {
+        BitmapReader reader(input);
+        TexturePtr texture(new OpenGlTexture(reader.Width(), reader.Height()));
+        reader.Read(*texture, colorKeys, colorKeyCount);
+        texture->Restore();
+        return texture;
+    }
+
     ~block "top"
     {
         #ifndef LP3_COMPILE_TARGET_DREAMCAST
