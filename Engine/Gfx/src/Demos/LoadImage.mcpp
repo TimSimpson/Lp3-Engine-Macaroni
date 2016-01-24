@@ -20,12 +20,14 @@
 ~import Lp3::Engine::Gfx::Screen;
 ~import Lp3::Engine::Gfx::ScreenObject;
 ~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
 ~import std::string;
 ~import std::vector;
 ~import Lp3::Engine::Gfx::VertexPixel;
 
 ~block "cpp" :=
 
+#include <boost/lexical_cast.hpp>
 #define LP3_MICROMAIN_WITH_GFX_DEPS true
 #include <Lp3/Engine/MicroMain.h>
 
@@ -35,7 +37,12 @@ const auto green = VertexPixel::Create(0x00, 0xFF, 0x00, 0x00);
 const auto blue = VertexPixel::Create(0x00, 0x00, 0xFF, 0x00);
 
 
-
+int scaleX = 8;
+int scaleY = 8;
+int scanLineX = 3;
+int scanLineY = 3;
+int startX = 0; //170
+int startY = 0; //130
 
 class RealImage : public Image
 {
@@ -71,12 +78,15 @@ RealImage * image;
 GfxManager * manager;
 
 
+
+
 void DrawPictureFrame(Renderer & renderer)
 {
-    renderer.Quad(0, 0, 640, 480, 0.0f, green);
+    /*renderer.Quad(0, 0, 640, 480, 0.0f, green);
     renderer.Quad(120, 90, 400, 300, 0.01f, blue);
     renderer.Quad(160, 120, 320, 240, 0.1f, red);
-    renderer.Quad(310, 360, 16, 120, 0.2f, blue);
+    renderer.Quad(310, 360, 16, 120, 0.2f, blue);*/
+    renderer.Quad(0, 0, 1919, 1079, 0.5f, blue);
 }
 
 void DrawManualBitMap(Renderer & renderer)
@@ -86,7 +96,9 @@ void DrawManualBitMap(Renderer & renderer)
         for (Lp3::UInt32 x = 0; x < image->width; x ++) {
             const InternalPixel & pixel =
                 image->data[(y * image->width) + x];
-            renderer.Quad(x * 8 + 170, y * 8 + 130, 5, 5, 0.5f,
+            renderer.Quad(x * scaleX + startX, y * scaleY + startY,
+                          scaleX - scanLineX,
+                          scaleY - scanLineY, 0.5f,
                           VertexPixel::Create(pixel.ToPixel()));
         }
     }
@@ -97,6 +109,7 @@ class TexturedBlock : public ScreenObject {
     {
         DrawPictureFrame(renderer);
         DrawManualBitMap(renderer);
+        DrawPictureFrame(renderer);
     }
 
     virtual void DrawTranslucent(Renderer & renderer)
@@ -124,17 +137,29 @@ public:
             LP3_THROW(Lp3::Exception, "Expected a bitmap file as an argument.");
         }
         const string & bitmapFilePath = arguments[1];
-
+        if (arguments.size() > 2)
+        {
+            scaleX = scaleY = boost::lexical_cast<int>(arguments[2]);
+            if (scaleX > 3)
+            {
+                scanLineX = scanLineY = (scaleX / 4);
+            }
+            else
+            {
+                scanLineX = scanLineY = 0;
+            }
+        }
         manager = new GfxManager(
             #ifdef LP3_COMPILE_TARGET_WINDOWS
-                hWnd
+                hWnd,
             #endif
+            Size2d<unsigned int>{1920, 1080}
         );
         Screen & screen = manager->GetScreen(0);
 
         ReadStreamPtr input(new InputFileStream(bitmapFilePath.c_str()));
         BitmapReader reader(input);
-        LP3_LOG_DEBUG("Bitmap dimensions = %d x %d", 
+        LP3_LOG_DEBUG("Bitmap dimensions = %d x %d",
                       reader.Width(), reader.Height());
         image = new RealImage(reader.Width(), reader.Height());
         reader.Read(*image);

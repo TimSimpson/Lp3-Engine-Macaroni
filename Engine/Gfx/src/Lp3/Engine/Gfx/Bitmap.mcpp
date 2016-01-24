@@ -16,6 +16,8 @@ class BitmapReader
     private ReadStreamPtr stream;
     private Lp3::UInt32 height;
     private Lp3::UInt32 width;
+    private Lp3::UInt32 rowSize;
+    private Lp3::UInt32 padSize;
 
     ~block "cpp" { namespace {
 
@@ -104,6 +106,12 @@ class BitmapReader
                                 "Can only read 24 bit bitmaps.");
         width   = infoHeader.biWidth;
         height  = infoHeader.biHeight;
+
+        rowSize = std::ceil(((double)width * 3.0) / 4.0) * 4;
+        padSize = rowSize - (width * 3);
+
+        LP3_LOG_DEBUG("  bitmap dimensions: %d x %d, stride=%d",
+                      width, height, rowSize);
     }
 
     public inline Lp3::UInt32 Height() const
@@ -154,6 +162,8 @@ class BitmapReader
                 }
                 image.SetPixel(lj, lk, pixel);
             }
+
+            stream->Skip(padSize);
         }
     }
 
