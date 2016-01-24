@@ -58,13 +58,26 @@ class PcInputFileStream : public ResettableReadStream
         return file.gcount();
     }
 
+    ~block "cpp" { namespace {
+        template<typename T>
+        bool seek(fstream & file, const size_t position, const T seekdir)
+        {
+            LP3_ASSERT_FALSE_MESSAGE(file.bad(), "Can't reset, file is bad!");
+            LP3_ASSERT_TRUE_MESSAGE(file.is_open(), "Can't reset, file not open!");
+            file.clear(); // Clear eof flags.
+            file.seekg(position, seekdir);
+            return file.eof();
+        }
+    } }
+
     public virtual void Reset(size_t position=0)
     {
-        LP3_ASSERT_FALSE_MESSAGE(file.bad(), "Can't reset, file is bad!");
-        LP3_ASSERT_TRUE_MESSAGE(file.is_open(), "Can't reset, file not open!");
-        file.clear(); // Clear eof flags.
-        file.seekg(position, std::ios::beg);
-        eof = file.eof();
+        eof = seek(file, position, std::ios::beg);
+    }
+
+    public virtual void Skip(size_t bytes)
+    {
+        eof = seek(file, bytes, std::ios::cur);
     }
 /*
     ~block "top"

@@ -81,6 +81,16 @@ class DreamcastInputFileStream : public ResettableReadStream
         clearerr(file);
     }
 
+    public virtual void Skip(size_t position=0)
+    {
+        const auto n = fseek(file, position, SEEK_CUR);
+        if (n != 0)
+        {
+            LP3_ASSERT_TRUE(ferror(file) == 0,
+                            "ferror returned bad result!");
+        }
+    }
+
     ~block "top"
     {
         #include <Lp3/LE.h>

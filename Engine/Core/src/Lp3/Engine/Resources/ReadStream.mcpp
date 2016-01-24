@@ -40,6 +40,9 @@ class ReadStream
             #endif
         }
     }
+
+    /** Skips ahead the number of bytes. */
+    public virtual void Skip(size_t bytes) = 0;
 };
 
 class ResettableReadStream : public ReadStream

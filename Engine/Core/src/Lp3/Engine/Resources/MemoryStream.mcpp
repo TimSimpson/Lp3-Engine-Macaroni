@@ -93,4 +93,9 @@ class MemoryStream : public ResettableReadStream
     {
         readIndex = 0;
     }
+
+    public virtual void Skip(size_t bytes)
+    {
+         readIndex += bytes;
+    }
 };
