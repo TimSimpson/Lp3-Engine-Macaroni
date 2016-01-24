@@ -361,12 +361,17 @@ public:
 	void UseTexture(TexturePtr texture)
 	{
 		LP3_ASSERT_FALSE(!texture);
+        UseTexture(*texture);
+    }
+
+    void UseTexture(Texture & texture)
+    {
 		//glEnable(GL_TEXTURE_2D);
-		currentTextureSize = { static_cast<float>(texture->GetWidth()),
-                               static_cast<float>(texture->GetHeight()) };
-		//LP3_LOG_DEBUG("glBindTexture(GL_TEXTURE_2D, %d);", texture->textureId);
+		currentTextureSize = { static_cast<float>(texture.GetWidth()),
+                               static_cast<float>(texture.GetHeight()) };
+		//LP3_LOG_DEBUG("glBindTexture(GL_TEXTURE_2D, %d);", texture.textureId);
 		//glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,GL_REPLACE);
-		safeGlBindTexture(GL_TEXTURE_2D, texture->textureId);
+		safeGlBindTexture(GL_TEXTURE_2D, texture.textureId);
 
 		/* This is the normal scheme for transparencies... */
 		//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);

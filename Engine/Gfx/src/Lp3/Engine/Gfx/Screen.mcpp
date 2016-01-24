@@ -1,7 +1,7 @@
 
 
 ~import Lp3::Engine::Gfx::Renderer;
-~import boost::intrusive_ptr;
+~import boost::shared_ptr;
 
 
 ~namespace Lp3::Engine::Gfx;
@@ -26,29 +26,17 @@ public:
 	virtual void DrawOpaque(Renderer & renderer) = 0;
 
 	virtual void DrawTranslucent(Renderer & renderer) = 0;
-
-	~global ~friend void intrusive_ptr_add_ref(ScreenObject * obj)
-	{
-		++ obj->references;
-	}
-
-	~global ~friend void intrusive_ptr_release(ScreenObject * obj)
-	{
-		-- obj->references;
-		if (0 >= obj->references)
-		{
-			delete obj;
-		}
-	}
 };
 
-
-typedef boost::intrusive_ptr<ScreenObject> ScreenObjectPtr;
+typedef boost::shared_ptr<ScreenObject> ScreenObjectPtr;
 
 
 class Screen
 {
 	~import Lp3::Engine::Gfx::ImageMemory;
+
+private:
+	ScreenObjectPtr sharedPtr; // Really wish I'd never done this.
 
 public:
 	virtual ~Screen()
@@ -57,5 +45,20 @@ public:
 
 	virtual ImageMemory & GetImageMemory() = 0;
 
-	virtual void SetObject(ScreenObjectPtr object) = 0;
+	void SetObject(ScreenObject * object)
+	{
+		sharedPtr.reset();
+		setObject(object);
+	}
+
+	// Support the old interface from my "shared pointers should be used
+	// everywhere" days.
+	void SetObject(ScreenObjectPtr object)
+	{
+		sharedPtr = object;
+		setObject(object.get());
+	}
+
+protected:
+	virtual void setObject(ScreenObject * object) = 0;
 };

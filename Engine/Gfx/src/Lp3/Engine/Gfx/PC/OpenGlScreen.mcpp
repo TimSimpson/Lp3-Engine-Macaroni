@@ -43,12 +43,12 @@ class OpenGlScreen : public Screen
 
     // Texture used to display colors.
     private OpenGlImageMemory memory;
-    private ScreenObjectPtr object;
+    private ScreenObject * object;
     private OpenGlRenderer renderer;
 
     public OpenGlScreen(Size2d<unsigned int> virtualResolution)
     :   memory(),
-        object(),
+        object(nullptr),
         renderer(virtualResolution, memory.CreateTexture(32, 32, white))
     {
     }
@@ -66,12 +66,15 @@ class OpenGlScreen : public Screen
     public void render()
     {
         renderer.beginFrame();
-        object->DrawOpaque(renderer);
-        object->DrawTranslucent(renderer);
+        if (object)
+        {
+            object->DrawOpaque(renderer);
+            object->DrawTranslucent(renderer);
+        }
         renderer.endFrame();
     }
 
-    public virtual void SetObject(ScreenObjectPtr object)
+    protected virtual void setObject(ScreenObject * object)
     {
         this->object = object;
     }

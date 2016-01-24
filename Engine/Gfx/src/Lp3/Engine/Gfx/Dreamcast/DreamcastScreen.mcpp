@@ -9,7 +9,7 @@
 class DreamcastScreen : public Screen
 {
     private DreamcastImageMemory memory;
-    private ScreenObjectPtr object;
+    private ScreenObject * object;
     private DreamcastRenderer renderer;
 
     ~block "h"
@@ -20,7 +20,7 @@ class DreamcastScreen : public Screen
 
     private DreamcastScreen()
     :   memory(),
-        object(),
+        object(nullptr),
         renderer()
     {
 
@@ -40,11 +40,11 @@ class DreamcastScreen : public Screen
     {
         renderer.beginFrame();
 
-        object->DrawOpaque(renderer);
+        if (object) object->DrawOpaque(renderer);
 
         renderer.beginTranslucent();
 
-        object->DrawTranslucent(renderer);
+        if (object) object->DrawTranslucent(renderer);
 
         renderer.endFrame();
         //renderOpaque();// Do opaque drawing here!
@@ -67,7 +67,7 @@ class DreamcastScreen : public Screen
 
     }
 
-    public virtual void SetObject(ScreenObjectPtr object)
+    protected virtual void setObject(ScreenObject * object)
     {
         this->object = object;
     }
