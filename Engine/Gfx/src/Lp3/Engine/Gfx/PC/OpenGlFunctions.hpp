@@ -6,6 +6,8 @@
 #ifndef FILE_LP3_ENGINE_GFX_PC_OPENGLFUNCTIONS_HPP
 #define FILE_LP3_ENGINE_GFX_PC_OPENGLFUNCTIONS_HPP
 #include <Lp3/LE.h>
+#include <Lp3/Assert.h>
+#include <Lp3/Log.h>
 #ifndef LP3_COMPILE_TARGET_WINDOWS
     #include <GL/glut.h>
 #else

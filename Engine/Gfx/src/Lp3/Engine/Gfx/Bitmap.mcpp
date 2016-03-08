@@ -3,7 +3,7 @@
 ~import Lp3::Int32;
 ~import LP3_LOG_DEBUG;
 ~import boost::optional;
-~import Lp3::Engine::Gfx::Pixel;
+~import-h Lp3::Engine::Gfx::Pixel;
 ~import Lp3::Engine::Resources::ReadStream;
 ~import Lp3::Engine::Resources::ReadStreamPtr;
 ~import LP3_ASSERT_TRUE_MESSAGE;

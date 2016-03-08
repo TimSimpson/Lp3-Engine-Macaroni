@@ -1,17 +1,13 @@
+~import-h Lp3_Windows_H;
+
+
 ~namespace Lp3::Engine::Input;
+
 
 /** Contains extra bits for platform specific code in a device source. This
  *  interface is used by the main unit. */
 class PlatformDeviceSource : public DeviceSource
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-            #include <windows.h>
-        #endif
-    }
-
     ~block "h"
     {
         #ifdef LP3_COMPILE_TARGET_WINDOWS

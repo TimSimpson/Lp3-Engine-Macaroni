@@ -1,3 +1,15 @@
+~unit "Lp3/Engine/Log/ErrOutPipe" ;
+
+~block "top"
+{
+	#include <Lp3/LE.h>
+	#ifdef LP3_COMPILE_TARGET_WINDOWS
+}
+~block "bottom"
+{
+	#endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
 // This class should only be used from Windows code!
 ~import LP3_ASSERT_TRUE_MESSAGE;
 ~import nullptr;
@@ -14,16 +26,6 @@
  */
 class ErrOutPipe
 {
-	~block "top"
-	{
-		#include <Lp3/LE.h>
-		#ifdef LP3_COMPILE_TARGET_WINDOWS
-	}
-	~block "bottom"
-	{
-		#endif // LP3_COMPILE_TARGET_WINDOWS
-	}
-
 	~block "cpp-include"
 	{
 		#include <process.h>

@@ -1,3 +1,4 @@
+~import-h LP3_ASSERT_TRUE_MESSAGE;
 ~import boost::shared_ptr;
 
 
@@ -9,11 +10,6 @@
 // good state.
 class ReadStream
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/Assert.h>
-    }
-
     public virtual ~ReadStream()
     {
     }

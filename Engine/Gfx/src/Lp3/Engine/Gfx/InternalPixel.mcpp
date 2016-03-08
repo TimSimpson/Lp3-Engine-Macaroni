@@ -1,0 +1,203 @@
+~unit "Lp3/Engine/Gfx/InternalPixel";
+
+~import-h LP3_ASSERT_TRUE;
+~import-h Lp3::Engine::Gfx::Pixel;
+~import-h type_traits;
+
+~namespace Lp3::Engine::Gfx;
+
+
+class InternalPixel
+/* POD type representing a pixel in it's native format. */
+{
+~block "h"
+{
+public:
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+        Lp3::UInt16 argb;
+
+        #define TO_BIT(n, s) (  ( ((Lp3::UInt8) n) / 16 )  << s)
+
+        /*InternalPixel(Lp3::UInt8 r, Lp3::UInt8 g, Lp3::UInt8 b, Lp3::UInt8 a)
+        :   argb(ToArgb(r, g, b, a))
+        {
+        }*/
+        // 61680 = 255 a, 0 r, 255 green
+        // First, isolate,
+        // then, shift,
+        // finally, multiple by 16.
+        // 0x
+
+        // alpha = (((value & 0xF000) >> 12) * 16) << 24
+        //
+        //                    1234_1234_1234_1234
+        //     1234
+        //1234_1234_1234_1234_1234_1234_1234_1234
+        //
+
+        inline static InternalPixel Create(const Lp3::UInt8 r, const Lp3::UInt8 g,
+                                           const Lp3::UInt8 b, const Lp3::UInt8 a)
+        {
+            return { ToArgb(r, g, b, a) };
+        }
+
+        inline static InternalPixel Create(const Pixel & p)
+        {
+            return { ToArgb(p.Red, p.Green, p.Blue, p.Alpha) };
+        }
+
+        inline Lp3::UInt8 GetAlpha() const
+        {
+            return (argb & 0xF000 >> 12u) * 16u + 8u;
+        }
+
+        inline Lp3::UInt8 GetBlue() const
+        {
+            return (argb & 0x000F >> 0u) * 16u + 8u;
+        }
+
+        inline Lp3::UInt8 GetGreen() const
+        {
+            return (argb & 0x00F0 >> 4u) * 16u + 8u;
+        }
+
+        inline Lp3::UInt8 GetRed() const
+        {
+            return (argb & 0x0F00 >> 8u) * 16u + 8u;
+        }
+
+        inline static Lp3::UInt16 ToArgb(
+            const Lp3::UInt8 red, const Lp3::UInt8 green,
+            const Lp3::UInt8 blue, const Lp3::UInt8 alpha)
+        {
+            return TO_BIT(alpha, 12)
+                 | TO_BIT(red, 8)
+                 | TO_BIT(green, 4)
+                 | TO_BIT(blue, 0);
+        }
+
+        inline Pixel ToPixel() const
+        {
+            return Pixel(GetRed(), GetGreen(), GetBlue(), GetAlpha());
+        }
+
+        inline void SetI(const Lp3::UInt8 red, const Lp3::UInt8 green,
+                         const Lp3::UInt8 blue, const Lp3::UInt8 alpha)
+        {
+            argb = TO_BIT(alpha, 12)
+                 | TO_BIT(red, 8)
+                 | TO_BIT(green, 4)
+                 | TO_BIT(blue, 0);
+        }
+
+        #undef TO_BIT
+
+        #define TO_BIT(n, s) (  ( ((Lp3::UInt16) n) * 0xF )  << s)
+
+        inline void SetF(const float red, const float green,
+                         const float blue, const float alpha)
+        {
+            LP3_ASSERT_TRUE(red >= 0.0f && red <= 1.0);
+            LP3_ASSERT_TRUE(green >= 0.0f && green <= 1.0);
+            LP3_ASSERT_TRUE(blue >= 0.0f && blue <= 1.0);
+            LP3_ASSERT_TRUE(alpha >= 0.0f && alpha <= 1.0);
+
+            argb = TO_BIT(alpha, 12) | TO_BIT(red, 8) | TO_BIT(green, 4) |
+                   TO_BIT(blue, 0);
+        }
+
+        #undef TO_BIT
+
+    #else  // NOT in the Dreamcast
+        Lp3::UInt8 red;
+        Lp3::UInt8 green;
+        Lp3::UInt8 blue;
+        Lp3::UInt8 alpha;
+
+        /*InternalPixel(Lp3::UInt8 r, Lp3::UInt8 g, Lp3::UInt8 b, Lp3::UInt8 a)
+        :   red(r),
+            green(g),
+            blue(b),
+            alpha(a)
+        {
+        }*/
+
+        inline static InternalPixel Create(Lp3::UInt8 r, Lp3::UInt8 g,
+                                           Lp3::UInt8 b, Lp3::UInt8 a)
+        {
+            return { r, g, b, a };
+        }
+
+        inline static InternalPixel Create(const Pixel & p)
+        {
+            return { p.Red, p.Green, p.Blue, p.Alpha };
+        }
+
+        inline Lp3::UInt8 GetAlpha() const
+        {
+            return alpha;
+        }
+
+        inline Lp3::UInt8 GetBlue() const
+        {
+            return blue;
+        }
+
+        inline Lp3::UInt8 GetGreen() const
+        {
+            return green;
+        }
+
+        inline Lp3::UInt8 GetRed() const
+        {
+            return red;
+        }
+
+        inline Pixel ToPixel() const
+        {
+            return Pixel(GetRed(), GetGreen(), GetBlue(), GetAlpha());
+        }
+
+        inline void SetI(const Lp3::UInt8 red, const Lp3::UInt8 green,
+                         const Lp3::UInt8 blue, const Lp3::UInt8 alpha)
+        {
+            this->red = red;
+            this->green = green;
+            this->blue = blue;
+            this->alpha = alpha;
+        }
+
+        inline void SetF(const float red, const float green,
+                         const float blue, const float alpha)
+        {
+            this->red = (Lp3::UInt8) (red * 255.0);
+            this->green = (Lp3::UInt8) (green * 255.0);
+            this->blue = (Lp3::UInt8) (blue * 255.0);
+            this->alpha = (Lp3::UInt8) (alpha * 255.0);
+        }
+    #endif
+} // end Header block.
+
+    public void Set(const Pixel & pixel)
+    {
+        #ifdef LP3_COMPILE_TARGET_DREAMCAST
+            //ab = (pixel.Green & 0xF0) | (pixel.Blue >> 4);
+            //cd = (pixel.Alpha & 0xF0) | (pixel.Red >> 4);
+            SetI(pixel.Red, pixel.Green, pixel.Blue, pixel.Alpha);
+        #else
+            SetI(pixel.Red, pixel.Green, pixel.Blue, pixel.Alpha);
+        #endif
+    }
+};
+
+
+~block "h"
+{
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+        static_assert(sizeof(Lp3::Engine::Gfx::InternalPixel) == 2,
+                      "Size of pixel must be two bytes on the Dreamcast.");
+    #endif
+
+    static_assert(std::is_pod<Lp3::Engine::Gfx::InternalPixel>::value,
+                  "InternalPixel not POD!");
+}

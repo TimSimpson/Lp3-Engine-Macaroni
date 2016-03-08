@@ -1,0 +1,65 @@
+~unit "Lp3/Engine/Gfx/VertexPixel";
+
+
+~import-h LP3_ASSERT_EQUAL;
+~import-h Lp3::Engine::Gfx::Pixel;
+~import-h type_traits;
+
+~namespace Lp3::Engine::Gfx;
+
+
+class VertexPixel
+/* POD type representing a pixel color to be used with polygons. */
+{
+    ~block "h"
+    {
+        public:
+            #ifdef LP3_COMPILE_TARGET_DREAMCAST
+                Lp3::UInt32 argb;
+
+                inline static VertexPixel Create(
+                    const Lp3::UInt8 r, const Lp3::UInt8 g,
+                    const Lp3::UInt8 b, const Lp3::UInt8 a)
+                {
+                    return  {   (a << 24u )
+                              | (r << 16u )
+                              | (g << 8u  )
+                              | (b << 0u  ) };
+                }
+
+                inline static VertexPixel Create(const Pixel & pixel)
+                {
+                    return Create(pixel.Red, pixel.Green, pixel.Blue,
+                                  pixel.Alpha);
+                }
+
+            #else
+
+                float r, g, b, a;
+
+                inline static VertexPixel Create(
+                    const Lp3::UInt8 r, const Lp3::UInt8 g,
+                    const Lp3::UInt8 b, const Lp3::UInt8 a)
+                {
+                    return {r / 255.0f, g / 255.0f, b / 255.0f, a / 255.0f};
+                }
+
+                inline static VertexPixel Create(const Pixel & pixel)
+                {
+                    return Create(pixel.Red, pixel.Green, pixel.Blue,
+                                  pixel.Alpha);
+                }
+            #endif
+    }
+};
+
+
+~block "h"
+{
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+        static_assert(sizeof(VertexPixel) == 4,
+                      "Size of pixel must be four bytes on the Dreamcast.");
+        static_assert(std::is_pod<VertexPixel>::value,
+                      "VertexPixel not POD!");
+    #endif
+} // end Header

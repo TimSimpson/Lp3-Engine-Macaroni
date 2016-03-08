@@ -1,36 +1,49 @@
+~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastGfxManager" ;
+
 ~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::Dreamcast::DreamcastScreen;
 
 ~namespace Lp3::Engine::Gfx::Dreamcast;
 
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+~block "cpp"
+{
+    namespace {
+
+        static bool initialized = false;
+
+        void init()
+        {
+            if (!initialized)
+            {
+                pvr_init_params_t params = {
+                    // Enable opaque and translucent polygons with size 16
+                    { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
+                    //{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0 },
+                    // Vertex buffer size 512K
+                    512*1024
+                    };
+                pvr_init(&params);
+                initialized = true;
+            }
+        }
+    } // end anonymous namespace
+}
 
 class DreamcastGfxManager {
 
     private DreamcastScreen screen;
 
-    ~block "cpp"
-    {
-        namespace {
 
-            static bool initialized = false;
-
-            void init()
-            {
-                if (!initialized)
-                {
-                    pvr_init_params_t params = {
-                        // Enable opaque and translucent polygons with size 16
-                        { PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_16 },
-                        //{ PVR_BINSIZE_16, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0, PVR_BINSIZE_0 },
-                        // Vertex buffer size 512K
-                        512*1024
-                        };
-                    pvr_init(&params);
-                    initialized = true;
-                }
-            }
-        } // end anonymous namespace
-    }
     public Screen & GetScreen(const unsigned int index)
     {
         return screen;
@@ -48,15 +61,5 @@ class DreamcastGfxManager {
 
     private void setUpPvrLikeMapping()
     {
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

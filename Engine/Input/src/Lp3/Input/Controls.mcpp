@@ -1,3 +1,13 @@
+~unit "Lp3/Engine/Input/Controls" ;
+
+~block "h"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        #include <windows.h>
+    #endif
+}
+
 ~import Lp3::Engine::Input::Control;
 ~import Lp3::Engine::Input::Device;
 ~import Lp3::Engine::Input::DeviceSource;
@@ -25,13 +35,6 @@ class Controls
     private vector<Control> controls;
     private DeviceSource * deviceSource;
 
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-            #include <windows.h>
-        #endif
-    }
     ~block "h"
     {
         #ifdef LP3_COMPILE_TARGET_DREAMCAST

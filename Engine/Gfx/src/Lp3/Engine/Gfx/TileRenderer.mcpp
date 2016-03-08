@@ -15,44 +15,13 @@
 ~namespace Lp3::Engine::Gfx;
 
 
-class TileSet
-{
-    ~import Lp3::Engine::Gfx::TileRenderer;
 
-    public const Size2d<float> normalizedSingleTileSize;
-    public const Size2d<float> normalizedSingleTileSizeNI;
-    public const Size2d<Lp3::UInt8> singleTileSize;
-    public const TexturePtr texture;
-    public const Size2d<Lp3::UInt8> textureSizeInTiles;
 
-    public TileSet(const TexturePtr texture,
-                   const Size2d<Lp3::UInt8> singleTileSize,
-                   const Size2d<Lp3::UInt8> textureSizeInTiles)
-    :   normalizedSingleTileSize({singleTileSize.Width
-                                    / (float) texture->GetWidth(),
-                                  singleTileSize.Height
-                                    / (float) texture->GetHeight()}),
-        normalizedSingleTileSizeNI({
-            (singleTileSize.Width - 1) / (float) texture->GetWidth(),
-            (singleTileSize.Height - 1) / (float) texture->GetHeight()}),
-        singleTileSize(singleTileSize),
-        texture(texture),
-        textureSizeInTiles(textureSizeInTiles)
-    {
-    }
-
-    public TileRenderer StartRenderer(Renderer & renderer)
-    {
-        renderer.UseTexture(texture);
-        return TileRenderer(renderer, *this);
-    }
-};
+~import Lp3::Engine::Gfx::TileSet;
 
 
 class TileRenderer
 {
-    ~import Lp3::Engine::Gfx::TileSet;
-
     Renderer & renderer;
     const TileSet & tileSet;
 

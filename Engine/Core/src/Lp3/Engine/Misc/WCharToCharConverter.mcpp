@@ -1,3 +1,13 @@
+~unit "Lp3/Engine/Misc/WCharToCharConverter" ;
+
+~block "top" {
+	#include <Lp3/LE.h>
+	#ifdef LP3_COMPILE_TARGET_WINDOWS
+}
+~block "bottom" {
+	#endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import LP3_ASSERT_TRUE;
 ~import nullptr;
 ~import wcslen;
@@ -11,13 +21,6 @@
  */
 class WCharToCharConverter
 {
-	~block "top" {
-		#include <Lp3/LE.h>
-		#ifdef LP3_COMPILE_TARGET_WINDOWS
-	}
-	~block "bottom" {
-		#endif // LP3_COMPILE_TARGET_DREAMCAST
-	}
 	private char * converted;
 
 	public WCharToCharConverter(const wchar_t * original)

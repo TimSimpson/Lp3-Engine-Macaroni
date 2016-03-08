@@ -28,21 +28,66 @@ class Box2d
 };
 
 
-class Coordinates2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class Size2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class NormalizedCoordinates2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class CoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class NormalizedCoordinatePair2d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+~extern Coordinates2d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::Coordinates2d; }
+    ;
+~extern Size2d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::Size2d; }
+    ;
+~extern NormalizedCoordinates2d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d; }
+    ;
+~extern CoordinatePair2d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::CoordinatePair2d; }
+    ;
+~extern NormalizedCoordinatePair2d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinatePair2d; }
+    ;
 
-class Coordinates3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class Size3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class NormalizedCoordinates3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class CoordinatePair3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class NormalizedCoordinatePair3d { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+~extern Coordinates3d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::Coordinates3d; }
+    ;
+~extern Size3d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::Size3d; }
+    ;
+~extern NormalizedCoordinates3d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinates3d; }
+    ;
+~extern CoordinatePair3d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::CoordinatePair3d; }
+    ;
+~extern NormalizedCoordinatePair3d
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinatePair3d; }
+    ;
 
-class ScreenPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class PolyPoint { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+~extern ScreenPoint
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::ScreenPoint; }
+    ;
+~extern PolyPoint
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::PolyPoint; }
+    ;
 
-class SpriteCoordinates { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class TexturedQuadUV { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
-class TexturedQuadSrc { ~hfile=<Lp3/Engine/Gfx/Geometry.hpp> };
+~extern SpriteCoordinates
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::SpriteCoordinates; }
+    ;
+~extern TexturedQuadUV
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::TexturedQuadUV; }
+    ;
+~extern TexturedQuadSrc
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::TexturedQuadSrc; }
+    ;

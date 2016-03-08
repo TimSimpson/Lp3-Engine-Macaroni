@@ -1,3 +1,15 @@
+~unit "Lp3/Engine/Gfx/OpenGl/OpenGlRenderer" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifndef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import LP3_ASSERT_FALSE;
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::Geometry::CoordinatePair2d;
@@ -376,13 +388,4 @@ public:
 		/* This is the normal scheme for transparencies... */
 		//glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA);
 	}
-
-	~block "top"
-    {
-        #ifndef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
-    }
 };

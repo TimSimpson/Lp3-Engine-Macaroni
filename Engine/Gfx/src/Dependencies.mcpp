@@ -4,3 +4,4 @@ class pvr_poly_hdr_t { ~hfile=<kos.h> };
 class pvr_vertex_t { ~hfile=<kos.h> };
 class GLuint { ~hfile=<Lp3/Engine/Gfx/PC/OpenGlHeaders.hpp> };
 
+~extern type_traits include=<type_traits>;

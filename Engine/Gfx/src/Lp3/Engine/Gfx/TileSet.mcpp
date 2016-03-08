@@ -1,0 +1,50 @@
+~import Lp3::Engine::Gfx::Geometry::Coordinates2d;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import boost::intrusive_ptr;
+~import Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d;
+~import Lp3::Engine::Gfx::Geometry::SpriteCoordinates;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadUV;
+~import Lp3::UInt8;
+
+
+~namespace Lp3::Engine::Gfx;
+
+
+~import Lp3::Engine::Gfx::TileRenderer;
+
+
+class TileSet
+{
+    public const Size2d<float> normalizedSingleTileSize;
+    public const Size2d<float> normalizedSingleTileSizeNI;
+    public const Size2d<Lp3::UInt8> singleTileSize;
+    public const TexturePtr texture;
+    public const Size2d<Lp3::UInt8> textureSizeInTiles;
+
+    public TileSet(const TexturePtr texture,
+                   const Size2d<Lp3::UInt8> singleTileSize,
+                   const Size2d<Lp3::UInt8> textureSizeInTiles)
+    :   normalizedSingleTileSize({singleTileSize.Width
+                                    / (float) texture->GetWidth(),
+                                  singleTileSize.Height
+                                    / (float) texture->GetHeight()}),
+        normalizedSingleTileSizeNI({
+            (singleTileSize.Width - 1) / (float) texture->GetWidth(),
+            (singleTileSize.Height - 1) / (float) texture->GetHeight()}),
+        singleTileSize(singleTileSize),
+        texture(texture),
+        textureSizeInTiles(textureSizeInTiles)
+    {
+    }
+
+    public TileRenderer StartRenderer(Renderer & renderer)
+    {
+        renderer.UseTexture(texture);
+        return TileRenderer(renderer, *this);
+    }
+};

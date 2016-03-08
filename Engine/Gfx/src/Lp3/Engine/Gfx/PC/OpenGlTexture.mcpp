@@ -1,3 +1,15 @@
+~unit "Lp3/Engine/Gfx/OpenGl/OpenGlTexture" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifndef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::Image;
 ~import Lp3::Engine::Gfx::InternalPixel;
@@ -121,16 +133,6 @@ class OpenGlTexture : public Image
     public virtual void SetPixel(int x, int y, const Pixel & pixel)
     {
         data[(y * width) + x].Set(pixel);
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifndef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };
 

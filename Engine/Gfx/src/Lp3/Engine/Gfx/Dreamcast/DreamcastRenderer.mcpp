@@ -1,3 +1,16 @@
+~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastRenderer" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+
 ~import Lp3::Engine::Gfx::Geometry::CoordinatePair2d;
 ~import Lp3::Engine::Gfx::Dreamcast::DreamcastTexture;
 ~import Lp3::Engine::Gfx::GfxManager;
@@ -14,7 +27,6 @@
 
 
 ~namespace Lp3::Engine::Gfx::Dreamcast;
-
 
 class DreamcastRenderer
 {
@@ -361,15 +373,5 @@ public:
         pvr_prim(&hdr, sizeof(hdr));
 
         currentTextureSize = { texture->GetWidth(), texture->GetHeight() };
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

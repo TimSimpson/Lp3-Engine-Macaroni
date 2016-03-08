@@ -1,3 +1,5 @@
+~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastImageMemory" ;
+
 ~import Lp3::Engine::Gfx::BitmapReader;
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::GfxManager;
@@ -9,6 +11,15 @@
 
 ~namespace Lp3::Engine::Gfx::Dreamcast;
 
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
 
 class DreamcastImageMemory
 {
@@ -58,15 +69,5 @@ class DreamcastImageMemory
         //texture->Restore();
         //TODO: Consider loading in larger chunks.
         return texture;
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

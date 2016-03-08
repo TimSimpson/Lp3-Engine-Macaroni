@@ -1,3 +1,15 @@
+~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastScreen" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::Dreamcast::DreamcastImageMemory;
 ~import Lp3::Engine::Gfx::Dreamcast::DreamcastRenderer;
@@ -70,15 +82,5 @@ class DreamcastScreen : public Screen
     protected virtual void setObject(ScreenObject * object)
     {
         this->object = object;
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

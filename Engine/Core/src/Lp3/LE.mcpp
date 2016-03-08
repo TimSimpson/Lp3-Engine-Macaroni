@@ -27,3 +27,5 @@ namespace Lp3
 class LP3_THROW { ~hfile=<Lp3/LE.h> };
 class LP3_THROW2 { ~hfile=<Lp3/LE.h> };
 class LP3_THROW3 { ~hfile=<Lp3/LE.h> };
+
+~extern Lp3_LE include=<Lp3/LE.h> ;

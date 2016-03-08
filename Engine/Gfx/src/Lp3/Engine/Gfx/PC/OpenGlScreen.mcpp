@@ -1,3 +1,15 @@
+~unit "Lp3/Engine/Gfx/PC/OpenGlScreen" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifndef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::ImageMemory;
 ~import Lp3::Engine::Gfx::InternalPixel;
@@ -79,13 +91,5 @@ class OpenGlScreen : public Screen
         this->object = object;
     }
 
-    ~block "top"
-    {
-        #ifndef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
-    }
 };
 

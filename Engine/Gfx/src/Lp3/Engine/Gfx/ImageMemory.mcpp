@@ -4,7 +4,7 @@
 ~namespace Lp3::Engine::Gfx;
 
 
-class ImageMemory
-{
-    ~hfile=<Lp3/Engine/Gfx/ImageMemory.hpp>
-};
+~extern ImageMemory
+    include=<Lp3/Engine/Gfx/ImageMemory.hpp>
+    using={ using Lp3::Engine::Gfx::ImageMemory; }
+    ;

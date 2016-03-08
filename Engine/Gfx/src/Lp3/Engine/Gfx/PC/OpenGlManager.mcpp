@@ -1,5 +1,18 @@
+~unit "Lp3/Engine/Gfx/OpenGl/OpenGlManager" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifndef LP3_COMPILE_TARGET_DREAMCAST
+
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+
 ~import LP3_LOG_DEBUG;
-~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::InternalPixel;
 ~import boost::optional;
 ~import Lp3::Engine::Gfx::Pixel;
@@ -17,29 +30,29 @@
 ~import std::unique_ptr;
 
 
+~block "h"
+{
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        #include <windows.h>
+    #endif
+}
+
+~block "cpp"
+{
+    #ifndef LP3_COMPILE_TARGET_WINDOWS
+        #include <GL/glut.h>
+    #else
+        #pragma comment(lib, "Gdi32.lib")
+        #pragma comment (lib, "user32.lib")
+        #include <windows.h>
+        #include <GL/gl.h>
+        #include <gl/glu.h>
+    #endif
+    #include <Lp3/Engine/Gfx/PC/OpenGlFunctions.hpp>
+}
+
 class OpenGlManager
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-            #include <windows.h>
-        #endif
-    }
-    ~block "cpp-include"
-    {
-        #include <Lp3/LE.h>
-        #ifndef LP3_COMPILE_TARGET_WINDOWS
-            #include <GL/glut.h>
-        #else
-            #pragma comment(lib, "Gdi32.lib")
-            #pragma comment (lib, "user32.lib")
-            #include <windows.h>
-            #include <GL/gl.h>
-            #include <gl/glu.h>
-        #endif
-        #include <Lp3/Engine/Gfx/PC/OpenGlFunctions.hpp>
-    }
 
     ~block "h"
     {
@@ -157,14 +170,5 @@ class OpenGlManager
     public void Resize(const Size2d<unsigned int> size)
     {
         glViewport(0, 0, size.Width, size.Height);
-    }
-
-    ~block "top"
-    {
-        #ifndef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

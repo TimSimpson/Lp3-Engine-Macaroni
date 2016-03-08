@@ -1,3 +1,4 @@
+~import-h Lp3_LE;
 ~import Lp3::Float32;
 
 ~namespace Lp3::Engine::Input;
@@ -8,10 +9,7 @@ class Device
  *  This class offers a common interface for devices from DirectInput and
  *  XInput to the Dreamcast controller. */
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-    }
+
     ~block "h"
     {
         /** Make the Dreamcast non-virtual. */

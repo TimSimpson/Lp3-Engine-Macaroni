@@ -18,11 +18,12 @@ class Image
 };
 
 
+~import-h LP3_ASSERT_TRUE;
+~import-h LP3_ASSERT_FALSE;
+
 // Simple subclass of image that just stores everything as a pixel.
 class PixelImage : public Image
 {
-    ~import LP3_ASSERT_TRUE;
-
     private Pixel * data;
     private size_t height;
     private size_t width;

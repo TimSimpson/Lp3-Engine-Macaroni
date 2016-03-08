@@ -1,0 +1,46 @@
+~namespace Lp3::Engine::Gfx;
+
+
+class PixelDiff
+{
+    public Lp3::Int16 Red;
+    public Lp3::Int16 Green;
+    public Lp3::Int16 Blue;
+    public Lp3::Int16 Alpha;
+
+    public PixelDiff(Lp3::Int16 r, Lp3::Int16 g, Lp3::Int16 b, Lp3::Int16 a)
+    :   Red(r), Green(g), Blue(b), Alpha(a)
+    {
+    }
+
+    public PixelDiff(const Pixel & a, const Pixel & b)
+    :   Red((Lp3::Int16) a.Red - (Lp3::Int16) b.Red),
+        Green((Lp3::Int16) a.Green - (Lp3::Int16) b.Green),
+        Blue((Lp3::Int16) a.Blue - (Lp3::Int16) b.Blue),
+        Alpha((Lp3::Int16) a.Alpha - (Lp3::Int16) b.Alpha)
+    {
+    }
+
+    public Pixel Apply(const Pixel & p) const
+    {
+        return Pixel((Lp3::Int16) p.Red - Red, (Lp3::Int16) p.Green - Green,
+                     (Lp3::Int16) p.Blue - Blue, (Lp3::Int16) p.Alpha - Alpha);
+    }
+
+    ~block "h"
+    {
+        public:
+        template<typename Number>
+        PixelDiff operator / (const Number scalar) const
+        {
+            return PixelDiff(Red / scalar, Green / scalar, Blue / scalar,
+                             Alpha / scalar);
+        }
+    }
+
+    public PixelDiff operator + (const PixelDiff & rhs) const
+    {
+        return PixelDiff(Red + rhs.Red, Green + rhs.Green,
+                         Blue + rhs.Blue, Alpha + rhs.Alpha);
+    }
+};

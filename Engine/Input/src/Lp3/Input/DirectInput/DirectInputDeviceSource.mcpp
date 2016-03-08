@@ -20,18 +20,20 @@
 ~import std::string;
 ~import std::vector;
 
+
+~block "h"
+{
+    namespace Lp3 { namespace Engine { namespace Input {
+        namespace DirectInput {
+        struct Pimpl;
+    }}}}
+}
+
+
 ~namespace Lp3::Engine::Input::DirectInput;
 
 class DirectInputDeviceSource : public DeviceSource
 {
-    ~block "h-predef"
-    {
-        // Forward declaration of hidden class.
-        namespace Lp3 { namespace Engine { namespace Input {
-            namespace DirectInput {
-            struct Pimpl;
-        }}}}
-    }
     ~block "h"
     {
         ::Lp3::Engine::Input::DirectInput::Pimpl * me;

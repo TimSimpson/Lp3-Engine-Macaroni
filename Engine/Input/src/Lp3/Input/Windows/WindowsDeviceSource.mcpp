@@ -1,3 +1,13 @@
+~unit "Lp3/Input/Windows/WindowsDeviceSource" ;
+
+~block "top" {
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+}
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~namespace Lp3::Engine::Input::Windows;
 
 
@@ -12,14 +22,6 @@
 
 class WindowsDeviceSource : public DeviceSource
 {
-    ~block "top" {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_WINDOWS
-    }
-    ~block "bottom" {
-        #endif // LP3_COMPILE_TARGET_WINDOWS
-    }
-
     private DirectInputDeviceSource dxInput;
     private XInputDeviceSource xInput;
 

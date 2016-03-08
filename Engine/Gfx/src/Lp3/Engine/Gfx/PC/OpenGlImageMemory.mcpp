@@ -1,3 +1,28 @@
+~unit "Lp3/Engine/Gfx/OpenGl/OpenGlImageMemory" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifndef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
+~block "cpp"
+{
+    #ifndef LP3_COMPILE_TARGET_WINDOWS
+        #include <GL/glut.h>
+    #else
+        #pragma comment(lib, "Gdi32.lib")
+        #pragma comment (lib, "user32.lib")
+        #include <windows.h>
+        #include <GL/gl.h>
+        #include <gl/glu.h>
+    #endif
+}
+
 ~import Lp3::Engine::Gfx::BitmapReader;
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::OpenGl::OpenGlRenderer;
@@ -18,20 +43,6 @@
 
 class OpenGlImageMemory
 {
-    ~block "cpp-include"
-    {
-        #include <Lp3/LE.h>
-        #ifndef LP3_COMPILE_TARGET_WINDOWS
-            #include <GL/glut.h>
-        #else
-            #pragma comment(lib, "Gdi32.lib")
-            #pragma comment (lib, "user32.lib")
-            #include <windows.h>
-            #include <GL/gl.h>
-            #include <gl/glu.h>
-        #endif
-    }
-
     public virtual ~OpenGlImageMemory()
     {
     }
@@ -81,12 +92,4 @@ class OpenGlImageMemory
         return texture;
     }
 
-    ~block "top"
-    {
-        #ifndef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
-    }
 };

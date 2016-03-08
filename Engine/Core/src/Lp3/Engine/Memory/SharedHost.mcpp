@@ -1,4 +1,6 @@
 ~import boost::intrusive_ptr;
+~import-h LP3_ASSERT_FALSE;
+~import-h memory;
 
 ~namespace Lp3::Engine::Memory;
 
@@ -14,12 +16,6 @@ typedef intrusive_ptr<SharedHost ~l> SharedHostPtr;
 /** A Host which may be owned by multiple entities. */
 class SharedHost : public Host
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/Assert.h>
-        #include <memory>
-    }
-
     private int referenceCount;
 
     public ~global ~friend void intrusive_ptr_add_ref(SharedHost * host)

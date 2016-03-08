@@ -46,3 +46,5 @@ class std::unique_ptr { ~hfile=<memory> };
 ~extern jmp_buf include=<setjmp.h>;
 ~extern map;
 ~extern memory include=<memory>;
+
+~extern Lp3_Windows_H include=<Lp3/Windows.h> ;

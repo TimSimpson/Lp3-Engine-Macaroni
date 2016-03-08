@@ -1,5 +1,17 @@
+~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastTexture" ;
+
+~block "top"
+{
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_DREAMCAST
+}
+~block "bottom"
+{
+    #endif // LP3_COMPILE_TARGET_DREAMCAST
+}
+
 ~import Lp3::Engine::Gfx::Renderer;
-~import Lp3::Engine::Gfx::InternalPixel;
+~import-h Lp3::Engine::Gfx::InternalPixel;
 ~import boost::intrusive_ptr;
 ~import Lp3::Engine::Gfx::Texture;
 
@@ -28,11 +40,6 @@ class DreamcastTexture : public Image
     const size_t mask;
 
 //    int minimum;
-
-    ~block "h-predef"
-    {
-        #include <Lp3/Engine/Gfx/InternalPixel.h>
-    }
 
     ~block "h"
     {
@@ -124,15 +131,5 @@ class DreamcastTexture : public Image
     {
         #undef TWIDTAB
         #undef TWIDOUT
-    }
-
-    ~block "top"
-    {
-        #include <Lp3/LE.h>
-        #ifdef LP3_COMPILE_TARGET_DREAMCAST
-    }
-    ~block "bottom"
-    {
-        #endif // LP3_COMPILE_TARGET_DREAMCAST
     }
 };

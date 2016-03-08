@@ -1,4 +1,5 @@
-~import Lp3::Engine::Input::Device;
+~import Lp3::Float32;
+~import-h Lp3::Engine::Input::Device;
 ~import std::string;
 
 ~namespace Lp3::Engine::Input;
@@ -9,12 +10,6 @@
  */
 class ButtonMapping
 {
-    ~block "h-predef"
-    {
-        #include <Lp3/LE.h>
-        #include <Lp3/Engine/Input/Device.h>
-    }
-
     public Device * Device;
     public string DeviceName;
     public unsigned int KeyIndex;
