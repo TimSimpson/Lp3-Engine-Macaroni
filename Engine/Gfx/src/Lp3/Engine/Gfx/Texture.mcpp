@@ -8,11 +8,13 @@
 
 
 ~extern Texture
+  export
   include=<Lp3/Engine/Gfx/Texture.hpp>
   using={ using Lp3::Engine::Gfx::Texture; }
   ;
 
 ~extern TexturePtr
+  export
   include=<Lp3/Engine/Gfx/TexturePtr.hpp>
   using={ using Lp3::Engine::Gfx::TexturePtr; }
   ;

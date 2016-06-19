@@ -11,7 +11,7 @@ Lp3Project{
   libShortName="Lp3Gfx",
   dependencies = {
     load("Lp3", "Lp3.Engine.Core", "DEV"):Target("lib"),
-    load("Macaroni", "Windows", "1.0.0"):Target("lib"),
+    --load("Macaroni", "Windows", "1.0.0"):Target("lib"),
     load("Lp3", "Lp3Project", "DEV"):Target("Lp3GfxDeps"),
   },
    exes={

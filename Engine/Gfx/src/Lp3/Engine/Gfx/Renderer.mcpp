@@ -1,4 +1,6 @@
 ~namespace Lp3::Engine::Gfx;
 
-~extern Renderer include=<Lp3/Engine/Gfx/Renderer.hpp>
+~extern Renderer
+    export
+    include=<Lp3/Engine/Gfx/Renderer.hpp>
     using={using Lp3::Engine::Gfx::Renderer;} ;

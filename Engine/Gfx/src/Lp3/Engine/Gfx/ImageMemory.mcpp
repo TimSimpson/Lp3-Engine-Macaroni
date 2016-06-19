@@ -5,6 +5,7 @@
 
 
 ~extern ImageMemory
+    export
     include=<Lp3/Engine/Gfx/ImageMemory.hpp>
     using={ using Lp3::Engine::Gfx::ImageMemory; }
     ;

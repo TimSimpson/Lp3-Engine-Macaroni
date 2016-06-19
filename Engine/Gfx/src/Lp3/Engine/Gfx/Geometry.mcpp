@@ -29,65 +29,80 @@ class Box2d
 
 
 ~extern Coordinates2d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::Coordinates2d; }
     ;
 ~extern Size2d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::Size2d; }
     ;
 ~extern NormalizedCoordinates2d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d; }
     ;
 ~extern CoordinatePair2d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::CoordinatePair2d; }
     ;
 ~extern NormalizedCoordinatePair2d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinatePair2d; }
     ;
 
 ~extern Coordinates3d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::Coordinates3d; }
     ;
 ~extern Size3d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::Size3d; }
     ;
 ~extern NormalizedCoordinates3d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinates3d; }
     ;
 ~extern CoordinatePair3d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::CoordinatePair3d; }
     ;
 ~extern NormalizedCoordinatePair3d
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinatePair3d; }
     ;
 
 ~extern ScreenPoint
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::ScreenPoint; }
     ;
 ~extern PolyPoint
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::PolyPoint; }
     ;
 
 ~extern SpriteCoordinates
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::SpriteCoordinates; }
     ;
 ~extern TexturedQuadUV
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::TexturedQuadUV; }
     ;
 ~extern TexturedQuadSrc
+    export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::TexturedQuadSrc; }
     ;
