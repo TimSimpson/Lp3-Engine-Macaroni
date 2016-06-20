@@ -46,8 +46,7 @@
         {
             format % arg;
         }
-
-        MACARONI_LIB_DECL_Lp3___Lp3_46_Engine_46_Core___DEV___lib
+		MACARONI_LIB_DECL_Lp3___Lp3_45_Engine___DEV___Lp3__Core
         void WriteLog(const char * const filename, const int lineNumber,
                       const LogLevel & level, const char * const message);
 

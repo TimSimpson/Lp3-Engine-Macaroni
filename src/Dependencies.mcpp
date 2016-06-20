@@ -1,0 +1,76 @@
+// --------------------------------------------------------------------------
+// External Dependencies
+// --------------------------------------------------------------------------
+
+// Std C, Windows
+~extern FILE include=<kos.h>;
+~extern HINSTANCE include=<windows.h>;
+~extern HWND include=<windows.h>;
+~extern iostream include=<iostream>;
+~extern jmp_buf include=<setjmp.h>;
+~extern map;
+~extern memory include=<memory>;
+~extern RAND_MAX include=<cstdlib>;
+~extern wcslen include=<wchar.h>;
+~extern wcstombs include=<cstdlib>;
+
+// Direct X
+~extern LPCDIDATAFORMAT  include=<dinput.h>;
+~extern LPCDIDEVICEINSTANCE include=<dinput.h>;
+~extern DIDATAFORMAT include=<dinput.h> ;
+~extern LPDIRECTINPUT8 include=<dinput.h>;
+~extern LPDIRECTINPUTDEVICE8 include=<dinput.h>;
+~extern DIDEVICEINSTANCE include=<dinput.h>;
+~extern DIJOYSTATE2 include=<dinput.h>;
+~extern XINPUT_STATE include=<XInput.h>;
+
+
+namespace boost {
+    ~extern format
+        include=<boost/format.hpp>
+        using= { using boost::format; };
+    ~extern intrusive_ptr
+        include=<boost/intrusive_ptr.hpp>
+        using= { using boost::intrusive_ptr; };
+    ~extern optional
+        include=<boost/optional.hpp>
+        using= { using boost::optional; };
+    ~extern shared_ptr
+        include=<boost/shared_ptr.hpp>
+        using= { using boost::shared_ptr; };
+}
+
+namespace std {
+    class exception { ~hfile=<exception> };
+    class fstream { ~hfile=<fstream> };
+    class string { ~hfile=<string> };
+    class stringstream { ~hfile=<sstream> };
+    class unique_ptr { ~hfile=<memory> };
+    class vector { ~hfile=<vector> };
+}
+
+
+
+// --------------------------------------------------------------------------
+// Internal nodes defined in plain C++
+// --------------------------------------------------------------------------
+~extern Lp3_Windows_H include=<Lp3/Windows.h> ;
+namespace Lp3
+{
+    namespace Engine
+    {
+        class ErrOut { ~hfile=<Lp3/Engine/ErrOut.h> };
+
+        namespace Misc
+        {
+            class GenerateVoidHash { ~hfile=<Lp3/Engine/Misc/Hash.h> };
+        }
+    }
+
+    namespace Memory
+    {
+        class MemoryList { ~hfile=<Lp3/Engine/Memory/MemoryList.h> };
+        class MemorySpace { ~hfile=<Lp3/Engine/Memory/MemorySpace.h> };
+        class MemoryPool { ~hfile=<Lp3/Engine/Memory/MemoryPool.h> };
+    }
+}

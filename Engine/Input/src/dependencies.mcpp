@@ -1,8 +1,0 @@
-~extern LPCDIDATAFORMAT  include=<dinput.h>;
-~extern LPCDIDEVICEINSTANCE include=<dinput.h>;
-~extern DIDATAFORMAT include=<dinput.h> ;
-~extern LPDIRECTINPUT8 include=<dinput.h>;
-~extern LPDIRECTINPUTDEVICE8 include=<dinput.h>;
-~extern DIDEVICEINSTANCE include=<dinput.h>;
-~extern DIJOYSTATE2 include=<dinput.h>;
-~extern XINPUT_STATE include=<XInput.h>;
