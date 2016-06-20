@@ -27,6 +27,17 @@ This code was Dreamcast compatible at some point in the past; now, it is
 anyone's guess. Support for this will be resurrected the toolchain even gets
 past GCC 4.7.
 
+## Media
+
+To simplify Media, all Lp3 projects use an environment variable called
+"LP3_ROOT_PATH". This should point to some directory where all media files
+(such as graphics and music) are located. This way, those files can live
+outside of the Git managed code repository. The expectation is that each
+project has its own directory that all files start with, so if the name of
+the project is "DuckMystery" then all files for it would live in a directory
+named "DuckMystery." There may be a better way to manage media files in
+concert with source code but I do not know it.
+
 ## Components
 
 ### Lp3 :: Core
