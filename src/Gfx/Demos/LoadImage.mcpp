@@ -7,6 +7,7 @@
  */
 ~unit LoadImage type=exe; // platform=windows;
 
+~import Lp3::Exception;
 ~import boost::format;
 ~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Gfx::BitmapReader;
