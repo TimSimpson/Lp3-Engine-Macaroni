@@ -59,13 +59,17 @@ set_source_files_properties(
     ${MACARONI_LIBS_Lp3_Core_SRC_FILES}
     PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Lp3_Core ${CONAN_LIBS})
-add_dependencies(Lp3_Core invoke_macaroni)
+
+# If project.lua is found, invoke Macaroni. Otherwise ignore for package builds.
+if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/project.lua")
+    add_dependencies(Lp3_Core invoke_macaroni)
+endif()
 
 create_test(PrimitivesTest src/Core/Lp3/PrimitivesTest.cpp Lp3_Core)
 create_test(AllocatorTest src/Core/Lp3/Engine/Memory/AllocatorTest.cpp Lp3_Core)
 create_test(CoroutineTest src/Core/Lp3/Engine/Coroutine/CoroutineTest.cpp Lp3_Core)
 create_test(MemoryStackTest src/Core/Lp3/Engine/Memory/MemoryStackTest.cpp Lp3_Core)
-create_test(ResourceDemo ../target/ResourceDemo.cpp Lp3_Core)
+create_test(ResourceDemo target/ResourceDemo.cpp Lp3_Core)
 
 create_exe(AssertDemo src/Core/Demos/AssertDemo.cpp Lp3_Core)
 create_exe(Demo src/Core/Demos/Demo.cpp Lp3_Core)
