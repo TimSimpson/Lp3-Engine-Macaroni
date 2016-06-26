@@ -1,0 +1,144 @@
+~import strncmp;
+~import Lp3::Exception;
+~import Lp3::Engine::Resources::ResettableReadStream;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+~import boost::shared_ptr;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+
+
+~namespace Lp3::Engine::Sfx;
+
+
+class WaveFile
+{
+    private int channels;
+    private int samplesPerSecond;
+    private int bitsPerSample;
+    private int length;
+    private int lengthInBytes;
+    private ResettableReadStreamPtr stream;
+    private WaveFormatEx format;
+
+    public WaveFile(ResettableReadStreamPtr stream)
+    :   stream(stream)
+    {
+        loadFileHeader();
+    }
+
+    public ~WaveFile()
+    {
+    }
+
+    public WaveFormatEx GetFormat() const
+    {
+        return format;
+    }
+
+    private void loadFileHeader()
+    {
+        LP3_LOG_DEBUG("MARIO a");
+
+        char wordChar[5];
+        wordChar[4] = '\0';
+        // Should start with RIFF...
+
+        stream->Read(wordChar, 4);
+        if (strncmp(wordChar, "RIFF", 4) != 0)
+        {
+            LP3_LOG_DEBUG(wordChar);
+            LP3_THROW(Lp3::Exception, "Wave stream did not start with RIFF.");
+        }
+
+        // This is the size in bytes of the stream, store that in lengthInBytes.
+        stream->Read((char *)&lengthInBytes, 4);
+
+
+        // Now we should have "WAVE"...
+        stream->Read(wordChar, 4);
+        if (strncmp(wordChar, "WAVE", 4) != 0)
+        {
+            LP3_THROW(Lp3::Exception, "Did not start with WAVE.");
+        }
+        lengthInBytes -= 4;
+
+        // Now we should have "fmt " (with space)...
+        stream->Read(wordChar, 4);
+        if (strncmp(wordChar, "fmt ", 4) != 0)
+        {
+            LP3_THROW(Lp3::Exception, "Did not start with \"fmt \".");
+        }
+        lengthInBytes -= 4;
+
+        // Next up is the fmtChunk, how big format chunk is...
+        // already know it so we'll skip it and not check it :p
+        stream->Read(wordChar, 4); // throw away.
+        lengthInBytes -= 4;
+
+        // Finally, read in the wave format data chunk.
+        stream->ReadPod(format);
+
+        lengthInBytes -= sizeof(format);
+
+        // Now, search for the word "data"...
+        // Note, 2014-1-4:
+        // (I'm using ancient code, so I have no idea if this is
+        //  something that seriously has to happen here).
+        char next;
+        stream->Read(&next, 1);
+        int maxTry = 32;
+        for(; maxTry > 0 && next != 'd'; -- maxTry)
+        {
+            stream->Read(&next, 1);
+            lengthInBytes -= 1;
+        }
+        if (maxTry < 0)
+        {
+            LP3_THROW(Lp3::Exception, "Did not see initial d for 'data'.");
+        }
+        wordChar[3] = '\0';
+        stream->Read(wordChar, 3);
+        if (strncmp(wordChar, "ata", 3) != 0)
+        {
+            wordChar[5] = '\0';
+            LP3_THROW(Lp3::Exception, "Did not see \"data\" in the stream!");
+        }
+        lengthInBytes -= 3;
+        // At this point, length is now length in terms of samples...
+
+        //LP3_LOG_DEBUG_F(boost::format("old length=%d") % lengthInBytes));
+        stream->Read((char *)&lengthInBytes, 4);
+
+        this->lengthInBytes = lengthInBytes;
+        this->channels = format.nChannels;
+        this->samplesPerSecond = format.nSamplesPerSec;
+        this->bitsPerSample = format.wBitsPerSample;
+
+        // Looking for LENGTH IN MILLISECONDS.
+        // So first, get samples per millisecond...
+        float modifier = (float)samplesPerSecond / 1000;
+        // Now, multiply times BYTES PER CHANNEL (bitsPerSample / 8)
+        // and channels to get the bytes per millisecond.
+        modifier = modifier * (bitsPerSample / 8) * channels;
+        // Now, lengthInBytes / modifer (bytes per millisecond)
+        // gets us the length... right?
+        this->length = (int)(lengthInBytes / modifier);
+    }
+
+    public bool Eof()
+    {
+        return stream->Eof();
+    }
+
+    // Get next sample. Return false if out of samples.
+    public size_t GetNextSample(Lp3::UInt8 * sample, size_t size)
+    {
+        return stream->Read((char *)sample, size);
+    }
+
+    public void Reset()
+    {
+        stream->Reset(0);
+        loadFileHeader();
+    }
+};
+

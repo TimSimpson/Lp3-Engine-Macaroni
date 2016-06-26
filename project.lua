@@ -39,6 +39,13 @@ gfx = project:Library{
         "src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp",
     }
 }
+sfx = project:Library{
+    name="Lp3_Sfx",
+    shortName="Lp3_Sfx",
+    headers=pathList{"src/Sfx", "target"},
+    sources=pathList{"src/Sfx", "src/Dependencies.mcpp"},
+    usesBoost=true,
+}
 
 function generate()
   local cpp = plugins:Get("Cpp")

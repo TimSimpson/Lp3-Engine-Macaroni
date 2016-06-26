@@ -9,8 +9,10 @@
 ~extern iostream include=<iostream>;
 ~extern jmp_buf include=<setjmp.h>;
 ~extern map;
+~extern memcpy include=<string.h>;
 ~extern memory include=<memory>;
 ~extern RAND_MAX include=<cstdlib>;
+~extern strncmp include=<string.h>;
 ~extern wcslen include=<wchar.h>;
 ~extern wcstombs include=<cstdlib>;
 
@@ -23,6 +25,10 @@
 ~extern DIDEVICEINSTANCE include=<dinput.h>;
 ~extern DIJOYSTATE2 include=<dinput.h>;
 ~extern XINPUT_STATE include=<XInput.h>;
+~extern IXAudio2 include=<XAudio2.h>;
+~extern IXAudio2MasteringVoice include=<XAudio2.h>;
+~extern IXAudio2SourceVoice include=<XAudio2.h>;
+~extern XAUDIO2_BUFFER include=<XAudio2.h>;
 
 
 namespace boost {
@@ -41,6 +47,7 @@ namespace boost {
 }
 
 namespace std {
+    class array { ~hfile=<array> };
     class exception { ~hfile=<exception> };
     class fstream { ~hfile=<fstream> };
     class string { ~hfile=<string> };
@@ -73,4 +80,5 @@ namespace Lp3
         class MemorySpace { ~hfile=<Lp3/Engine/Memory/MemorySpace.h> };
         class MemoryPool { ~hfile=<Lp3/Engine/Memory/MemoryPool.h> };
     }
+
 }

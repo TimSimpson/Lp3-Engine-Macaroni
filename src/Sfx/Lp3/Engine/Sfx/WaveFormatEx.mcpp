@@ -1,0 +1,44 @@
+~unit "Lp3/Engine/Sfx/WaveFormatEx" ;
+
+~namespace Lp3::Engine::Sfx;
+
+~extern WaveFormatEx
+    include=<Lp3/Engine/Sfx/WaveFormatEx.h>
+    using={ using Lp3::Engine::Sfx::WaveFormatEx; }
+    ;
+
+~block "h"
+{
+    #include <Lp3/LE.h>
+
+    namespace Lp3 { namespace Engine { namespace Sfx {
+
+        // This is an *identical* copy of the WAVEFORMATEX from the Windows SDK.
+        // It's needed to load format info from wave files and also the XAudio2
+        // API uses it directly to set up voices.
+        struct WaveFormatEx
+        {
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(push, 1)
+            #endif
+            Lp3::UInt16  wFormatTag;
+            Lp3::UInt16  nChannels;
+            Lp3::UInt32  nSamplesPerSec;
+            Lp3::UInt32  nAvgBytesPerSec;
+            Lp3::UInt16  nBlockAlign;
+            Lp3::UInt16  wBitsPerSample;
+            #ifndef LP3_COMPILE_TARGET_LINUX
+                #pragma pack(pop)
+            #endif
+        }
+        #if defined(LP3_COMPILE_TARGET_LINUX) || defined(LP3_COMPILE_TARGET_DREAMCAST)
+        // WARNING: This GCC macro can potentially be unsafe except on x86 if
+        // a pointer to this struct is dereferenced.
+            __attribute__((packed));
+        #endif
+        ;
+        static_assert(sizeof(WaveFormatEx) == 16, // 8,
+                      "WaveFormatEx is the wrong size.");
+
+    }}}
+}

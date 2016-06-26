@@ -125,3 +125,19 @@ create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
            Lp3_Gfx)
 create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
 
+
+
+###############################################################################
+#  Sfx
+###############################################################################
+add_library(Lp3_Sfx
+    ${MACARONI_LIBS_Lp3_Sfx_CPP_FILES}
+    ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES})
+set_source_files_properties(
+    ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES}
+    PROPERTIES HEADER_FILE_ONLY TRUE)
+target_link_libraries(Lp3_Sfx Lp3_Core ${CONAN_LIBS})
+
+
+create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
+target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)

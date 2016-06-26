@@ -1,0 +1,171 @@
+~import std::array;
+~import IXAudio2;
+~import IXAudio2SourceVoice;
+~import LP3_ASSERT_TRUE_MESSAGE;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import LP3_COROUTINE;
+~import Lp3::Engine::Coroutine::CoroutineState;
+~import XAUDIO2_BUFFER;
+
+~namespace Lp3::Engine::Sfx;
+
+/** A Channel of sound.
+ *
+ *  Play - Starts the sound.
+ *  Stop - Stops the sound.
+ *  SetSource - Sets the channel source. Call this, then play, to make the
+ *              channel play anything.
+ *  SetVolume - Sets the volume. Expects a number from 0.0 to 1.0.
+ *
+ */
+class Channel
+{
+    public enum ChannelAction
+    {
+        REQUEST_PLAY,
+        REQUEST_STOP,
+        PLAYING,
+        STOPPED
+    };
+
+    private IXAudio2 * xAudio;
+    private int currentBufferIndex;
+    private static constexpr size_t maxBufferCount = 3;
+    private static constexpr size_t bufferSize = 8 * 1024;
+    private array<Lp3::UInt8 *, maxBufferCount> buffer;
+    private ChannelSource * source;
+    private IXAudio2SourceVoice * voice;
+    private XAUDIO2_BUFFER xbuffer;
+    private CoroutineState state;
+    private ChannelAction action;
+
+
+    ~block "cpp" {
+        #define CHECK_WIN_FUNC(expr, errMsg) { \
+            const HRESULT hr = (expr); \
+            if (FAILED(hr)) { \
+                LP3_LOG_ERROR(errMsg); \
+                throw Lp3::Exception(errMsg); \
+            } \
+        }
+    }
+
+    public Channel(IXAudio2 * audio, int streamIndex)
+    :   xAudio(audio),
+        currentBufferIndex(0),
+        buffer(),
+        source(nullptr),
+        voice(nullptr),
+        state(),
+        action(STOPPED)
+    {
+        LP3_ASSERT_TRUE_MESSAGE(audio != nullptr,
+                                "XAudio2 not initialized!");
+        for (int i = 0; i < maxBufferCount; ++i) {
+            buffer[i] = new Lp3::UInt8[bufferSize];
+        }
+    }
+
+    public ~Channel()
+    {
+        if (voice)
+        {
+            voice->DestroyVoice();
+        }
+    }
+
+    public Channel(const Channel & other) = delete;
+
+
+    private void loadFromSource()
+    {
+        LP3_ASSERT_TRUE_MESSAGE(source != nullptr,
+                                "Source was null.");
+        const StreamResult result = source->StreamNext(
+            reinterpret_cast<Lp3::UInt8 *>(buffer[currentBufferIndex]),
+            bufferSize);
+
+        xbuffer = { 0 };
+        xbuffer.AudioBytes = (UINT32) result.BytesRead;
+        xbuffer.pAudioData = (const BYTE *)buffer[currentBufferIndex];
+
+        if (result.Eof)
+        {
+            xbuffer.Flags = XAUDIO2_END_OF_STREAM;
+        }
+
+        ++ currentBufferIndex;
+        currentBufferIndex %= maxBufferCount;
+
+        CHECK_WIN_FUNC(voice->SubmitSourceBuffer(&xbuffer),
+                       "Failed submitting buffer.");
+    }
+
+    public void Play()
+    {
+        if (STOPPED != action)
+        {
+            return;
+        }
+        else
+        {
+            action = REQUEST_PLAY;
+        }
+    }
+
+    public void SetSource(ChannelSource & source)
+    {
+        const WaveFormatEx format = source.GetFormat();
+        IXAudio2SourceVoice * newVoice;
+        CHECK_WIN_FUNC(xAudio->CreateSourceVoice(&newVoice,
+                                                 (WAVEFORMATEX*) &format),
+                       "Failed to initialize source voice.");
+        if (voice)
+        {
+            voice->DestroyVoice();
+        }
+        voice = newVoice;
+        this->source = &source;
+    }
+
+    public void Stop()
+    {
+        if (PLAYING != action)
+        {
+            return;
+        }
+        else
+        {
+            action = REQUEST_STOP;
+        }
+    }
+
+    public void Update()
+    {
+        LP3_COROUTINE_BEGIN(state);
+            while(action != REQUEST_PLAY)
+            {
+                LP3_YIELD();
+            }
+            action = PLAYING;
+            loadFromSource();
+            CHECK_WIN_FUNC(voice->Start(0),
+                           "Failed to start voice.");
+            LP3_YIELD();
+            while(action == PLAYING)
+            {
+                XAUDIO2_VOICE_STATE state;
+                voice->GetState(&state);
+                if (state.BuffersQueued < (maxBufferCount -1))
+                {
+                    loadFromSource();
+                }
+                LP3_YIELD();
+            }
+            CHECK_WIN_FUNC(voice->Stop(0),
+                           "Failed to stop voice.");
+            action = STOPPED;
+        LP3_COROUTINE_END();
+    }
+};
+

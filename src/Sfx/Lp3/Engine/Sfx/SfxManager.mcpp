@@ -1,0 +1,70 @@
+~import Lp3::Engine::Sfx::Channel;
+~import Lp3::Exception;
+~import LP3_LOG_ERROR;
+~import LP3_ASSERT_TRUE;
+~import IXAudio2;
+~import IXAudio2MasteringVoice;
+~import std::vector;
+
+~namespace Lp3::Engine::Sfx;
+
+
+class SfxManager
+{
+    private IXAudio2 * xAudio2;
+    private IXAudio2MasteringVoice * masteringVoice;
+    private vector<Channel *> channels;
+
+    ~block "cpp" {
+        #define CHECK_WIN_FUNC(expr, errMsg) { \
+            const HRESULT hr = (expr); \
+            if (FAILED(hr)) { \
+                LP3_LOG_ERROR(errMsg); \
+                throw Lp3::Exception(errMsg); \
+            } \
+        }
+    }
+
+    public SfxManager()
+    :   xAudio2(nullptr),
+        masteringVoice(nullptr),
+        channels()
+    {
+        //TODO:
+        // This is suspect. I'm surprised it would be necessary... look into it.
+        CoInitialize(nullptr);
+
+        CHECK_WIN_FUNC(XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR),
+                       "Failed initializing XAudio2.");
+        CHECK_WIN_FUNC(xAudio2->CreateMasteringVoice(&masteringVoice),
+                       "Failed initializing master voice.");
+    }
+
+    public ~SfxManager()
+    {
+        for (Channel * c : channels)
+        {
+            delete c;
+        }
+        masteringVoice->DestroyVoice();
+        xAudio2->Release();
+    }
+
+
+    public Channel * CreateChannel()
+    {
+        channels.push_back(new Channel(xAudio2, (int) channels.size()));
+        return channels.back();
+    }
+
+    public void Update()
+    {
+        for (Channel * c : channels)
+        {
+            if (c)
+            {
+                c->Update();
+            }
+        }
+    }
+};

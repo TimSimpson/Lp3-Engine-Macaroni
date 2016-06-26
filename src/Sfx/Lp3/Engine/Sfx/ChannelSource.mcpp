@@ -1,0 +1,18 @@
+~import boost::shared_ptr;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+~import Lp3::UInt8;
+
+
+~namespace Lp3::Engine::Sfx;
+
+
+class ChannelSource
+{
+    public virtual ~ChannelSource() {}
+
+    public virtual WaveFormatEx GetFormat() const = 0;
+
+    // Called by the Channel to grab more sound data.
+    public virtual StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) = 0;
+};

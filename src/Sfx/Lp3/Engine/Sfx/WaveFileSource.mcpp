@@ -1,0 +1,209 @@
+~import Lp3::Engine::Sfx::ChannelSource;
+~import LP3_COROUTINE;
+~import Lp3::Engine::Coroutine::CoroutineState;
+~import Lp3::Engine::Memory::Host;
+~import memcpy;
+~import boost::optional;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::Engine::Sfx::WaveFile;
+
+
+~namespace Lp3::Engine::Sfx;
+
+
+/**
+ *  A sound source that allows a channel to play back a Wave file.
+ *
+ *  Methods of note:
+ *      - Load - Call this method to load more file data into this object's
+ *               buffer. In theory this can happen in a seperate thread.
+ *      - StreamNext - Called by the sound system to load more sound data.
+ *
+ *  When constructing this class, a MemoryHost is used to create a buffer.
+ *
+ */
+class WaveFileSource : public ChannelSource
+{
+    private Host & host;
+    private size_t lastSizeStreamed;
+    private size_t loadChunkSize;
+
+    // Buffer where the sound is loaded.
+    private Lp3::UInt8 * pBuffer;
+    private size_t pBufferSize;
+
+    private size_t playBegin;
+    private size_t playEnd;
+    private bool playEndInit;
+	private size_t totalLoad;
+    private CoroutineState state;
+    private WaveFile * waveFile;
+
+    public WaveFileSource(Host & host, WaveFile * waveFile, size_t pBufferSize,
+                          size_t loadChunkSize)
+    :   host(host),
+        lastSizeStreamed(0),
+        loadChunkSize(loadChunkSize),
+        pBuffer(nullptr),
+        pBufferSize(pBufferSize),
+        playBegin(0),
+        playEnd(0),
+        playEndInit(false),
+		totalLoad(0),
+        waveFile(waveFile)
+    {
+        pBuffer = reinterpret_cast<Lp3::UInt8 *>(host.Alloc(pBufferSize));
+    }
+
+    public ~WaveFileSource()
+    {
+        host.Free(pBuffer);
+    }
+
+    public WaveFormatEx GetFormat() const override
+    {
+        return waveFile->GetFormat();
+    }
+
+    public void Load()
+    {
+        // Load from the file into the buffer.
+        //
+        // Visualize the buffer like this, with "b" = playBegin, "e"= playEnd
+        //
+        //   [________________________________________________________]
+        //
+        // The first pass is simple- we start at the beginning, and fill the
+        // front of the buffer.
+        // playBegin will be set to the start of the buffer.
+        // playEnd will be set to the end of the loaded data.
+        //
+        //   [b_______________e_______________________________________]
+        //
+        // On the next pass, we will see if playEnd > playBegin. If playEnd
+        // is still less than the size of our buffer, we will load more data
+        // starting at playEnd (e'). Meanwhile, we can assume that some data
+        // from the start of the buffer has been played (or just that
+        // StreamNext has been called) and playBegin has moved forward (b'):
+        //
+        //   [b__b'___________e________e'_____________________________]
+        //
+        // Finally, we keep doing that until the playEnd reaches the end of
+        // the buffer:
+        //
+        //   [____________________b__________________________________e]
+        //
+        // At this point, when we get called next, we will load from the
+        // buffer at a max size of whatever playBegin is at. playEnd wil
+        // then be set to the however much was loaded:
+        //
+        //   [___________e________b___________________________________]
+        //
+        // From now one, the last bit of logic is called, which loads the
+        // buffer starting from playEnd up until playBegin, waiting if
+        // playEnd == playBegin (though if you think about it that would
+        // be disastrous and mean the sound data is not loading fast enough).
+        //
+        //   [___________e_____e'_b_____b'_____________________________]
+        //
+        if (!playEndInit || playEnd > playBegin)
+        {
+            // B < E
+            // If we haven't finished filling the pBuffer...
+            if (playEnd < pBufferSize)
+            {
+                playEndInit = true;
+                Lp3::UInt8 * const buff = pBuffer + playEnd;
+                const size_t buffSize = pBufferSize - playEnd;
+                const size_t result = tryLoad(buff, buffSize);
+                playEnd += result;
+            }
+            else
+            {
+                // Ok, now we're going to wrap around- things will get tricky.
+                if (playBegin == 0) {
+                    // Wait
+                }
+                else if (playBegin == playEnd)
+                {
+                    // Wait
+                }
+                else
+                {
+                    // There may be some space at the beginning, so set playEnd
+                    // equal to whatever the result of the load is- which will
+                    // put it *before* playBegin as we wrap around.
+                    Lp3::UInt8 * const buff = pBuffer + 0;
+                    const size_t buffSize = playBegin;
+                    const size_t result = tryLoad(buff, buffSize);
+                    // Now play end will wrap around.
+                    playEnd = result;
+                }
+            }
+        }
+        else
+        {
+            // E < B
+            // This is during the second phase, where playEnd may be < playBegin.
+            if ((playBegin - playEnd ) == 0)
+            {
+                // We have to wait!
+            }
+            else
+            {
+                // May be some space between playEnd and playBegin.
+                Lp3::UInt8 * const buff = pBuffer + playEnd;
+                const size_t buffSize = (playBegin - playEnd) - 1;
+                const size_t result = tryLoad(buff, buffSize);
+                playEnd += result;
+            }
+        }
+		LP3_LOG_DEBUG("playBegin=%d, playEnd=%d", playBegin, playEnd);
+    }
+
+    private size_t tryLoad(Lp3::UInt8 * buff,
+                           optional<size_t> maxSize = boost::none)
+    {
+        const size_t max = (maxSize && maxSize.get() < loadChunkSize)
+            ?
+                maxSize.get()
+            :
+                loadChunkSize;
+        if (waveFile->Eof())
+        {
+            waveFile->Reset();
+        }
+        size_t result = 0;
+        while(0 == result)
+        {
+            result = waveFile->GetNextSample(buff, max);
+        }
+		totalLoad += result;
+		LP3_LOG_DEBUG("TOTAL LOAD: %d", totalLoad);
+        return result;
+    }
+
+    public StreamResult StreamNext(Lp3::UInt8 * sndBuff, size_t size) override
+    {
+		Load();
+        LP3_ASSERT_FALSE(size == 0);
+        Lp3::UInt8 * const buff = pBuffer + playBegin;
+        LP3_ASSERT_TRUE(playEndInit); // Should have called load once!
+        const size_t possibleBuffSize = (playEnd > playBegin)
+            ?   (playEnd - playBegin)
+            :   (pBufferSize - playBegin);
+        const size_t actualBuffSize = (size < possibleBuffSize)
+            ? size : possibleBuffSize;
+        //LP3_LOG_DEBUG_F(boost::format("playBegin=%d, playEnd=%d") % playBegin % playEnd);
+        memcpy(sndBuff, buff, actualBuffSize);
+        // Move playBegin forward.
+        playBegin += actualBuffSize;
+        if (playBegin >= pBufferSize)
+        {
+            playBegin = playBegin - pBufferSize;
+        }
+        lastSizeStreamed = actualBuffSize;
+        LP3_ASSERT_FALSE(lastSizeStreamed == 0);
+        return StreamResult(lastSizeStreamed, waveFile->Eof());
+    }
+};

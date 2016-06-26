@@ -1,0 +1,17 @@
+~import boost::shared_ptr;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+~import Lp3::UInt8;
+
+
+~namespace Lp3::Engine::Sfx;
+
+struct StreamResult
+{
+    public size_t BytesRead;
+    public bool Eof;
+
+    public StreamResult(size_t bytesRead, bool eof)
+    :   BytesRead(bytesRead),
+        Eof(eof)
+    {}
+};

@@ -1,0 +1,332 @@
+~unit "SoundDemo" type=exe ;
+
+~import Lp3::Engine::Sfx::Channel;
+~import Lp3::Engine::Memory::GlobalHeap;
+~import Lp3::Engine::Memory::GlobalHeapPtr;
+~import Lp3::Engine::Resources::MemoryStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import Lp3::Engine::Sfx::SfxManager;
+~import Lp3::Engine::Sfx::WaveFile;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+~import Lp3::Engine::Sfx::WaveFileSource;
+
+~block "cpp" :=
+
+#include <Lp3/LE.h>
+#include <array>
+#include <boost/format.hpp>
+#include <Lp3/Exception.h>
+#include <Lp3/Log.h>
+#include <Lp3/Engine/Gfx/Pixel.h>
+#include <boost/shared_ptr.hpp>
+#include <Lp3/Assert.h>
+#include <Lp3/Engine/Resources/ReadStream.h>
+#include <Lp3/Engine/Resources/ReadStreamPtr.h>
+#include <Lp3/Engine/Gfx/GfxManager.hpp>
+#include <Lp3/Engine/Gfx/Renderer.hpp>
+#include <Lp3/Engine/Gfx/Geometry.hpp>
+#include <Lp3/Engine/Gfx/ImageMemory.hpp>
+#include <Lp3/Engine/Resources/ResettableReadStream.h>
+#include <Lp3/Engine/Resources/InputFileStream.hpp>
+#include <Lp3/Engine/Gfx/ScreenObject.h>
+#include <Lp3/Engine/Gfx/ScreenObjectPtr.h>
+#include <Lp3/Engine/Gfx/Screen.h>
+#include <string>
+#include <Lp3/Engine/Gfx/Texture.hpp>
+#include <Lp3/Engine/Gfx/TexturePtr.hpp>
+#include <Lp3/Engine/Gfx/TileSet.h>
+#include <Lp3/Engine/Gfx/TileRenderer.h>
+#include <vector>
+#include <memory>
+
+using std::array;
+using boost::format;
+using Lp3::Engine::Gfx::GfxManager;
+using Lp3::Engine::Gfx::ImageMemory;
+using Lp3::Engine::Resources::InputFileStream;
+using Lp3::Engine::Gfx::Pixel;
+using Lp3::Engine::Resources::ReadStreamPtr;
+using Lp3::Engine::Gfx::Renderer;
+using Lp3::Engine::Gfx::Screen;
+using Lp3::Engine::Gfx::ScreenObject;
+using Lp3::Engine::Gfx::ScreenObjectPtr;
+using std::string;
+using Lp3::Engine::Gfx::Texture;
+using Lp3::Engine::Gfx::TexturePtr;
+using Lp3::Engine::Gfx::TileRenderer;
+using Lp3::Engine::Gfx::TileSet;
+using std::vector;
+using std::unique_ptr;
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+#include <Xaudio2.h>
+
+GfxManager * manager;
+
+
+using namespace Lp3::Engine::Gfx::Geometry;
+
+
+#define CHECK_GOOD(expr, errMsg) { \
+	const HRESULT hr = (expr); \
+    if (FAILED(hr)) { \
+		LP3_LOG_ERROR(errMsg); \
+		throw Lp3::Exception(errMsg); \
+	} \
+   }
+
+/*
+
+class SoundManager
+{
+private:
+
+    IXAudio2 * xAudio;
+    IXAudio2MasteringVoice * masterVoice;
+    IXAudio2SourceVoice * sourceVoice;
+
+    const size_t loadingBufferSize = 4 * 1024;
+    Lp3::UInt8 * loadingBuffer;
+
+	unique_ptr<WaveFile> wf;
+    unique_ptr<WaveFileSource> ws;
+
+    int currentBufferIndex = 0;
+    static constexpr std::size_t maxBufferCount = 3;
+	static constexpr size_t bufferSize = 8 * 1024;
+	array<Lp3::UInt8 *, maxBufferCount> buffer;
+
+	XAUDIO2_BUFFER xbuffer;
+
+public:
+    SoundManager()
+    :   buffer(),
+        currentBufferIndex(0)
+    {
+        for (int i = 0; i < maxBufferCount; ++i) {
+		    buffer[i] = new Lp3::UInt8[bufferSize];
+        }
+		CoInitialize(nullptr);
+
+        xAudio = nullptr;
+		CHECK_GOOD(XAudio2Create(&xAudio, 0, XAUDIO2_DEFAULT_PROCESSOR),
+			"Failed initializing XAudio2.");
+
+        masterVoice = nullptr;
+		CHECK_GOOD(xAudio->CreateMasteringVoice(&masterVoice),
+			       "Failed initializing master voice.");
+
+
+        auto globalHeap = GlobalHeap::GetGlobalHeap();
+        loadingBuffer = reinterpret_cast<Lp3::UInt8 *>(
+            globalHeap->Alloc(loadingBufferSize));
+
+        LP3_LOG_DEBUG("Loading wave file...");
+
+        const auto createWaveSource = [&globalHeap](const char * fileName)
+        {
+            ResettableReadStreamPtr file = InputFileStream::Create(fileName);
+            //ResettableReadStreamPtr memory = MemoryStream::Create(
+            //    *globalHeap, 512 * 1024);
+            //LP3_LOG_DEBUG("Going to load the stream to memory now.");
+            //static_cast<MemoryStream *>(memory.get())->Load(
+            //    file, boost::none, 4 * 1024);
+            unique_ptr<WaveFileSource> ws;
+            //ws = new WaveFileSource(
+            //    *globalHeap,
+            //    WaveFile::Create(memory),
+            //    4 * 80 * 1024, // Four times the typical sound buffer.
+            //    (80 * 1024) / 4,
+            //    1024
+            //);
+
+			unique_ptr<WaveFile> wf = std::make_unique<WaveFile>(file); //memory);
+            return wf;
+        };
+
+        //ws = createWaveSource("Engine/Sfx/c.wav");
+		wf = createWaveSource("Engine/Sfx/c.wav");
+		ws = std::make_unique<WaveFileSource>(
+			*globalHeap,
+			wf.get(),
+			4 * 80 * 1024, // Four times the typical sound buffer.
+			(80 * 1024) / 4);
+
+        LP3_LOG_DEBUG("Now, let's try a delicious load...");
+        ws->Load();
+        LP3_LOG_DEBUG("Set source GO!");
+        //channels[0]->SetSource(ws);
+
+		WaveFormatEx ex = wf->GetFormat();
+
+        CHECK_GOOD(xAudio->CreateSourceVoice( &sourceVoice, (WAVEFORMATEX*)& ex),
+				  "Failed to initialize source voice.");
+
+		queueUpWaveFile();
+
+		CHECK_GOOD(sourceVoice->Start(0),
+			"Failed to start sound.");
+
+    }
+
+    void queueUpWaveFile() {
+        ws->Load();
+        ws->StreamNext(reinterpret_cast<Lp3::UInt8 *>(buffer[currentBufferIndex]), bufferSize);
+
+        xbuffer = { 0 };
+        xbuffer.AudioBytes = bufferSize;
+        xbuffer.pAudioData = (const BYTE *)buffer[currentBufferIndex];
+		if (wf->Eof())
+		{
+			xbuffer.Flags = XAUDIO2_END_OF_STREAM;
+		}
+
+        ++ currentBufferIndex;
+        currentBufferIndex %= maxBufferCount;
+
+        CHECK_GOOD(sourceVoice->SubmitSourceBuffer(&xbuffer),
+            "Failed submitting buffer.");
+    }
+
+    ~SoundManager()
+    {
+		//delete sourceVoice;
+        //delete masterVoice;
+		xAudio->Release();
+        for (auto i = 0; i < maxBufferCount; ++ i) {
+		    delete buffer[i];
+        }
+    }
+
+    void update() {
+        XAUDIO2_VOICE_STATE state;
+        sourceVoice->GetState(&state);
+        if (state.BuffersQueued < (maxBufferCount -1))
+        {
+            queueUpWaveFile();
+        }
+    }
+};
+*/
+
+class SoundManager
+{
+private:
+    GlobalHeapPtr globalHeap;
+    SfxManager manager;
+    unique_ptr<WaveFile> wf;
+    unique_ptr<WaveFileSource> ws;
+
+
+public:
+    SoundManager()
+    :   manager()
+    {
+        Channel * c = manager.CreateChannel();
+
+        ResettableReadStreamPtr file
+            = InputFileStream::Create("Engine/Sfx/count.wav");
+        wf = std::make_unique<WaveFile>(file);
+
+        globalHeap = GlobalHeap::GetGlobalHeap();
+        ws = std::make_unique<WaveFileSource>(
+            *globalHeap,
+            wf.get(),
+            4 * 80 * 1024, // Four times the typical sound buffer.
+            (80 * 1024) / 4);
+
+        c->SetSource(*ws);
+        c->Play();
+    }
+
+    ~SoundManager()
+    {
+    }
+
+    void update() {
+        manager.Update();
+    }
+};
+
+
+class GraphicsObject : public ScreenObject
+{
+    TexturePtr textureText;
+    std::unique_ptr<TileSet> tileSet;
+
+    public: GraphicsObject(ImageMemory & memory)
+    {
+        LP3_LOG_DEBUG("Creating textureTexts...");
+        ReadStreamPtr input(new InputFileStream("Engine/text.bmp"));
+        const Pixel colorKey(0, 0, 0, 0);
+        textureText = memory.LoadTexture(input, colorKey);
+        tileSet.reset(new TileSet(textureText, {16, 16}, {16, 16}));
+    }
+
+    public: virtual void DrawOpaque(Renderer & renderer)
+    {
+    }
+
+    public: virtual void DrawTranslucent(Renderer & renderer)
+    {
+        TileRenderer tr = tileSet->StartRenderer(renderer);
+        tr.Write({32, 304 + 32}, 0.5f, "Music!");
+    }
+};
+
+
+class Main
+{
+private:
+    GfxManager manager;
+    SoundManager sfx;
+
+public:
+    Main(const vector<string> & arguments
+         LP3_COMPILE_TARGET_WINDOWS_THEN(, HINSTANCE hInstance, HWND hWnd))
+    :   manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd)),
+        sfx()
+    {
+        LP3_LOG_DEBUG("Initializing GFX...");
+        Screen & screen = manager.GetScreen(0);
+        ImageMemory & memory = screen.GetImageMemory();
+
+        ScreenObjectPtr obj(new GraphicsObject(memory));
+        screen.SetObject(obj);
+
+                LP3_LOG_DEBUG("Finished initialization.");
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+    }
+
+
+    void Iterate()
+    {
+        manager.Render();
+        sfx.update();
+    }
+
+    LP3_COMPILE_TARGET_WINDOWS_THEN(
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+            switch(message){
+                case WM_SIZE:
+                    /* Tell Gfx the size of our window. This
+                     * does not affect the game's resolution. */
+                    manager.Resize({ LOWORD(lParam), HIWORD(lParam) });
+                    break;
+                default:
+                    break;
+            }
+        }
+    )
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::ResizeWindow")
