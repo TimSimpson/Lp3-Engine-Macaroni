@@ -1,0 +1,73 @@
+~import std::array;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import boost_math_constants;
+~import std::memcpy;
+~import std::min;
+~import std::numeric_limits;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::UInt8;
+~import Lp3::Int16;
+
+
+~namespace Lp3::Engine::Sfx::Sources;
+
+
+class Sinusoidal : public ChannelSource
+{
+    // http://www.math.umn.edu/~rogness/math1155/soundwaves/
+    // I've found the diagrams on this page will show higher values than the
+    // text. So the diagram for note A has Sin[880pieX], but the text says
+    // 440. Playing the downloaded note from the site proves 440 is the
+    // correct value, for this code at least, to get an A note.
+
+    private float cyclesPerSecond;
+    private static constexpr size_t samplesPerSecond = 44100;
+    private size_t currentIndex;
+    private float volume;
+
+    public Sinusoidal(const float cyclesPerSecond, const float volume)
+    :   cyclesPerSecond(cyclesPerSecond),
+        currentIndex(0),
+        volume(volume)
+    {
+    }
+
+    Lp3::Int16 createSample(size_t index)
+    {
+        index %= samplesPerSecond;
+        const float x = ((float) index / 44100.0f);
+
+        // sin(2pie * cycles * x)
+        float theta
+            = 2 * boost::math::constants::pi<float>() * cyclesPerSecond * x;
+        return numeric_limits<Lp3::Int16>::max() * sin(theta) * volume;
+    }
+
+    public virtual WaveFormatEx GetFormat() const override
+    {
+        WaveFormatArgs args;
+        args.channels = 1;  // Mono
+        args.bitsPerSample = 16;
+        args.samplesPerSecond = 44100;
+        WaveFormatEx ex = CreateWaveFormatEx(args);
+        return ex;
+    }
+
+    public void SetCyclesPerSecond(const float cps)
+    {
+        cyclesPerSecond = cps;
+    }
+
+    public StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) override
+    {
+        Lp3::Int16 * bufferAs16 = (Lp3::Int16 *) buffer;
+        size_t sizeAs16 = size / 2;
+        for (auto i = 0; i < sizeAs16; ++ i)
+        {
+            bufferAs16[i] = createSample(currentIndex + i);
+        }
+        currentIndex += sizeAs16;
+        currentIndex %= samplesPerSecond;
+        return StreamResult(size - (size % 2 == 0 ? 0 : 1));
+    }
+};

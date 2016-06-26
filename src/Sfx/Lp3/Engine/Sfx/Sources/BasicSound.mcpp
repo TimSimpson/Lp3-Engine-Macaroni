@@ -1,0 +1,21 @@
+~import Lp3::UInt8;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+
+
+~namespace Lp3::Engine::Sfx::Sources;
+
+
+class BasicSound : public ChannelSource
+{
+    public virtual WaveFormatEx GetFormat() const override
+    {
+        WaveFormatArgs args;
+        args.channels = 2;
+        args.bitsPerSample = 16;
+        args.samplesPerSecond = 44100;
+        WaveFormatEx ex = CreateWaveFormatEx(args);
+        return ex;
+    }
+};

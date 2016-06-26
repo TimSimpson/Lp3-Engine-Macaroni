@@ -71,6 +71,7 @@ class Channel
         if (voice)
         {
             voice->DestroyVoice();
+			voice = nullptr;
         }
     }
 
@@ -120,11 +121,12 @@ class Channel
         CHECK_WIN_FUNC(xAudio->CreateSourceVoice(&newVoice,
                                                  (WAVEFORMATEX*) &format),
                        "Failed to initialize source voice.");
-        if (voice)
+        if (this->voice)
         {
-            voice->DestroyVoice();
+            this->voice->DestroyVoice();
+			this->voice = nullptr;
         }
-        voice = newVoice;
+        this->voice = newVoice;
         this->source = &source;
     }
 

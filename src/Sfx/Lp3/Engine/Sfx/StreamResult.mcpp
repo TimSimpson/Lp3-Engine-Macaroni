@@ -10,7 +10,7 @@ struct StreamResult
     public size_t BytesRead;
     public bool Eof;
 
-    public StreamResult(size_t bytesRead, bool eof)
+    public StreamResult(size_t bytesRead, bool eof=false)
     :   BytesRead(bytesRead),
         Eof(eof)
     {}

@@ -1,0 +1,114 @@
+~import std::array;
+~import Lp3::UInt8;
+~import Lp3::Engine::Sfx::Sources::BasicSound;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::Engine::Sfx::WaveFormatEx;
+
+
+~namespace Lp3::Engine::Sfx::Sources;
+
+
+class ChannelSourceTone : public BasicSound
+{
+    private bool nDir;
+    private Lp3::UInt8 noise;
+
+    public ChannelSourceTone()
+    :   nDir(false),
+        noise(0x00)
+    {}
+
+    public StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) override
+    {
+        for(size_t i = 0; i < size; i ++)
+        {
+            buffer[i] = noise;
+            if (nDir)
+            {
+                noise ++;
+                if (noise >= 0x44) nDir = false;
+             }
+             else
+             {
+                 noise --;
+                 if (noise <= 0x00) nDir = true;
+             }
+         }
+         return StreamResult(size, false);
+    }
+};
+
+
+class ChannelSourceTone2 : public BasicSound
+{
+    private bool nDir;
+    private Lp3::UInt8 noise;
+
+    public StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) override
+    {
+        for(size_t i = 0; i < size; i ++)
+        {
+            buffer[i] = noise;
+            if (nDir)
+            {
+                noise += 16;
+                if (noise >= 0x44) nDir = false;
+             }
+             else
+             {
+                 noise --;
+                 if (noise <= 0x00) nDir = true;
+             }
+         }
+         return StreamResult(size, false);
+    }
+};
+
+
+class A4 : public BasicSound
+{
+    ~import boost_math_constants;
+    ~import std::memcpy;
+    ~import std::min;
+
+    private static constexpr size_t samplesPerSecond = 44100;
+    private array<Lp3::Int16, samplesPerSecond> sourceBuffer;
+    private size_t currentIndex;
+
+    public A4()
+    :   sourceBuffer(),
+        currentIndex(0)
+    {
+        float frequency = 880.0f;
+        float amplitude = 0.5f;
+        for (int i = 0; i < 44100; i++)
+        {
+            float theta
+                = ((float)i / 44100.0f) * boost::math::constants::pi<float>();
+            sourceBuffer[i]
+                = (Lp3::Int16) (sin(theta * frequency) * 32767.0f * amplitude);
+        }
+    }
+
+    public StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) override
+    {
+        const size_t maxBytesInSrc = 44100 * 2;
+        Lp3::UInt8 * start = (Lp3::UInt8 *) this->sourceBuffer.data();
+        start += currentIndex;
+        size_t readSize = std::min(maxBytesInSrc - currentIndex, size);
+
+        std::memcpy(buffer, start, readSize);
+
+        size -= readSize;
+        if (size > 0)
+        {
+            const auto n = StreamNext(buffer + readSize, size);
+            return StreamResult(readSize + n.BytesRead, false);
+        }
+        else
+        {
+            return StreamResult(readSize, false);
+        }
+    }
+};

@@ -109,9 +109,9 @@ class WaveFile
         stream->Read((char *)&lengthInBytes, 4);
 
         this->lengthInBytes = lengthInBytes;
-        this->channels = format.nChannels;
-        this->samplesPerSecond = format.nSamplesPerSec;
-        this->bitsPerSample = format.wBitsPerSample;
+        this->channels = format.channels;
+        this->samplesPerSecond = format.samplesPerSecond;
+        this->bitsPerSample = format.bitsPerSample;
 
         // Looking for LENGTH IN MILLISECONDS.
         // So first, get samples per millisecond...

@@ -21,12 +21,13 @@
             #ifndef LP3_COMPILE_TARGET_LINUX
                 #pragma pack(push, 1)
             #endif
-            Lp3::UInt16  wFormatTag;
-            Lp3::UInt16  nChannels;
-            Lp3::UInt32  nSamplesPerSec;
-            Lp3::UInt32  nAvgBytesPerSec;
-            Lp3::UInt16  nBlockAlign;
-            Lp3::UInt16  wBitsPerSample;
+            Lp3::UInt16  formatTag;
+            Lp3::UInt16  channels;
+            Lp3::UInt32  samplesPerSecond;
+            Lp3::UInt32  avgBytesPerSecond;
+            Lp3::UInt16  blockAlign;
+            Lp3::UInt16  bitsPerSample;
+            Lp3::UInt16  size;
             #ifndef LP3_COMPILE_TARGET_LINUX
                 #pragma pack(pop)
             #endif
@@ -37,8 +38,29 @@
             __attribute__((packed));
         #endif
         ;
-        static_assert(sizeof(WaveFormatEx) == 16, // 8,
+        static_assert(sizeof(WaveFormatEx) == 18, // 16, // 8,
                       "WaveFormatEx is the wrong size.");
 
     }}}
+}
+
+struct WaveFormatArgs
+{
+    Lp3::UInt16 channels;
+    Lp3::UInt16 bitsPerSample;
+    Lp3::UInt32 samplesPerSecond;
+}
+
+WaveFormatEx CreateWaveFormatEx(const WaveFormatArgs & args)
+{
+    WaveFormatEx format = {0};
+    format.size = sizeof(WaveFormatEx);
+    format.channels = args.channels;
+    format.bitsPerSample = args.bitsPerSample;
+    format.samplesPerSecond = args.samplesPerSecond;
+    format.avgBytesPerSecond
+        = args.samplesPerSecond * args.channels * (args.bitsPerSample / 8);
+    format.blockAlign = 2 * args.channels;
+    format.formatTag = 1;
+    return format;
 }

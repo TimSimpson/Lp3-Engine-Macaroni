@@ -1,6 +1,9 @@
 ~unit "SoundDemo" type=exe ;
 
 ~import Lp3::Engine::Sfx::Channel;
+~import Lp3::Engine::Sfx::Sources::ChannelSourceTone;
+~import Lp3::Engine::Sfx::Sources::ChannelSourceTone2;
+~import Lp3::Engine::Sfx::Sources::Sinusoidal;
 ~import Lp3::Engine::Memory::GlobalHeap;
 ~import Lp3::Engine::Memory::GlobalHeapPtr;
 ~import Lp3::Engine::Resources::MemoryStream;
@@ -78,154 +81,32 @@ using namespace Lp3::Engine::Gfx::Geometry;
 	} \
    }
 
-/*
-
-class SoundManager
-{
-private:
-
-    IXAudio2 * xAudio;
-    IXAudio2MasteringVoice * masterVoice;
-    IXAudio2SourceVoice * sourceVoice;
-
-    const size_t loadingBufferSize = 4 * 1024;
-    Lp3::UInt8 * loadingBuffer;
-
-	unique_ptr<WaveFile> wf;
-    unique_ptr<WaveFileSource> ws;
-
-    int currentBufferIndex = 0;
-    static constexpr std::size_t maxBufferCount = 3;
-	static constexpr size_t bufferSize = 8 * 1024;
-	array<Lp3::UInt8 *, maxBufferCount> buffer;
-
-	XAUDIO2_BUFFER xbuffer;
-
-public:
-    SoundManager()
-    :   buffer(),
-        currentBufferIndex(0)
-    {
-        for (int i = 0; i < maxBufferCount; ++i) {
-		    buffer[i] = new Lp3::UInt8[bufferSize];
-        }
-		CoInitialize(nullptr);
-
-        xAudio = nullptr;
-		CHECK_GOOD(XAudio2Create(&xAudio, 0, XAUDIO2_DEFAULT_PROCESSOR),
-			"Failed initializing XAudio2.");
-
-        masterVoice = nullptr;
-		CHECK_GOOD(xAudio->CreateMasteringVoice(&masterVoice),
-			       "Failed initializing master voice.");
-
-
-        auto globalHeap = GlobalHeap::GetGlobalHeap();
-        loadingBuffer = reinterpret_cast<Lp3::UInt8 *>(
-            globalHeap->Alloc(loadingBufferSize));
-
-        LP3_LOG_DEBUG("Loading wave file...");
-
-        const auto createWaveSource = [&globalHeap](const char * fileName)
-        {
-            ResettableReadStreamPtr file = InputFileStream::Create(fileName);
-            //ResettableReadStreamPtr memory = MemoryStream::Create(
-            //    *globalHeap, 512 * 1024);
-            //LP3_LOG_DEBUG("Going to load the stream to memory now.");
-            //static_cast<MemoryStream *>(memory.get())->Load(
-            //    file, boost::none, 4 * 1024);
-            unique_ptr<WaveFileSource> ws;
-            //ws = new WaveFileSource(
-            //    *globalHeap,
-            //    WaveFile::Create(memory),
-            //    4 * 80 * 1024, // Four times the typical sound buffer.
-            //    (80 * 1024) / 4,
-            //    1024
-            //);
-
-			unique_ptr<WaveFile> wf = std::make_unique<WaveFile>(file); //memory);
-            return wf;
-        };
-
-        //ws = createWaveSource("Engine/Sfx/c.wav");
-		wf = createWaveSource("Engine/Sfx/c.wav");
-		ws = std::make_unique<WaveFileSource>(
-			*globalHeap,
-			wf.get(),
-			4 * 80 * 1024, // Four times the typical sound buffer.
-			(80 * 1024) / 4);
-
-        LP3_LOG_DEBUG("Now, let's try a delicious load...");
-        ws->Load();
-        LP3_LOG_DEBUG("Set source GO!");
-        //channels[0]->SetSource(ws);
-
-		WaveFormatEx ex = wf->GetFormat();
-
-        CHECK_GOOD(xAudio->CreateSourceVoice( &sourceVoice, (WAVEFORMATEX*)& ex),
-				  "Failed to initialize source voice.");
-
-		queueUpWaveFile();
-
-		CHECK_GOOD(sourceVoice->Start(0),
-			"Failed to start sound.");
-
-    }
-
-    void queueUpWaveFile() {
-        ws->Load();
-        ws->StreamNext(reinterpret_cast<Lp3::UInt8 *>(buffer[currentBufferIndex]), bufferSize);
-
-        xbuffer = { 0 };
-        xbuffer.AudioBytes = bufferSize;
-        xbuffer.pAudioData = (const BYTE *)buffer[currentBufferIndex];
-		if (wf->Eof())
-		{
-			xbuffer.Flags = XAUDIO2_END_OF_STREAM;
-		}
-
-        ++ currentBufferIndex;
-        currentBufferIndex %= maxBufferCount;
-
-        CHECK_GOOD(sourceVoice->SubmitSourceBuffer(&xbuffer),
-            "Failed submitting buffer.");
-    }
-
-    ~SoundManager()
-    {
-		//delete sourceVoice;
-        //delete masterVoice;
-		xAudio->Release();
-        for (auto i = 0; i < maxBufferCount; ++ i) {
-		    delete buffer[i];
-        }
-    }
-
-    void update() {
-        XAUDIO2_VOICE_STATE state;
-        sourceVoice->GetState(&state);
-        if (state.BuffersQueued < (maxBufferCount -1))
-        {
-            queueUpWaveFile();
-        }
-    }
-};
-*/
 
 class SoundManager
 {
 private:
     GlobalHeapPtr globalHeap;
     SfxManager manager;
+    Sinusoidal aNote;
+    float cps;
+    Sinusoidal cSharpNote;
+    Sinusoidal eNote;
     unique_ptr<WaveFile> wf;
     unique_ptr<WaveFileSource> ws;
 
 
 public:
     SoundManager()
-    :   manager()
+    :   manager(),
+        aNote(440, 0.5),
+        cps(440),
+        cSharpNote(550, 0.5),
+        eNote(660, 0.5)
     {
         Channel * c = manager.CreateChannel();
+        Channel * c2 = manager.CreateChannel();
+        Channel * c3 = manager.CreateChannel();
+        Channel * cW = manager.CreateChannel();
 
         ResettableReadStreamPtr file
             = InputFileStream::Create("Engine/Sfx/count.wav");
@@ -238,8 +119,17 @@ public:
             4 * 80 * 1024, // Four times the typical sound buffer.
             (80 * 1024) / 4);
 
-        c->SetSource(*ws);
+        cW->SetSource(*ws);
+        cW->Play();
+
+        c->SetSource(cSharpNote);
         c->Play();
+
+        c2->SetSource(aNote);
+        c2->Play();
+
+        c3->SetSource(eNote);
+        c3->Play();
     }
 
     ~SoundManager()
@@ -248,6 +138,11 @@ public:
 
     void update() {
         manager.Update();
+        aNote.SetCyclesPerSecond(cps);
+        cps --;
+        if (cps < 0) {
+            cps = 2600;
+        }
     }
 };
 

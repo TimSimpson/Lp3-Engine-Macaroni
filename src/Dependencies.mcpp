@@ -2,10 +2,8 @@
 // External Dependencies
 // --------------------------------------------------------------------------
 
-// Std C, Windows
+// Std C
 ~extern FILE include=<kos.h>;
-~extern HINSTANCE include=<windows.h>;
-~extern HWND include=<windows.h>;
 ~extern iostream include=<iostream>;
 ~extern jmp_buf include=<setjmp.h>;
 ~extern map;
@@ -15,6 +13,14 @@
 ~extern strncmp include=<string.h>;
 ~extern wcslen include=<wchar.h>;
 ~extern wcstombs include=<cstdlib>;
+
+// Windows
+~extern HINSTANCE include=<windows.h>;
+~extern HWND include=<windows.h>;
+~extern LPARAM include=<windows.h>;
+~extern WPARAM include=<windows.h>;
+~extern UINT include=<windows.h>;
+
 
 // Direct X
 ~extern LPCDIDATAFORMAT  include=<dinput.h>;
@@ -31,6 +37,8 @@
 ~extern XAUDIO2_BUFFER include=<XAudio2.h>;
 
 
+~extern boost_math_constants
+        include=<boost/math/constants/constants.hpp>;
 namespace boost {
     ~extern format
         include=<boost/format.hpp>
@@ -50,6 +58,10 @@ namespace std {
     class array { ~hfile=<array> };
     class exception { ~hfile=<exception> };
     class fstream { ~hfile=<fstream> };
+    ~extern memcpy include=<cstring>;
+    ~extern min include=<algorithm>;
+    ~extern numeric_limits include=<limits>
+        using = {using std::numeric_limits; };
     class string { ~hfile=<string> };
     class stringstream { ~hfile=<sstream> };
     class unique_ptr { ~hfile=<memory> };
