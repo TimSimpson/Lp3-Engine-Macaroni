@@ -77,6 +77,49 @@ create_exe(MicroMainDemo target/MicroMainDemo.cpp Lp3_Core)
 
 
 ###############################################################################
+#  Gfx
+###############################################################################
+add_library(Lp3_Gfx
+    ${MACARONI_LIBS_Lp3_Gfx_CPP_FILES}
+    ${MACARONI_LIBS_Lp3_Gfx_SRC_FILES})
+set_source_files_properties(
+    ${MACARONI_LIBS_Lp3_Gfx_SRC_FILES}
+    PROPERTIES HEADER_FILE_ONLY TRUE)
+target_link_libraries(Lp3_Gfx Lp3_Core ${CONAN_LIBS}
+                      ${OPENGL_LIBRARIES})
+
+create_test(PixelTest src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp Lp3_Gfx)
+
+create_exe(DrawText target/DrawText.cpp Lp3_Gfx)
+create_exe(EmscriptenSimple src/Gfx/Demos/Emscripten/Simple.cpp Lp3_Gfx)
+create_exe(HighResolution target/HighResolution.cpp Lp3_Gfx)
+create_exe(LoadImage target/LoadImage.cpp Lp3_Gfx)
+create_exe(MotivatingExample target/MotivatingExample.cpp Lp3_Gfx)
+create_exe(OpenGlDemo target/OpenGlDemo.cpp Lp3_Gfx)
+create_exe(ResizeWindow target/ResizeWindow.cpp Lp3_Gfx)
+create_exe(ShowTexture target/ShowTexture.cpp Lp3_Gfx)
+create_exe(Pvr2DShapesDemo src/Gfx/Demos/Pvr2DShapesDemo.cpp Lp3_Gfx)
+create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
+           Lp3_Gfx)
+create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
+
+
+
+###############################################################################
+#  Windows
+###############################################################################
+add_library(Lp3_Windows
+    ${MACARONI_LIBS_Lp3_Windows_CPP_FILES}
+    ${MACARONI_LIBS_Lp3_Windows_SRC_FILES})
+set_source_files_properties(
+    ${MACARONI_LIBS_Lp3_Windows_SRC_FILES}
+    PROPERTIES HEADER_FILE_ONLY TRUE)
+target_link_libraries(Lp3_Windows Lp3_Gfx Lp3_Core ${CONAN_LIBS}
+                      ${OPENGL_LIBRARIES})
+
+create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Windows)
+
+###############################################################################
 #  Input
 ###############################################################################
 
@@ -96,34 +139,6 @@ set_target_properties(DxDemo
 create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
 set_target_properties(XInputDemo
     PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-
-
-###############################################################################
-#  Gfx
-###############################################################################
-add_library(Lp3_Gfx
-    ${MACARONI_LIBS_Lp3_Gfx_CPP_FILES}
-    ${MACARONI_LIBS_Lp3_Gfx_SRC_FILES})
-set_source_files_properties(
-    ${MACARONI_LIBS_Lp3_Gfx_SRC_FILES}
-    PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Gfx Lp3_Input Lp3_Core ${CONAN_LIBS}
-                      ${OPENGL_LIBRARIES})
-
-create_test(PixelTest src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp Lp3_Gfx)
-
-create_exe(DrawText target/DrawText.cpp Lp3_Gfx)
-create_exe(EmscriptenSimple src/Gfx/Demos/Emscripten/Simple.cpp Lp3_Gfx)
-create_exe(HighResolution target/HighResolution.cpp Lp3_Gfx)
-create_exe(LoadImage target/LoadImage.cpp Lp3_Gfx)
-create_exe(MotivatingExample target/MotivatingExample.cpp Lp3_Gfx)
-create_exe(OpenGlDemo target/OpenGlDemo.cpp Lp3_Gfx)
-create_exe(ResizeWindow target/ResizeWindow.cpp Lp3_Gfx)
-create_exe(ShowTexture target/ShowTexture.cpp Lp3_Gfx)
-create_exe(Pvr2DShapesDemo src/Gfx/Demos/Pvr2DShapesDemo.cpp Lp3_Gfx)
-create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
-           Lp3_Gfx)
-create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
 
 
 

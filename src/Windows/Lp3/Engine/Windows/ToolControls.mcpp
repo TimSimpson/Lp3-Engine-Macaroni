@@ -1,0 +1,174 @@
+~import std::array;
+~import Lp3::Engine::Gfx::Geometry::Coordinates2d;
+~import LP3_LOG_DEBUG;
+~import LPARAM;
+~import boost::optional;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
+~import std::string;
+~import WPARAM;
+~import UINT;
+~import commdlg_h;
+
+~namespace Lp3::Engine::Windows;
+
+
+class ToolControls
+{
+    //#pragma comment(lib, "Comdlg32.lib")
+    ~block "cpp-include"
+    {
+        #include <windows.h>
+        #include <commdlg.h>
+
+    }
+
+    private Size2d<unsigned int> actualResolution;
+    private Coordinates2d<float> resolutionModifier;
+    private static constexpr int keyCount = 256;
+    private array<bool, keyCount> keys;
+    private Coordinates2d<int> mouse;
+    private bool mouseButton1;
+    private bool mouseButton2;
+    private Size2d<unsigned int> virtualResolution;
+
+    public ToolControls(Size2d<unsigned int> virtualResolution)
+    :   actualResolution({10, 10}),
+        resolutionModifier({1, 1}),
+        mouse({0, 0}),
+        mouseButton1(false),
+        mouseButton2(false),
+        virtualResolution(virtualResolution)
+    {
+        for (int i = 0; i < 256; ++i)
+        {
+            keys[i] = false;
+        }
+    }
+
+    ~block "cpp"
+    {
+        namespace {
+            template<typename DialogFunction>
+            optional<string> openDialogBox()
+            {
+                const int maxLength = 1024;
+                char fileName[1024];
+
+                // Initialize ancient Windows struct from Hell.
+                OPENFILENAME ofn;
+                ZeroMemory(&ofn, sizeof(ofn));
+                ofn.lStructSize = sizeof(ofn);
+                ofn.hwndOwner = nullptr;  // doesn't need to be set?
+                ofn.lpstrFile = fileName;
+                ofn.nMaxFile = maxLength - 1;
+
+                if (maxLength < 1) return false;
+                ofn.lpstrFile[0] = '\0';
+
+                LP3_LOG_DEBUG("Opening a dialog box to search for file...");
+                DialogFunction dialogFunction{};
+                if (TRUE == dialogFunction(&ofn))
+                {
+                    LP3_LOG_DEBUG("Returned filename %s", fileName);
+                    return optional<string>(fileName);
+                }
+                LP3_LOG_DEBUG("User cancelled.");
+                return boost::none;
+            }
+        }
+    }
+
+    public bool GetKeyDown(const char key) const
+    {
+        return keys[(int)key];
+    }
+
+    public bool GetKeyDownWithCancel(const char key)
+    {
+        const bool value = keys[(int)key];
+        keys[(int)key] = false;
+        return value;
+    }
+
+    public static optional<string> OpenFileDialog()
+    {
+        struct Call {
+            BOOL operator ()(OPENFILENAME * ofn)
+            {
+                return GetOpenFileName(ofn);
+            }
+        };
+        return openDialogBox<Call>();
+    }
+
+    public static optional<string> SaveFileDialog()
+    {
+        struct Call {
+            BOOL operator ()(OPENFILENAME * ofn)
+            {
+                return GetSaveFileName(ofn);
+            }
+        };
+        return openDialogBox<Call>();
+    }
+
+    public void WindowsMessage(HWND hWnd, const UINT message, const WPARAM wParam,
+                               const LPARAM lParam)
+    {
+        switch(message){
+            case WM_SIZE:
+                this->actualResolution.Width = LOWORD(lParam);
+                this->resolutionModifier.X = (float)
+                    ((float) this->virtualResolution.Width
+                        / (float)this->actualResolution.Width);
+                this->actualResolution.Height = HIWORD(lParam);
+                this->resolutionModifier.Y = (float)
+                    ((float) this->virtualResolution.Height
+                        / (float)this->actualResolution.Height);
+                break;
+            case WM_KEYDOWN:
+				if (wParam < keyCount)
+				{
+					this->keys[wParam] = true;
+				}                
+                break;
+            case WM_KEYUP:
+				if (wParam < keyCount)
+				{
+					this->keys[wParam] = false;
+				}
+                break;
+            case WM_LBUTTONDOWN:
+                this->mouse.X = (int)((float)LOWORD(lParam)
+                    * this->resolutionModifier.X);
+                this->mouse.Y = (int)((float)HIWORD(lParam)
+                    * this->resolutionModifier.Y);
+                this->mouseButton1 = true;
+                break;
+            case WM_LBUTTONUP:
+                this->mouse.X = (int)((float)LOWORD(lParam)
+                    * this->resolutionModifier.X);
+                this->mouse.Y = (int)((float)HIWORD(lParam)
+                    * this->resolutionModifier.Y);
+                this->mouseButton1 = false;
+                break;
+            case WM_RBUTTONDOWN:
+                this->mouse.X = (int)((float)LOWORD(lParam)
+                    * this->resolutionModifier.X);
+                this->mouse.Y = (int)((float)HIWORD(lParam)
+                    * this->resolutionModifier.Y);
+                this->mouseButton1 = true;
+                break;
+            case WM_RBUTTONUP:
+                this->mouse.X = (int)((float)LOWORD(lParam)
+                    * this->resolutionModifier.X);
+                this->mouse.Y = (int)((float)HIWORD(lParam)
+                    * this->resolutionModifier.Y);
+                this->mouseButton1 = false;
+                break;
+            default:
+                break;
+        }
+    }
+};
+

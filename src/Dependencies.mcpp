@@ -20,7 +20,7 @@
 ~extern LPARAM include=<windows.h>;
 ~extern WPARAM include=<windows.h>;
 ~extern UINT include=<windows.h>;
-
+~extern commdlg_h include=<commdlg.h>;
 
 // Direct X
 ~extern LPCDIDATAFORMAT  include=<dinput.h>;

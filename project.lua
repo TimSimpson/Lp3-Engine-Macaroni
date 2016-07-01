@@ -18,13 +18,6 @@ core = project:Library{
         "src/Core/Lp3/Engine/Memory/MemoryStackTest.cpp",
     }
 }
-input = project:Library{
-    name="Lp3_Input",
-    shortName="Lp3_Input",
-    headers=pathList{"src/Input", "target"},
-    sources=pathList{"src/Input", "src/Dependencies.mcpp"},
-    usesBoost=true,
-}
 gfx = project:Library{
     name="Lp3_Gfx",
     shortName="Lp3_Gfx",
@@ -39,6 +32,21 @@ gfx = project:Library{
         "src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp",
     }
 }
+windows = project:Library{
+    name="Lp3_Windows",
+    shortName="Lp3_Windows",
+    headers=pathList{"src/Windows", "target"},
+    sources=pathList{"src/Windows", "src/Dependencies.mcpp"},
+    usesBoost=true,
+}
+input = project:Library{
+    name="Lp3_Input",
+    shortName="Lp3_Input",
+    headers=pathList{"src/Input", "target"},
+    sources=pathList{"src/Input", "src/Dependencies.mcpp"},
+    usesBoost=true,
+}
+
 sfx = project:Library{
     name="Lp3_Sfx",
     shortName="Lp3_Sfx",
