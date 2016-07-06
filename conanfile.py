@@ -19,7 +19,7 @@ class Lp3EngineConan(ConanFile):
     def build(self):
         root = self.conanfile_directory
         if os.path.isfile(os.path.join(root, "project.lua")):
-            cmd =  'cavatappi {root} --generate'.format(root=root)
+            cmd =  'macaroni {root} --generate'.format(root=root)
             self.run("cd %s && %s" % (self.conanfile_directory, cmd))
 
         cmake = CMake(self.settings)

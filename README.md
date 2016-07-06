@@ -1,5 +1,7 @@
 # LP3::Engine
 
+[![Build status](https://ci.appveyor.com/api/projects/status/0h294w0e2mmrgu4y?svg=true)](https://ci.appveyor.com/project/TimSimpson/lp3-engine)
+
 This is a rudimentary game engine designed to compile against Windows, the Dreamcast using KallistiOS, and eventually Emscripten and Linux.
 
 Because it runs on such a low common denominator certain aspects are very primitive, such as the graphics API (which maps closely to the Dreamcast's PVR library).
