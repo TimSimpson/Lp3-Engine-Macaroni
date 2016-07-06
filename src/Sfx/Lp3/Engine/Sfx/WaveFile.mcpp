@@ -1,5 +1,6 @@
 ~import strncmp;
 ~import Lp3::Exception;
+~import LP3_LOG_DEBUG;
 ~import Lp3::Engine::Resources::ResettableReadStream;
 ~import Lp3::Engine::Resources::ResettableReadStreamPtr;
 ~import boost::shared_ptr;
@@ -36,8 +37,6 @@ class WaveFile
 
     private void loadFileHeader()
     {
-        LP3_LOG_DEBUG("MARIO a");
-
         char wordChar[5];
         wordChar[4] = '\0';
         // Should start with RIFF...
@@ -45,7 +44,6 @@ class WaveFile
         stream->Read(wordChar, 4);
         if (strncmp(wordChar, "RIFF", 4) != 0)
         {
-            LP3_LOG_DEBUG(wordChar);
             LP3_THROW(Lp3::Exception, "Wave stream did not start with RIFF.");
         }
 
@@ -105,7 +103,6 @@ class WaveFile
         lengthInBytes -= 3;
         // At this point, length is now length in terms of samples...
 
-        //LP3_LOG_DEBUG_F(boost::format("old length=%d") % lengthInBytes));
         stream->Read((char *)&lengthInBytes, 4);
 
         this->lengthInBytes = lengthInBytes;

@@ -28,7 +28,7 @@ endif()
 
 add_custom_target(
     invoke_macaroni
-    COMMAND cavatappi ${CMAKE_CURRENT_LIST_DIR} -g
+    COMMAND macaroni ${CMAKE_CURRENT_LIST_DIR} -g
 )
 
 ###############################################################################
