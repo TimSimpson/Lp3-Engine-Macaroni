@@ -180,25 +180,6 @@ struct CoordinateTriple
 };
 
 template<typename T>
-struct NormalizedCoordinateTriple : public CoordinateTriple<T>
-{
-    inline NormalizedCoordinateTriple(T a, T b)
-    :   CoordinateTriple<T>(a, b)
-    {}
-
-    template<typename ArgCordType, typename SizeType>
-    inline NormalizedCoordinateTriple(ArgCordType a, ArgCordType b, SizeType s)
-    :   CoordinateTriple<T>(T(a, s), T(b, s))
-    {}
-
-    template<typename ArgCordTripleType, typename SizeType>
-    inline NormalizedCoordinateTriple(ArgCordTripleType triplet, SizeType s)
-    :   CoordinatePair<T>(T(triplet.A, s), T(triplet.B, s))
-    {}
-};
-
-
-template<typename T>
 struct CoordinateQuad
 {
     typedef T CoordType;

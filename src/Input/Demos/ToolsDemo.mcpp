@@ -32,10 +32,11 @@
 ~import Lp3::Engine::Gfx::TileRenderer;
 ~import Lp3::Engine::Gfx::TileSet;
 ~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
-~import Lp3::Engine::Windows::ToolControls;
+~import Lp3::Engine::Input::ToolControls;
 ~import std::vector;
 ~import Lp3::Engine::Gfx::VertexPixel;
 ~import std::vector;
+~import Lp3::Engine::Gfx::Windows_h;
 
 
 ~block "cpp" :=
@@ -156,37 +157,6 @@ public:
         LP3_LOG_DEBUG("Shutting down, good-bye.");
     }
 
-    void fullScreen()
-    {
-        LONG lStyle = GetWindowLong(hWnd, GWL_STYLE);
-        lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE
-                    | WS_MAXIMIZE | WS_SYSMENU);
-        SetWindowLong(hWnd, GWL_STYLE, lStyle);
-
-        LONG lExStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
-        lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE
-                      | WS_EX_STATICEDGE);
-        SetWindowLong(hWnd, GWL_EXSTYLE, lExStyle);
-
-        RECT desktop;
-        GetWindowRect(GetDesktopWindow(), &desktop);
-
-        SetWindowPos(hWnd, HWND_TOP,
-                     desktop.left, desktop.top, desktop.right, desktop.bottom,
-                     SWP_FRAMECHANGED);
-        //ShowWindow(hWnd, SW_MAXIMIZE);
-    }
-
-    void windowed()
-    {
-        return;
-        SetWindowLong(hWnd, GWL_STYLE, lStyleWin);
-
-        SetWindowLong(hWnd, GWL_EXSTYLE, lExStyleWin);
-
-        SetWindowPos(hWnd, 0, 50, 50, 640, 480, SWP_FRAMECHANGED);
-    }
-
     void Iterate()
     {
         Clock::NextFrame();
@@ -202,11 +172,11 @@ public:
         if (toolControls.GetKeyDownWithCancel('F'))
         {
             if (isFullScreen) {
-                windowed();
+                ChangeToBorderedWindowed(hWnd);
             } else {
-                fullScreen();
+                ChangeToBorderlessFullScreenWindow(hWnd);
             }
-			isFullScreen = !isFullScreen;
+            isFullScreen = !isFullScreen;
         }
 
         // The textbook definition of not thread safe code!

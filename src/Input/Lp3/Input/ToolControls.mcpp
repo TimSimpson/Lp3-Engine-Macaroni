@@ -1,3 +1,14 @@
+~unit "Lp3/Engine/Input/ToolControls";
+
+~block "top" {
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #include <windows.h>  // Errors happen if other stuff is included first...
+}
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
 ~import std::array;
 ~import Lp3::Engine::Gfx::Geometry::Coordinates2d;
 ~import LP3_LOG_DEBUG;
@@ -9,19 +20,45 @@
 ~import UINT;
 ~import commdlg_h;
 
-~namespace Lp3::Engine::Windows;
+~namespace Lp3::Engine::Input;
+
+
+~block "cpp"
+{
+    namespace {
+        template<typename DialogFunction>
+        optional<string> openDialogBox()
+        {
+            const int maxLength = 1024;
+            char fileName[1024];
+
+            // Initialize ancient Windows struct from Hell.
+            OPENFILENAME ofn;
+            ZeroMemory(&ofn, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.hwndOwner = nullptr;  // doesn't need to be set?
+            ofn.lpstrFile = fileName;
+            ofn.nMaxFile = maxLength - 1;
+
+            if (maxLength < 1) return false;
+            ofn.lpstrFile[0] = '\0';
+
+            LP3_LOG_DEBUG("Opening a dialog box to search for file...");
+            DialogFunction dialogFunction{};
+            if (TRUE == dialogFunction(&ofn))
+            {
+                LP3_LOG_DEBUG("Returned filename %s", fileName);
+                return optional<string>(fileName);
+            }
+            LP3_LOG_DEBUG("User cancelled.");
+            return boost::none;
+        }
+    }
+}
 
 
 class ToolControls
 {
-    //#pragma comment(lib, "Comdlg32.lib")
-    ~block "cpp-include"
-    {
-        #include <windows.h>
-        #include <commdlg.h>
-
-    }
-
     private Size2d<unsigned int> actualResolution;
     private Coordinates2d<float> resolutionModifier;
     private static constexpr int keyCount = 256;
@@ -45,38 +82,7 @@ class ToolControls
         }
     }
 
-    ~block "cpp"
-    {
-        namespace {
-            template<typename DialogFunction>
-            optional<string> openDialogBox()
-            {
-                const int maxLength = 1024;
-                char fileName[1024];
 
-                // Initialize ancient Windows struct from Hell.
-                OPENFILENAME ofn;
-                ZeroMemory(&ofn, sizeof(ofn));
-                ofn.lStructSize = sizeof(ofn);
-                ofn.hwndOwner = nullptr;  // doesn't need to be set?
-                ofn.lpstrFile = fileName;
-                ofn.nMaxFile = maxLength - 1;
-
-                if (maxLength < 1) return false;
-                ofn.lpstrFile[0] = '\0';
-
-                LP3_LOG_DEBUG("Opening a dialog box to search for file...");
-                DialogFunction dialogFunction{};
-                if (TRUE == dialogFunction(&ofn))
-                {
-                    LP3_LOG_DEBUG("Returned filename %s", fileName);
-                    return optional<string>(fileName);
-                }
-                LP3_LOG_DEBUG("User cancelled.");
-                return boost::none;
-            }
-        }
-    }
 
     public bool GetKeyDown(const char key) const
     {
@@ -127,16 +133,16 @@ class ToolControls
                         / (float)this->actualResolution.Height);
                 break;
             case WM_KEYDOWN:
-				if (wParam < keyCount)
-				{
-					this->keys[wParam] = true;
-				}                
+                if (wParam < keyCount)
+                {
+                    this->keys[wParam] = true;
+                }
                 break;
             case WM_KEYUP:
-				if (wParam < keyCount)
-				{
-					this->keys[wParam] = false;
-				}
+                if (wParam < keyCount)
+                {
+                    this->keys[wParam] = false;
+                }
                 break;
             case WM_LBUTTONDOWN:
                 this->mouse.X = (int)((float)LOWORD(lParam)

@@ -38,11 +38,6 @@ class Box2d
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::Size2d; }
     ;
-~extern NormalizedCoordinates2d
-    export
-    include=<Lp3/Engine/Gfx/Geometry.hpp>
-    using={ using Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d; }
-    ;
 ~extern CoordinatePair2d
     export
     include=<Lp3/Engine/Gfx/Geometry.hpp>

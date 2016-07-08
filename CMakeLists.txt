@@ -14,8 +14,6 @@ include_directories(
     ${CONAN_INCLUDE_DIRS}
     ${OPENGL_INCLUDE_DIRS})
 
-
-
 include(target/macaroni.cmake)
 
 if (MSVC)
@@ -26,10 +24,15 @@ endif()
 #  Run Macaroni in Visual Studio
 ###############################################################################
 
-add_custom_target(
-    invoke_macaroni
-    COMMAND macaroni ${CMAKE_CURRENT_LIST_DIR} -g
-)
+option(SKIP_MACARONI OFF)
+if(NOT SKIP_MACARONI)
+    add_custom_target(
+        invoke_macaroni
+        COMMAND macaroni ${CMAKE_CURRENT_LIST_DIR} -g
+    )
+endif()
+
+
 
 ###############################################################################
 #  Extra Functions
@@ -104,21 +107,6 @@ create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
 create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
 
 
-
-###############################################################################
-#  Windows
-###############################################################################
-add_library(Lp3_Windows
-    ${MACARONI_LIBS_Lp3_Windows_CPP_FILES}
-    ${MACARONI_LIBS_Lp3_Windows_SRC_FILES})
-set_source_files_properties(
-    ${MACARONI_LIBS_Lp3_Windows_SRC_FILES}
-    PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Windows Lp3_Gfx Lp3_Core ${CONAN_LIBS}
-                      ${OPENGL_LIBRARIES})
-
-create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Windows)
-
 ###############################################################################
 #  Input
 ###############################################################################
@@ -140,7 +128,8 @@ create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
 set_target_properties(XInputDemo
     PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 
-
+create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Input)
+target_link_libraries(ToolsDemo Lp3_Gfx ${OPENGL_LIBRARIES})
 
 ###############################################################################
 #  Sfx

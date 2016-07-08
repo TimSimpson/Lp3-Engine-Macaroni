@@ -2,7 +2,6 @@
 ~import Lp3::Engine::Gfx::Renderer;
 ~import Lp3::Engine::Gfx::InternalPixel;
 ~import boost::intrusive_ptr;
-~import Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d;
 ~import Lp3::Engine::Gfx::Geometry::SpriteCoordinates;
 ~import Lp3::Engine::Gfx::Geometry::Size2d;
 ~import Lp3::Engine::Gfx::Texture;
@@ -41,24 +40,7 @@ class TileRenderer
             { (float) screenPosition.X + tileSet.singleTileSize.Width - 1,
               (float) screenPosition.Y + tileSet.singleTileSize.Height - 1 }
         };
-/*
-        const NormalizedCoordinates2d<float> start = {
-            tileSource.X * tileSet.normalizedSingleTileSize.Width,
-            tileSource.Y * tileSet.normalizedSingleTileSize.Height
-        };
-        const TexturedQuadUV uv = {
-            start,
-            {
-                start.X + tileSet.normalizedSingleTileSizeNI.Width,
-                start.Y + tileSet.normalizedSingleTileSizeNI.Height
-            }
-        };
-        LP3_ASSERT_TRUE(uv.A.X <= 1.0 && uv.A.X >= 0.0);
-        LP3_ASSERT_TRUE(uv.A.Y <= 1.0 && uv.A.Y >= 0.0);
-        LP3_ASSERT_TRUE(uv.B.X <= 1.0 && uv.B.X >= 0.0);
-        LP3_ASSERT_TRUE(uv.B.Y <= 1.0 && uv.B.Y >= 0.0);
-        renderer.TexturedQuad(c, z, uv);
-*/
+
         const Coordinates2d<int> start = {
             tileSource.X * tileSet.singleTileSize.Width,
             tileSource.Y * tileSet.singleTileSize.Height

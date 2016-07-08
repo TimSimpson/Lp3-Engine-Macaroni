@@ -2,7 +2,6 @@
 ~import Lp3::Engine::Gfx::Renderer;
 ~import Lp3::Engine::Gfx::InternalPixel;
 ~import boost::intrusive_ptr;
-~import Lp3::Engine::Gfx::Geometry::NormalizedCoordinates2d;
 ~import Lp3::Engine::Gfx::Geometry::SpriteCoordinates;
 ~import Lp3::Engine::Gfx::Geometry::Size2d;
 ~import Lp3::Engine::Gfx::Texture;

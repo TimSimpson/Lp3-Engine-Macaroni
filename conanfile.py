@@ -6,8 +6,9 @@ from conans import tools
 
 class Lp3EngineConan(ConanFile):
     name = "Lp3-Engine"
-    version = "0.0.4.0"
-    requires = ("Boost/1.60.0@lasote/stable")
+    version = "0.4.1.0"
+    requires = ("Boost/1.60.0@lasote/stable",
+                "glm/0.9.8-0@TimSimpson/testing")
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
     exports = ["conanfile.py", "CMakeLists.txt", "target/*", "src/*"]
@@ -18,12 +19,17 @@ class Lp3EngineConan(ConanFile):
 
     def build(self):
         root = self.conanfile_directory
-        if os.path.isfile(os.path.join(root, "project.lua")):
+
+        if self.scope.dev:
             cmd =  'macaroni {root} --generate'.format(root=root)
             self.run("cd %s && %s" % (self.conanfile_directory, cmd))
+            skip_macaroni = ""
+        else:
+            skip_macaroni = "-DSKIP_MACARONI"
 
         cmake = CMake(self.settings)
-        self.run('cmake %s %s' % (self.conanfile_directory, cmake.command_line))
+        self.run('cmake "%s" %s %s' % (self.conanfile_directory,
+                                       cmake.command_line, skip_macaroni))
         self.run("cmake --build . %s" % cmake.build_config)
 
     def package(self):

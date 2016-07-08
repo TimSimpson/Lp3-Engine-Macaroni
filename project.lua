@@ -32,13 +32,6 @@ gfx = project:Library{
         "src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp",
     }
 }
-windows = project:Library{
-    name="Lp3_Windows",
-    shortName="Lp3_Windows",
-    headers=pathList{"src/Windows", "target"},
-    sources=pathList{"src/Windows", "src/Dependencies.mcpp"},
-    usesBoost=true,
-}
 input = project:Library{
     name="Lp3_Input",
     shortName="Lp3_Input",

@@ -1,0 +1,52 @@
+~unit "Lp3/Engine/Gfx/Windows";
+
+~block "top" {
+    #include <Lp3/LE.h>
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+    #include <windows.h>  // Errors happen if other stuff is included first...
+}
+~block "bottom" {
+    #endif // LP3_COMPILE_TARGET_WINDOWS
+}
+
+~extern Lp3::Engine::Gfx::Windows_h
+    include=<Lp3/Engine/Gfx/Windows.h>
+    using={ using namespace Lp3::Engine::Gfx::Windows; };
+
+~namespace Lp3::Engine::Gfx::Windows;
+
+// Takes a Window and makes it full screen, which is just a borderless full
+// screen window instead of "real" full screen, since the performance of
+// starting up fake full screen is easier.
+void ChangeToBorderlessFullScreenWindow(HWND hWnd)
+{
+    LONG lStyle = GetWindowLong(hWnd, GWL_STYLE);
+    lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE
+                | WS_MAXIMIZE | WS_SYSMENU);
+    SetWindowLong(hWnd, GWL_STYLE, lStyle);
+
+    LONG lExStyle = GetWindowLong(hWnd, GWL_EXSTYLE);
+    lExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE
+                  | WS_EX_STATICEDGE);
+    SetWindowLong(hWnd, GWL_EXSTYLE, lExStyle);
+
+    RECT desktop;
+    GetWindowRect(GetDesktopWindow(), &desktop);
+
+    SetWindowPos(hWnd, HWND_TOP,
+                 desktop.left, desktop.top, desktop.right, desktop.bottom,
+                 SWP_FRAMECHANGED);
+}
+
+// Change to a typical looking window.
+void ChangeToBorderedWindowed(HWND hWnd)
+{
+    RECT rect;
+    rect.left = 0;
+    rect.top = 0;
+    rect.right = 640;
+    rect.bottom = 480;
+    SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW | WS_VISIBLE);
+    AdjustWindowRect(&rect, WS_OVERLAPPEDWINDOW, FALSE);
+    MoveWindow(hWnd, 0, 0, rect.right, rect.bottom, TRUE);
+}
