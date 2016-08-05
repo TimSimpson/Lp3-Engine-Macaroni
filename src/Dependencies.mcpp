@@ -49,21 +49,31 @@ namespace boost {
     ~extern optional
         include=<boost/optional.hpp>
         using= { using boost::optional; };
+    ~extern ptr_vector
+        include=<boost/ptr_container/ptr_vector.hpp>
+        using= {using boost::ptr_vector; };
     ~extern shared_ptr
         include=<boost/shared_ptr.hpp>
         using= { using boost::shared_ptr; };
 }
 
+namespace gsl {
+    class owner { ~hfile=<gsl.h> };
+}
+
 namespace std {
     class array { ~hfile=<array> };
+    class cout { ~hfile=<iostream> };
     class exception { ~hfile=<exception> };
     class fstream { ~hfile=<fstream> };
     ~extern memcpy include=<cstring>;
     ~extern min include=<algorithm>;
     ~extern numeric_limits include=<limits>
         using = {using std::numeric_limits; };
+    class ostream { ~hfile=<ostream> };
     class string { ~hfile=<string> };
     class stringstream { ~hfile=<sstream> };
+    class thread { ~hfile=<thread> };
     class unique_ptr { ~hfile=<memory> };
     class vector { ~hfile=<vector> };
 }

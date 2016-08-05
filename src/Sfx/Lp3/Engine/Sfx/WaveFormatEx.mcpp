@@ -1,5 +1,7 @@
 ~unit "Lp3/Engine/Sfx/WaveFormatEx" ;
 
+~import std::ostream;
+
 ~namespace Lp3::Engine::Sfx;
 
 ~extern WaveFormatEx
@@ -10,6 +12,7 @@
 ~block "h"
 {
     #include <Lp3/LE.h>
+    #include <iostream>
 
     namespace Lp3 { namespace Engine { namespace Sfx {
 
@@ -40,8 +43,19 @@
         ;
         static_assert(sizeof(WaveFormatEx) == 18, // 16, // 8,
                       "WaveFormatEx is the wrong size.");
-
     }}}
+}
+
+ostream & operator << (ostream & output, const WaveFormatEx & f)
+{
+    output << "formatTag        : " << f.formatTag << "\n"
+              "channels         : " << f.channels << "\n"
+              "samplesPerSecond : " << f.samplesPerSecond << "\n"
+              "avgBytesPerSecond: " << f.avgBytesPerSecond << "\n"
+              "blockAlign       : " << f.blockAlign << "\n"
+              "bitsPerSample    : " << f.bitsPerSample << "\n"
+              "size             : " << f.size << "\n";
+    return output;
 }
 
 struct WaveFormatArgs

@@ -1,0 +1,51 @@
+~unit "PlayWave" type=exe ;
+
+~import Lp3::Engine::Sfx::Channel;
+~import std::cout;
+~import Lp3::Engine::Memory::GlobalHeap;
+~import Lp3::Engine::Memory::GlobalHeapPtr;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Resources::ResettableReadStreamPtr;
+~import Lp3::Engine::Sfx::SfxManager;
+~import Lp3::Engine::Sfx::WaveFile;
+~import Lp3::Engine::Sfx::WaveFileSource;
+~import std::thread;
+
+
+int main(int argc, const char * * argv)
+{
+    if (argc < 2)
+    {
+        std::cerr << "Usage: " << (argc > 0 ? argv[0] : "PlayWave")
+                  << " soundfile-path\n";
+    }
+    GlobalHeapPtr globalHeap;
+    SfxManager manager;
+    ResettableReadStreamPtr file
+            = InputFileStream::Create(argv[1]);
+    auto wf = std::make_unique<WaveFile>(file);
+
+    globalHeap = GlobalHeap::GetGlobalHeap();
+    auto ws = std::make_unique<WaveFileSource>(
+            *globalHeap,
+            wf.get(),
+            4 * 80 * 1024, // Four times the typical sound buffer.
+            (80 * 1024) / 4);
+
+    Channel * cW = manager.CreateChannel();
+    cW->SetSource(*ws);
+    cW->Play();
+
+    bool quit = false;
+    thread t([&quit, &manager]() mutable {
+        while(!quit) {
+            manager.Update();
+        }
+    });
+    std::cout << "Press enter to quit.";
+    char buffer;
+    std::cin >> buffer;
+    quit = true;
+    t.join();
+}

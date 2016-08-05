@@ -8,7 +8,8 @@ class Lp3EngineConan(ConanFile):
     name = "Lp3-Engine"
     version = "0.4.1.0"
     requires = ("Boost/1.60.0@lasote/stable",
-                "glm/0.9.8-0@TimSimpson/testing")
+                "glm/0.9.8-0@TimSimpson/testing",
+                "GSL/0.0.0.0-1@TimSimpson/testing")
     settings = "os", "compiler", "build_type", "arch"
     generators = "cmake"
     exports = ["conanfile.py", "CMakeLists.txt", "target/*", "src/*"]
@@ -25,7 +26,7 @@ class Lp3EngineConan(ConanFile):
             self.run("cd %s && %s" % (self.conanfile_directory, cmd))
             skip_macaroni = ""
         else:
-            skip_macaroni = "-DSKIP_MACARONI"
+            skip_macaroni = "-DSKIP_MACARONI=1"
 
         cmake = CMake(self.settings)
         self.run('cmake "%s" %s %s' % (self.conanfile_directory,

@@ -1,0 +1,43 @@
+~import std::array;
+~import Lp3::Engine::Sfx::ChannelSource;
+~import boost_math_constants;
+~import std::memcpy;
+~import std::min;
+~import std::numeric_limits;
+~import Lp3::Engine::Sfx::Sources::Sinusoidal;
+~import Lp3::Engine::Sfx::StreamResult;
+~import Lp3::UInt8;
+~import Lp3::Int16;
+
+
+~namespace Lp3::Engine::Sfx::Sources;
+
+
+class Chirpy : public ChannelSource
+{
+    enum class Note
+    {
+        off,
+        A,
+        C
+    };
+
+    private Sinusoidal s;
+    private Note note;
+
+    public Chirpy()
+    :   s(0, 0.5),
+        note(Note::off)
+    {
+    }
+
+    public virtual WaveFormatEx GetFormat() const override
+    {
+        return s.GetFormat();
+    }
+
+    public StreamResult StreamNext(Lp3::UInt8 * buffer, size_t size) override
+    {
+        return s.StreamNext(buffer, size);
+    }
+};

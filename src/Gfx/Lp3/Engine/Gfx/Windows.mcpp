@@ -1,3 +1,8 @@
+~extern Lp3::Engine::Gfx::Windows_h
+    export
+    include=<Lp3/Engine/Gfx/Windows.h>
+    using={ using namespace Lp3::Engine::Gfx::Windows; };
+
 ~unit "Lp3/Engine/Gfx/Windows";
 
 ~block "top" {
@@ -8,10 +13,6 @@
 ~block "bottom" {
     #endif // LP3_COMPILE_TARGET_WINDOWS
 }
-
-~extern Lp3::Engine::Gfx::Windows_h
-    include=<Lp3/Engine/Gfx/Windows.h>
-    using={ using namespace Lp3::Engine::Gfx::Windows; };
 
 ~namespace Lp3::Engine::Gfx::Windows;
 

@@ -3,6 +3,7 @@
 ~import Lp3::Engine::Sfx::Channel;
 ~import Lp3::Engine::Sfx::Sources::ChannelSourceTone;
 ~import Lp3::Engine::Sfx::Sources::ChannelSourceTone2;
+~import Lp3::Engine::Sfx::Sources::Chirpy;
 ~import Lp3::Engine::Sfx::Sources::Sinusoidal;
 ~import Lp3::Engine::Memory::GlobalHeap;
 ~import Lp3::Engine::Memory::GlobalHeapPtr;
@@ -11,6 +12,7 @@
 ~import Lp3::Engine::Resources::ResettableReadStreamPtr;
 ~import Lp3::Engine::Sfx::ChannelSource;
 ~import Lp3::Engine::Sfx::SfxManager;
+~import Lp3::Engine::Input::ToolControls;
 ~import Lp3::Engine::Sfx::WaveFile;
 ~import Lp3::Engine::Sfx::WaveFormatEx;
 ~import Lp3::Engine::Sfx::WaveFileSource;
@@ -85,8 +87,10 @@ using namespace Lp3::Engine::Gfx::Geometry;
 class SoundManager
 {
 private:
+
     GlobalHeapPtr globalHeap;
     SfxManager manager;
+    Chirpy chirpy;
     Sinusoidal aNote;
     float cps;
     Sinusoidal cSharpNote;
@@ -94,10 +98,10 @@ private:
     unique_ptr<WaveFile> wf;
     unique_ptr<WaveFileSource> ws;
 
-
 public:
     SoundManager()
     :   manager(),
+        chirpy(),
         aNote(440, 0.5),
         cps(440),
         cSharpNote(550, 0.5),
@@ -120,7 +124,7 @@ public:
             (80 * 1024) / 4);
 
         cW->SetSource(*ws);
-        cW->Play();
+        cW->Stop();
 
         c->SetSource(cSharpNote);
         c->Play();
@@ -136,13 +140,25 @@ public:
     {
     }
 
+    void OnKeyPress(ToolControls & tc)
+    {
+        if (tc.GetKeyDown('W'))
+        {
+            ++ cps;
+        }
+        if (tc.GetKeyDown('S'))
+        {
+            -- cps;
+        }
+    }
+
     void update() {
         manager.Update();
         aNote.SetCyclesPerSecond(cps);
-        cps --;
+        /*cps --;
         if (cps < 0) {
             cps = 2600;
-        }
+        }*/
     }
 };
 
@@ -168,22 +184,29 @@ class GraphicsObject : public ScreenObject
     public: virtual void DrawTranslucent(Renderer & renderer)
     {
         TileRenderer tr = tileSet->StartRenderer(renderer);
-        tr.Write({32, 304 + 32}, 0.5f, "Music!");
+        tr.Write({32, 304 + 32}, 0.5f,
+            R"TEXT(Welcome to Music Town
+            Here we are clowning around!)TEXT");
     }
 };
 
 
+const Size2d<unsigned int> virtualResolution{1920, 1080};
+
 class Main
 {
 private:
+
     GfxManager manager;
     SoundManager sfx;
+    ToolControls toolControls;
 
 public:
     Main(const vector<string> & arguments
          LP3_COMPILE_TARGET_WINDOWS_THEN(, HINSTANCE hInstance, HWND hWnd))
-    :   manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd)),
-        sfx()
+    :   manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd,) virtualResolution),
+        sfx(),
+        toolControls(virtualResolution)
     {
         LP3_LOG_DEBUG("Initializing GFX...");
         Screen & screen = manager.GetScreen(0);
@@ -211,6 +234,8 @@ public:
         void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
                             LPARAM lParam)
         {
+            toolControls.WindowsMessage(hWnd, message, wParam, lParam);
+            sfx.OnKeyPress(toolControls);
             switch(message){
                 case WM_SIZE:
                     /* Tell Gfx the size of our window. This

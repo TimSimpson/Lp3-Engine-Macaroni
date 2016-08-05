@@ -117,6 +117,7 @@ class Channel
     public void SetSource(ChannelSource & source)
     {
         const WaveFormatEx format = source.GetFormat();
+		LP3_LOG_DEBUG("Setting to format:\n %s", format);
         IXAudio2SourceVoice * newVoice;
         CHECK_WIN_FUNC(xAudio->CreateSourceVoice(&newVoice,
                                                  (WAVEFORMATEX*) &format),

@@ -16,6 +16,7 @@
 ~import boost::format;
 ~import std::string;
 ~import std::vector;
+~import std::unique_ptr;
 
 
 ~namespace Lp3::Engine::Input;
@@ -33,7 +34,7 @@ class Controls
     }
 
     private vector<Control> controls;
-    private DeviceSource * deviceSource;
+    private unique_ptr<DeviceSource> deviceSource;
 
     ~block "h"
     {
@@ -77,7 +78,6 @@ class Controls
 
     public ~Controls()
     {
-        delete deviceSource;
     }
 
     private void configureButton(unsigned int controlIndex,
@@ -156,7 +156,7 @@ class Controls
                 return;
             }
             const auto xDeviceIndex = static_cast<WindowsDeviceSource *>(
-                deviceSource)->FindXInputDevice();
+                deviceSource.get())->FindXInputDevice();
             if (!xDeviceIndex)  // Use the stinky old keyboard.
             {
                 const Device * const device = deviceSource->GetDevice(0);

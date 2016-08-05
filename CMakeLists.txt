@@ -142,6 +142,8 @@ set_source_files_properties(
     PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Lp3_Sfx Lp3_Core ${CONAN_LIBS})
 
+create_exe(PlayWave target/PlayWave.cpp Lp3_Sfx)
+target_link_libraries(PlayWave Xaudio2)
 
 create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
 target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)

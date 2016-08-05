@@ -4,6 +4,7 @@
 ~import LP3_ASSERT_TRUE;
 ~import IXAudio2;
 ~import IXAudio2MasteringVoice;
+~import gsl::owner;
 ~import std::vector;
 
 ~namespace Lp3::Engine::Sfx;
@@ -13,7 +14,7 @@ class SfxManager
 {
     private IXAudio2 * xAudio2;
     private IXAudio2MasteringVoice * masteringVoice;
-    private vector<Channel *> channels;
+    private vector<owner<Channel *>> channels;
 
     ~block "cpp" {
         #define CHECK_WIN_FUNC(expr, errMsg) { \
@@ -46,8 +47,16 @@ class SfxManager
         {
             delete c;
         }
-        masteringVoice->DestroyVoice();
-        xAudio2->Release();
+        if (masteringVoice != nullptr)
+        {
+            masteringVoice->DestroyVoice();
+            masteringVoice = nullptr;
+        }
+        if (xAudio2 != nullptr)
+        {
+            xAudio2->Release();
+            xAudio2 = nullptr;
+        }
     }
 
 
