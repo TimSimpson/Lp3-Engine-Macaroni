@@ -1,6 +1,7 @@
 ~import-h Lp3_LE;
 ~import LP3_FAIL;
 ~import std::string;
+~import string_h;
 ~import-h map;
 
 ~namespace Lp3::Engine::Resources;

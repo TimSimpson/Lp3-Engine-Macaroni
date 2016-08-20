@@ -1,6 +1,7 @@
 ~import std::exception;
 ~import boost::optional;
 ~import std::string;
+~import-h type_traits;
 
 
 ~namespace Lp3;
@@ -8,16 +9,26 @@
 
 class Exception : public virtual exception
 {
-	private const char * message;
+	private string message;
 
-	public Exception(const char * message) BOOST_NOEXCEPT
-	: 	exception(message),
-		message(message)
-	{
+	~block "h" {
+	public:
+		template<typename Message>
+		explicit Exception(
+			Message && message,
+			typename std::enable_if<
+				!std::is_same<Exception, Message>::value>::type * = nullptr
+		) BOOST_NOEXCEPT
+		: 	exception(),
+			message(std::forward<Message>(message))
+		{
+		}
 	}
 
-	public virtual ~Exception() BOOST_NOEXCEPT
+	public Exception(const Exception & other) BOOST_NOEXCEPT
+	:	message(other.message)
 	{
+
 	}
 
 	public Exception & operator =(const Exception & other)
@@ -28,7 +39,7 @@ class Exception : public virtual exception
 
 	public virtual const char * what() const BOOST_NOEXCEPT
 	{
-		return message;
+		return message.c_str();
 	}
 
 };

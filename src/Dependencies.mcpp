@@ -3,6 +3,7 @@
 // --------------------------------------------------------------------------
 
 // Std C
+~extern cstring include=<cstring>;
 ~extern FILE include=<kos.h>;
 ~extern iostream include=<iostream>;
 ~extern jmp_buf include=<setjmp.h>;
@@ -10,6 +11,7 @@
 ~extern memcpy include=<string.h>;
 ~extern memory include=<memory>;
 ~extern RAND_MAX include=<cstdlib>;
+~extern string_h include=<string.h>;
 ~extern strncmp include=<string.h>;
 ~extern wcslen include=<wchar.h>;
 ~extern wcstombs include=<cstdlib>;
@@ -65,6 +67,9 @@ namespace std {
     class array { ~hfile=<array> };
     class cout { ~hfile=<iostream> };
     class exception { ~hfile=<exception> };
+    ~extern forward
+        include=<utility>
+        using = { using std::forward; };
     class fstream { ~hfile=<fstream> };
     ~extern memcpy include=<cstring>;
     ~extern min include=<algorithm>;

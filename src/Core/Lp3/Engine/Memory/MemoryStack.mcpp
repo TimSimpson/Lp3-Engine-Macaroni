@@ -327,18 +327,20 @@ class MemoryStack : public virtual SharedHost
 
 ~block "h"
 {
-    template<size_t entryCount, size_t size>
-    class MemoryStack2 : public MemoryStack
-    /* This memory stack actually lives on the stack! */
-    {
-    public:
-        static const size_t BufferSize =
-            (sizeof(MemoryStackEntryFooter) * entryCount) + size;
-        char Buffer[BufferSize];
+    namespace Lp3 { namespace Engine { namespace Memory {
+        template<size_t entryCount, size_t size>
+        class MemoryStack2 : public MemoryStack
+        /* This memory stack actually lives on the stack! */
+        {
+        public:
+            static const size_t BufferSize =
+                (sizeof(MemoryStackEntryFooter) * entryCount) + size;
+            char Buffer[BufferSize];
 
-        MemoryStack2()
-        :   MemoryStack(Buffer, entryCount, BufferSize)
-        {}
-    };
+            MemoryStack2()
+            :   MemoryStack(Buffer, entryCount, BufferSize)
+            {}
+        };
+    } } }
 }
 

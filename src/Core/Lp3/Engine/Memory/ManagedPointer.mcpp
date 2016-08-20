@@ -1,4 +1,5 @@
-~import Lp3::Engine::Memory::Host;
+~import-h LP3_LOG_DEBUG;
+~import-h Lp3::Engine::Memory::Host;
 ~import Lp3::Engine::Memory::HostObject;
 
 ~namespace Lp3::Engine::Memory;

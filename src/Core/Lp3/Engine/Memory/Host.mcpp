@@ -1,5 +1,6 @@
 ~unit "Lp3/Engine/Memory/Host";
 
+~import-h std::forward;
 ~import memory;
 
 namespace Lp3::Engine::Memory {

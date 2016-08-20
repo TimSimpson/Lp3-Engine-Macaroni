@@ -1,3 +1,5 @@
+// MinGW needs strcpy_s to be included to avoid esoteric build errors.
+~import cstring;
 ~import Lp3::Float32;
 ~import Lp3::Float64;
 ~import LP3_LOG_DEBUG;
