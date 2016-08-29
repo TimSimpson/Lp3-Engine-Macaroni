@@ -7,7 +7,7 @@ username = os.getenv("CONAN_USERNAME", "demo")
 
 class Lp3EngineTestPackage(ConanFile):
     settings = "os", "compiler", "build_type", "arch"
-    requires = "Lp3-Engine/0.0.4.0@%s/%s" % (username, channel)
+    requires = "Lp3-Engine/0.4.1.0@%s/%s" % (username, channel)
     generators = "cmake"
 
     def build(self):
