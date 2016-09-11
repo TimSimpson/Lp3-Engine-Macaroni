@@ -42,14 +42,18 @@ endif()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
 
 function(create_exe name src other_libs)
-    add_executable(${name} ${src})
-    target_link_libraries(${name} ${other_libs} ${CONAN_LIBS})
+    if(NOT SKIP_MACARONI)
+        add_executable(${name} ${src})
+        target_link_libraries(${name} ${other_libs} ${CONAN_LIBS})
+    endif()
 endfunction()
 
 function(create_test name src other_libs)
-    create_exe(${name} ${src} ${other_libs})
-add_test(test_${name} ${EXECUTABLE_OUTPUT_PATH}/bin/${name})
-    add_dependencies(check ${name})
+    if(NOT SKIP_MACARONI)
+        create_exe(${name} ${src} ${other_libs})
+    add_test(test_${name} ${EXECUTABLE_OUTPUT_PATH}/bin/${name})
+        add_dependencies(check ${name})
+    endif()
 endfunction()
 
 
@@ -70,16 +74,17 @@ if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/project.lua")
     add_dependencies(Lp3_Core invoke_macaroni)
 endif()
 
-create_test(PrimitivesTest src/Core/Lp3/PrimitivesTest.cpp Lp3_Core)
-create_test(AllocatorTest src/Core/Lp3/Engine/Memory/AllocatorTest.cpp Lp3_Core)
-create_test(CoroutineTest src/Core/Lp3/Engine/Coroutine/CoroutineTest.cpp Lp3_Core)
-create_test(MemoryStackTest src/Core/Lp3/Engine/Memory/MemoryStackTest.cpp Lp3_Core)
-create_test(ResourceDemo target/ResourceDemo.cpp Lp3_Core)
+if(NOT SKIP_MACARONI)
+    create_test(PrimitivesTest src/Core/Lp3/PrimitivesTest.cpp Lp3_Core)
+    create_test(AllocatorTest src/Core/Lp3/Engine/Memory/AllocatorTest.cpp Lp3_Core)
+    create_test(CoroutineTest src/Core/Lp3/Engine/Coroutine/CoroutineTest.cpp Lp3_Core)
+    create_test(MemoryStackTest src/Core/Lp3/Engine/Memory/MemoryStackTest.cpp Lp3_Core)
+    create_test(ResourceDemo target/ResourceDemo.cpp Lp3_Core)
 
-create_exe(AssertDemo src/Core/Demos/AssertDemo.cpp Lp3_Core)
-create_exe(Demo src/Core/Demos/Demo.cpp Lp3_Core)
-create_exe(MicroMainDemo target/MicroMainDemo.cpp Lp3_Core)
-
+    create_exe(AssertDemo src/Core/Demos/AssertDemo.cpp Lp3_Core)
+    create_exe(Demo src/Core/Demos/Demo.cpp Lp3_Core)
+    create_exe(MicroMainDemo target/MicroMainDemo.cpp Lp3_Core)
+endif()
 
 ###############################################################################
 #  Gfx
@@ -93,21 +98,23 @@ set_source_files_properties(
 target_link_libraries(Lp3_Gfx Lp3_Core ${CONAN_LIBS}
                       ${OPENGL_LIBRARIES})
 
-create_test(PixelTest src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp Lp3_Gfx)
+if(NOT SKIP_MACARONI)
+    create_test(PixelTest src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp Lp3_Gfx)
 
-create_exe(DrawText target/DrawText.cpp Lp3_Gfx)
-create_exe(EmscriptenSimple src/Gfx/Demos/Emscripten/Simple.cpp Lp3_Gfx)
-create_exe(HighResolution target/HighResolution.cpp Lp3_Gfx)
-create_exe(LoadImage target/LoadImage.cpp Lp3_Gfx)
-create_exe(MotivatingExample target/MotivatingExample.cpp Lp3_Gfx)
-create_exe(OpenGlDemo target/OpenGlDemo.cpp Lp3_Gfx)
-create_exe(ResizeWindow target/ResizeWindow.cpp Lp3_Gfx)
-create_exe(ShowTexture target/ShowTexture.cpp Lp3_Gfx)
-create_exe(Pvr2DShapesDemo src/Gfx/Demos/Pvr2DShapesDemo.cpp Lp3_Gfx)
-create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
-           Lp3_Gfx)
-create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
-
+    create_exe(DrawText target/DrawText.cpp Lp3_Gfx)
+    create_exe(EmscriptenSimple src/Gfx/Demos/Emscripten/Simple.cpp Lp3_Gfx)
+    create_exe(HighResolution target/HighResolution.cpp Lp3_Gfx)
+    create_exe(LoadImage target/LoadImage.cpp Lp3_Gfx)
+    create_exe(MotivatingExample target/MotivatingExample.cpp Lp3_Gfx)
+    create_exe(OpenGlDemo target/OpenGlDemo.cpp Lp3_Gfx)
+    create_exe(ResizeWindow target/ResizeWindow.cpp Lp3_Gfx)
+    create_exe(ShowTexture target/ShowTexture.cpp Lp3_Gfx)
+    create_exe(Triangles target/Triangles.cpp Lp3_Gfx)
+    create_exe(Pvr2DShapesDemo src/Gfx/Demos/Pvr2DShapesDemo.cpp Lp3_Gfx)
+    create_exe(Pvr2DTexturedShapesDemo src/Gfx/Demos/Pvr2DTexturedShapesDemo.cpp
+               Lp3_Gfx)
+    create_exe(PvrTextureDemo src/Gfx/Demos/PvrTextureDemo.cpp Lp3_Gfx)
+endif()
 
 ###############################################################################
 #  Input
@@ -121,17 +128,22 @@ set_source_files_properties(
     PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Lp3_Input Lp3_Core ${CONAN_LIBS})
 
-create_exe(InputDemo target/Lp3_Engine_Input_Demo.cpp Lp3_Input)
-create_exe(DreamcastDemo target/DreamcastDemo.cpp Lp3_Input)
-create_exe(DxDemo target/DxDemo.cpp Lp3_Input)
-set_target_properties(DxDemo
-    PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
-set_target_properties(XInputDemo
-    PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+if(NOT SKIP_MACARONI)
+    create_exe(InputDemo target/Lp3_Engine_Input_Demo.cpp Lp3_Input)
+    create_exe(DreamcastDemo target/DreamcastDemo.cpp Lp3_Input)
 
-create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Input)
-target_link_libraries(ToolsDemo Lp3_Gfx ${OPENGL_LIBRARIES})
+    create_exe(DxDemo target/DxDemo.cpp Lp3_Input)
+    set_target_properties(DxDemo
+        PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
+    set_target_properties(XInputDemo
+        PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+
+    create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Input)
+    target_link_libraries(ToolsDemo Lp3_Gfx ${OPENGL_LIBRARIES})
+endif()
+
+
 
 ###############################################################################
 #  Sfx
@@ -144,8 +156,10 @@ set_source_files_properties(
     PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Lp3_Sfx Lp3_Core ${CONAN_LIBS})
 
-create_exe(PlayWave target/PlayWave.cpp Lp3_Sfx)
-target_link_libraries(PlayWave Xaudio2)
+if(NOT SKIP_MACARONI)
+    create_exe(PlayWave target/PlayWave.cpp Lp3_Sfx)
+    target_link_libraries(PlayWave Xaudio2)
 
-create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
-target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)
+    create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
+    target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)
+endif()

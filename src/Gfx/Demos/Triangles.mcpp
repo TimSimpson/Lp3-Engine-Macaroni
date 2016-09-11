@@ -1,0 +1,136 @@
+/**
+ *
+ *  Triangles
+ *
+ *  This executable loads a bitmap and renders it as triangles.
+ *
+ */
+~unit Triangles type=exe;
+
+~import boost::format;
+~import LP3_LOG_DEBUG;
+~import Lp3::Engine::Gfx::BitmapReader;
+~import Lp3::Engine::Gfx::GfxManager;
+~import Lp3::Engine::Gfx::Image;
+~import Lp3::Engine::Gfx::ImageMemory;
+~import Lp3::Engine::Resources::InputFileStream;
+~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Gfx::Pixel;
+~import Lp3::Engine::Resources::ReadStreamPtr;
+~import Lp3::Engine::Gfx::Renderer;
+~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::ScreenObject;
+~import Lp3::Engine::Gfx::ScreenObjectPtr;
+~import std::string;
+~import Lp3::Engine::Gfx::Texture;
+~import Lp3::Engine::Gfx::TexturePtr;
+~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
+~import std::vector;
+~import Lp3::Engine::Gfx::Vertex;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+~block "cpp" :=
+
+#define LP3_MICROMAIN_WITH_GFX_DEPS true
+#include <Lp3/Engine/MicroMain.h>
+
+
+const auto red = VertexPixel::Create(0xFF, 0x00, 0x00, 0xFF);
+const auto green = VertexPixel::Create(0x00, 0xFF, 0x00, 0xFF);
+const auto blue = VertexPixel::Create(0x00, 0x00, 0xFF, 0xFF);
+
+
+GfxManager * manager;
+TexturePtr texturePizza;
+
+using namespace Lp3::Engine::Gfx::Geometry;
+
+
+inline const SpriteCoordinates Coord(ScreenPoint p, Size2d<float> size)
+{
+	return{ p,{ p.X + size.Width - 1, p.Y + size.Height - 1 } };
+}
+
+class TexturedBlock : public ScreenObject
+{
+
+    virtual void DrawOpaque(Renderer & renderer)
+    {
+		renderer.UseNoTexture();
+		const VertexPixel color = VertexPixel::Create(255, 255, 255, 255);
+		renderer.Quad(Coord({ 0, 0 }, { 640, 480 }), 0.2f, color);
+    }
+
+    virtual void DrawTranslucent(Renderer & renderer)
+    {
+        renderer.UseTexture(texturePizza);
+
+        const float z = 0.95f;
+		const VertexPixel color = VertexPixel::Create(255, 255, 255, 255);
+        const Vertex pa = { { 0, 480, z },
+                            { 0.0f, 1.0f },
+                            color };
+        const Vertex pb = { { 320, 0, z },
+                            { 0.5f, 0.0f },
+                            color };
+        const Vertex pc = { { 640, 480, z },
+                            { 1.0f, 1.0f },
+                            color };
+        renderer.Triangle(pb, pa, pc);
+    }
+};
+
+
+class Main
+{
+public:
+    Main(const vector<string> & arguments
+         #ifdef LP3_COMPILE_TARGET_WINDOWS
+           , HINSTANCE hInstance, HWND hWnd
+         #endif
+    )
+    {
+        LP3_LOG_DEBUG("Initializing GFX...");
+
+        manager = new GfxManager(
+            #ifdef LP3_COMPILE_TARGET_WINDOWS
+                hWnd
+            #endif
+        );
+        Screen & screen = manager->GetScreen(0);
+        ImageMemory & memory = screen.GetImageMemory();
+        {
+            LP3_LOG_DEBUG("Creating texturePizzas...");
+            ReadStreamPtr input(new InputFileStream("Engine/Gfx/pizza.bmp"));
+			// Color key is intentionally wrong for now...
+			const Pixel colorKey(255, 255, 255, 255); //255, 0, 220, 0);
+            texturePizza = memory.LoadTexture(input, colorKey);
+        }
+        ScreenObjectPtr obj(new TexturedBlock());
+        screen.SetObject(obj);
+
+        LP3_LOG_DEBUG("Finished initialization.");
+    }
+
+    ~Main()
+    {
+        LP3_LOG_DEBUG("Shutting down, good-bye.");
+        texturePizza = nullptr;
+        delete manager;
+    }
+
+
+    void Iterate()
+    {
+        manager->Render();
+    }
+
+    #ifdef LP3_COMPILE_TARGET_WINDOWS
+        void WindowsMessage(HWND hWnd, UINT message, WPARAM wParam,
+                            LPARAM lParam)
+        {
+        }
+    #endif
+};
+
+LP3_MICROMAIN(Main, "Lp3::Engine::Gfx::ShowTexture")

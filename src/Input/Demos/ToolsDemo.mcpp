@@ -12,18 +12,21 @@
 ~import Lp3::Engine::Gfx::BitmapReader;
 ~import LP3_COROUTINE;
 ~import Lp3::Engine::Coroutine::CoroutineState;
+~import Lp3::Float32;
 ~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::GradientRenderer;
 ~import Lp3::Engine::Gfx::Image;
 ~import Lp3::Engine::Gfx::ImageMemory;
 ~import Lp3::Engine::Resources::InputFileStream;
 ~import Lp3::Engine::Gfx::InternalPixel;
+~import Lp3::Engine::Input::Mouse;
 ~import Lp3::Engine::Gfx::NonTexturedFlatQuad;
 ~import Lp3::Engine::Gfx::Pixel;
 ~import Lp3::Engine::Gfx::PixelDiff;
 ~import Lp3::Engine::Resources::ReadStreamPtr;
 ~import Lp3::Engine::Gfx::Renderer;
 ~import Lp3::Engine::Gfx::Screen;
+~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
 ~import Lp3::Engine::Gfx::ScreenObject;
 ~import Lp3::Engine::Gfx::ScreenObjectPtr;
 ~import std::string;
@@ -64,18 +67,27 @@ string pressedKeys;
 
 class Sign : public ScreenObject
 {
-
+	vector<ScreenPoint> lbLine;
+	vector<ScreenPoint> rbLine;
+	ScreenPoint scrollWheelThing;
     TexturePtr textureText;
     std::unique_ptr<TileSet> tileSet;
 
     public: Sign(ImageMemory & memory)
     {
+		scrollWheelThing = { 0, 0 };
         LP3_LOG_DEBUG("Creating textureTexts...");
         ReadStreamPtr input(new InputFileStream("Engine/text.bmp"));
         const Pixel colorKey(0, 0, 0, 0);
         textureText = memory.LoadTexture(input, colorKey);
         tileSet.reset(new TileSet(textureText, {16, 16}, {16, 16}));
     }
+
+	public: void AddToLine(bool rmb, ScreenPoint p)
+	{
+		vector<ScreenPoint> & l = (rmb ? rbLine : lbLine);
+		l.push_back(p);
+	}
 
     public: virtual void DrawOpaque(Renderer & renderer)
     {
@@ -90,7 +102,20 @@ class Sign : public ScreenObject
                         {16 + (16 * 34), 304 + 24 + (6 * 16)},
                         0.2f, textBg, textBgEnd);
 
-        renderer.Triangle({ 320, 200}, {480, 430}, {39, 467}, 0.15f, orange);
+        renderer.Triangle({ 320, 200 + scrollWheelThing.Y}, 
+						  {480, 430 + scrollWheelThing.Y }, 
+						  {39, 467 + scrollWheelThing.Y }, 0.15f, orange);
+
+		for (const ScreenPoint & p : lbLine)
+		{
+			SpriteCoordinates coord{ {p.X - 5, p.Y - 5}, {p.X + 5, p.Y + 5} };
+			renderer.Quad(coord, 0.98, red);
+		}
+		for (const ScreenPoint & p : rbLine)
+		{
+			SpriteCoordinates coord{ { p.X - 5, p.Y - 5 },{ p.X + 5, p.Y + 5 } };
+			renderer.Quad(coord, 0.98, blue);
+		}
     }
 
     public: virtual void DrawTranslucent(Renderer & renderer)
@@ -107,6 +132,11 @@ class Sign : public ScreenObject
         std::string fpsString = str(boost::format("FPS:%d") % fps);
         tr.Write({32, 32}, 0.5f, fpsString.c_str());
     }
+
+	public: void Scroll(Float32 amount)
+	{
+		scrollWheelThing.Y += (amount * Clock::GetSpeedMod()) * 1080;
+	}
 };
 
 const Size2d<unsigned int> virtualResolution{1920, 1080};
@@ -117,6 +147,7 @@ private:
     HWND hWnd;
     bool isFullScreen;
     GfxManager manager;
+	Sign * sign;
     ToolControls toolControls;
 
     LONG lStyleWin;
@@ -131,13 +162,15 @@ public:
         isFullScreen(false),
         manager(LP3_COMPILE_TARGET_WINDOWS_THEN(hWnd,)
                 virtualResolution),
+		sign(nullptr),
         toolControls(virtualResolution)
     {
         LP3_LOG_DEBUG("Initializing GFX...");
         Screen & screen = manager.GetScreen(0);
         ImageMemory & memory = screen.GetImageMemory();
-
-        ScreenObjectPtr obj(new Sign(memory));
+		
+		sign = new Sign(memory);
+        ScreenObjectPtr obj(sign);
         screen.SetObject(obj);
 
         Clock::Init(1000.0f / 60.0f); // enforce 60 fps?
@@ -160,6 +193,18 @@ public:
     void Iterate()
     {
         Clock::NextFrame();
+		toolControls.Update();
+
+		{
+			Mouse m = toolControls.GetMouse();
+			if (m.LeftButton || m.RightButton)
+			{
+				sign->AddToLine(m.RightButton,
+								{ float(m.Position.X), float(m.Position.Y) });
+			}
+			sign->Scroll(m.Wheel);
+		}
+
         if (toolControls.GetKeyDownWithCancel('O'))
         {
             auto filePath = toolControls.OpenFileDialog();

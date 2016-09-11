@@ -1,0 +1,12 @@
+~import Lp3::Engine::Gfx::Geometry::PolyPoint;
+~import Lp3::Engine::Gfx::Geometry::TexturedPoint;
+~import Lp3::Engine::Gfx::VertexPixel;
+
+~namespace Lp3::Engine::Gfx;
+
+class Vertex
+{
+    public PolyPoint P;
+    public TexturedPoint T;
+    public VertexPixel C;
+};

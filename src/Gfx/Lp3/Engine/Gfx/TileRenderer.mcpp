@@ -41,7 +41,7 @@ class TileRenderer
               (float) screenPosition.Y + tileSet.singleTileSize.Height - 1 }
         };
 
-        const Coordinates2d<int> start = {
+        const Coordinates2d<float> start = {
             tileSource.X * tileSet.singleTileSize.Width,
             tileSource.Y * tileSet.singleTileSize.Height
         };
@@ -68,7 +68,7 @@ class TileRenderer
                 continue;
             }
             LP3_ASSERT_TRUE(*text > 31 && *text < 128);
-            const int offSet = *text - 32;
+            const float offSet = *text - 32;
             const Lp3::UInt8 row = offSet / tileSet.textureSizeInTiles.Width;
             const Lp3::UInt8 col = offSet -
                                    (row * tileSet.textureSizeInTiles.Width);

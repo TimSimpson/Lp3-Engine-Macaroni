@@ -246,8 +246,15 @@ using PolyPoint = Coordinates3d<float>;
 
 using SpriteCoordinates = CoordinatePair2d<float>;
 
+using TexturedPoint = Coordinates2d<float>;
 using TexturedQuadUV = NormalizedCoordinatePair2d<float>;
-using TexturedQuadSrc = CoordinatePair2d<int>;
+using TexturedQuadSrc = CoordinatePair2d<float>;
+
+struct PolyPointT
+{
+    PolyPoint P;
+    TexturedPoint T;
+};
 
 #ifdef LP3_COMPILE_TARGET_DREAMCAST
     static_assert(sizeof(TexturedQuadUV) == sizeof(float) * 4,

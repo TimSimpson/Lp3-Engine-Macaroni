@@ -11,8 +11,10 @@
 
 ~import std::array;
 ~import Lp3::Engine::Gfx::Geometry::Coordinates2d;
+~import Lp3::Int32;
 ~import LP3_LOG_DEBUG;
 ~import LPARAM;
+~import Lp3::Engine::Input::Mouse;
 ~import boost::optional;
 ~import Lp3::Engine::Gfx::Geometry::Size2d;
 ~import std::string;
@@ -63,18 +65,16 @@ class ToolControls
     private Coordinates2d<float> resolutionModifier;
     private static constexpr int keyCount = 256;
     private array<bool, keyCount> keys;
-    private Coordinates2d<int> mouse;
-    private bool mouseButton1;
-    private bool mouseButton2;
+    private Mouse mouse;
     private Size2d<unsigned int> virtualResolution;
+    private Int32 wheelDelta;
 
     public ToolControls(Size2d<unsigned int> virtualResolution)
     :   actualResolution({10, 10}),
         resolutionModifier({1, 1}),
-        mouse({0, 0}),
-        mouseButton1(false),
-        mouseButton2(false),
-        virtualResolution(virtualResolution)
+        mouse(),
+        virtualResolution(virtualResolution),
+        wheelDelta(0)
     {
         for (int i = 0; i < 256; ++i)
         {
@@ -82,11 +82,15 @@ class ToolControls
         }
     }
 
-
-
     public bool GetKeyDown(const char key) const
     {
         return keys[(int)key];
+    }
+
+    public Mouse GetMouse() const
+    {
+        return Mouse(mouse.Position, mouse.LeftButton, mouse.RightButton,
+                     mouse.Wheel);
     }
 
     public bool GetKeyDownWithCancel(const char key)
@@ -118,6 +122,14 @@ class ToolControls
         return openDialogBox<Call>();
     }
 
+    // Called once per frame.
+    public void Update()
+    {
+        mouse.Wheel = ((float)wheelDelta / (float)WHEEL_DELTA);
+		wheelDelta = 0;
+    }
+
+    // Called for every single Windows message.
     public void WindowsMessage(HWND hWnd, const UINT message, const WPARAM wParam,
                                const LPARAM lParam)
     {
@@ -144,34 +156,46 @@ class ToolControls
                     this->keys[wParam] = false;
                 }
                 break;
+			case WM_MOUSEMOVE:
+				this->mouse.Position.X = (int)((float)LOWORD(lParam)
+					* this->resolutionModifier.X);
+				this->mouse.Position.Y = (int)((float)HIWORD(lParam)
+					* this->resolutionModifier.Y);
+				break;
             case WM_LBUTTONDOWN:
-                this->mouse.X = (int)((float)LOWORD(lParam)
+                this->mouse.Position.X = (int)((float)LOWORD(lParam)
                     * this->resolutionModifier.X);
-                this->mouse.Y = (int)((float)HIWORD(lParam)
+                this->mouse.Position.Y = (int)((float)HIWORD(lParam)
                     * this->resolutionModifier.Y);
-                this->mouseButton1 = true;
+                this->mouse.LeftButton = true;
                 break;
             case WM_LBUTTONUP:
-                this->mouse.X = (int)((float)LOWORD(lParam)
+                this->mouse.Position.X = (int)((float)LOWORD(lParam)
                     * this->resolutionModifier.X);
-                this->mouse.Y = (int)((float)HIWORD(lParam)
+                this->mouse.Position.Y = (int)((float)HIWORD(lParam)
                     * this->resolutionModifier.Y);
-                this->mouseButton1 = false;
+                this->mouse.LeftButton = false;
                 break;
             case WM_RBUTTONDOWN:
-                this->mouse.X = (int)((float)LOWORD(lParam)
+                this->mouse.Position.X = (int)((float)LOWORD(lParam)
                     * this->resolutionModifier.X);
-                this->mouse.Y = (int)((float)HIWORD(lParam)
+                this->mouse.Position.Y = (int)((float)HIWORD(lParam)
                     * this->resolutionModifier.Y);
-                this->mouseButton1 = true;
+                this->mouse.RightButton = true;
                 break;
             case WM_RBUTTONUP:
-                this->mouse.X = (int)((float)LOWORD(lParam)
+                this->mouse.Position.X = (int)((float)LOWORD(lParam)
                     * this->resolutionModifier.X);
-                this->mouse.Y = (int)((float)HIWORD(lParam)
+                this->mouse.Position.Y = (int)((float)HIWORD(lParam)
                     * this->resolutionModifier.Y);
-                this->mouseButton1 = false;
+                this->mouse.RightButton = false;
                 break;
+            case WM_MOUSEWHEEL:
+				{
+					const short delta = GET_WHEEL_DELTA_WPARAM(wParam);
+					wheelDelta += delta;
+				}
+				break;
             default:
                 break;
         }

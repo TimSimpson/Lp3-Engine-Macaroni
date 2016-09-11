@@ -23,6 +23,7 @@
 ~import Lp3::Engine::Gfx::OpenGl::OpenGlScreen;
 ~import Lp3::Engine::Gfx::Pixel;
 ~import Lp3::Engine::Gfx::Geometry::PolyPoint;
+~import Lp3::Engine::Gfx::Geometry::PolyPointT;
 ~import Lp3::Engine::Gfx::Renderer;
 ~import Lp3::Engine::Gfx::Screen;
 ~import Lp3::Engine::Gfx::Geometry::ScreenPoint;
@@ -35,6 +36,7 @@
 ~import Lp3::Engine::Gfx::TexturePtr;
 ~import Lp3::Engine::Gfx::Geometry::TexturedQuadSrc;
 ~import Lp3::Engine::Gfx::Geometry::TexturedQuadUV;
+~import Lp3::Engine::Gfx::Vertex;
 ~import Lp3::Engine::Gfx::VertexPixel;
 
 
@@ -362,6 +364,38 @@ public:
             safeGlVertex3f(p2.X, p2.Y, p2.Z);
             safeGlTexCoord2f(1.0, 0.0);
             safeGlVertex3f(p3.X, p3.Y, p3.Z);
+        safeGlEnd();
+    }
+
+    void Triangle(const PolyPointT p1, const PolyPointT p2,
+                  const PolyPointT p3, const VertexPixel & pixel)
+    {
+        glColor4f(pixel.r, pixel.g, pixel.b, pixel.a);
+        safeGlBegin(GL_TRIANGLES);
+            safeGlTexCoord2f(p1.T.X, p1.T.Y);
+            safeGlVertex3f(p1.P.X, p1.P.Y, p1.P.Z);
+            safeGlTexCoord2f(p2.T.X, p2.T.Y);
+            safeGlVertex3f(p2.P.X, p2.P.Y, p2.P.Z);
+            safeGlTexCoord2f(p3.T.X, p3.T.Y);
+            safeGlVertex3f(p3.P.X, p3.P.Y, p3.P.Z);
+        safeGlEnd();
+    }
+
+    void Triangle(const Vertex p1, const Vertex p2,
+                  const Vertex p3)
+    {
+        safeGlBegin(GL_TRIANGLES);
+            glColor4f(p1.C.r, p1.C.g, p1.C.b, p1.C.a);
+            safeGlTexCoord2f(p1.T.X, p1.T.Y);
+            safeGlVertex3f(p1.P.X, p1.P.Y, p1.P.Z);
+
+            glColor4f(p2.C.r, p2.C.g, p2.C.b, p2.C.a);
+            safeGlTexCoord2f(p2.T.X, p2.T.Y);
+            safeGlVertex3f(p2.P.X, p2.P.Y, p2.P.Z);
+
+            glColor4f(p3.C.r, p3.C.g, p3.C.b, p3.C.a);
+            safeGlTexCoord2f(p3.T.X, p3.T.Y);
+            safeGlVertex3f(p3.P.X, p3.P.Y, p3.P.Z);
         safeGlEnd();
     }
 

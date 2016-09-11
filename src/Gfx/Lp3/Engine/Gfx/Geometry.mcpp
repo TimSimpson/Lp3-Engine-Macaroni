@@ -2,17 +2,17 @@
 
 class Box2d
 {
-    public int X1;
-    public int Y1;
-    public int X2;
-    public int Y2;
+    public float X1;
+    public float Y1;
+    public float X2;
+    public float Y2;
 
-    public inline int Height() const
+    public inline float Height() const
     {
         return Y2 - Y1;
     }
 
-    public void Set(int X1, int Y1, int X2, int Y2)
+    public void Set(float X1, float Y1, float X2, float Y2)
     {
         this->X1 = X1;
         this->Y1 = Y1;
@@ -20,7 +20,7 @@ class Box2d
         this->Y2 = Y2;
     }
 
-    public inline int Width() const
+    public inline float Width() const
     {
         return X2 - X1;
     }
@@ -85,6 +85,12 @@ class Box2d
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::PolyPoint; }
     ;
+~extern PolyPointT
+    export
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::PolyPointT; }
+    ;
+
 
 ~extern SpriteCoordinates
     export
@@ -100,4 +106,9 @@ class Box2d
     export
     include=<Lp3/Engine/Gfx/Geometry.hpp>
     using={ using Lp3::Engine::Gfx::Geometry::TexturedQuadSrc; }
+    ;
+~extern TexturedPoint
+    export
+    include=<Lp3/Engine/Gfx/Geometry.hpp>
+    using={ using Lp3::Engine::Gfx::Geometry::TexturedPoint; }
     ;

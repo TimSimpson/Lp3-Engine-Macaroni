@@ -1,0 +1,28 @@
+~import Lp3::Engine::Gfx::Geometry::Coordinates2d;
+~import Lp3::Float32;
+
+~namespace Lp3::Engine::Input;
+
+
+class Mouse
+{
+public:
+    Coordinates2d<int> Position;
+    bool LeftButton;
+    bool RightButton;
+    Float32 Wheel;
+
+    Mouse()
+    :   Position({0, 0}),
+        LeftButton(false),
+        RightButton(false),
+        Wheel(0.0f)
+    {}
+
+    Mouse(Coordinates2d<int> p, bool lb, bool rb, Float32 w)
+    :   Position(p),
+        LeftButton(lb),
+        RightButton(rb),
+        Wheel(w)
+    {}
+};
