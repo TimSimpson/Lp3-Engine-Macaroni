@@ -1,4 +1,5 @@
 ~import LP3_ABORT;
+~import LP3_ASSERT_TRUE;
 ~import LP3_ASSERT_FALSE_MESSAGE;
 ~import LP3_LOG_DEBUG;
 ~import boost::format;
@@ -98,7 +99,7 @@ class DreamcastInputFileStream : public ResettableReadStream
         const auto n = fseek(file, position, SEEK_CUR);
         if (n != 0)
         {
-            LP3_ASSERT_TRUE(ferror(file) == 0,
+            LP3_ASSERT_TRUE_MESSAGE(ferror(file) == 0,
                             "ferror returned bad result!");
         }
     }

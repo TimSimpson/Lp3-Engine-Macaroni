@@ -1,20 +1,50 @@
 project(Lp3-Engine CXX)
 cmake_minimum_required(VERSION 2.8)
 
-include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
-conan_basic_setup()
+option(DREAMCAST OFF)
 
-add_compile_options(-std=c++14)
+if(NOT DREAMCAST)
+    # Configure for Windows
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup()
+    find_package(OpenGL REQUIRED)
+    SET(LP3_INCLUDE_DIRS "${CONAN_INCLUDE_DIRS}" "${OPENGL_INCLUDE_DIRS}")
+    SET(LP3_LIBS, "${CONAN_LIBS}")
+else()
+    # Static all the way baby!
+    SET(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+    SET(BUILD_SHARED_LIBRARIES OFF)
+    SET(CMAKE_EXE_LINKER_FLAGS "-static")
 
-find_package(OpenGL REQUIRED)
+    # We have to manually know where to find Boost since we can't rely
+    # on Conan.
+    SET(LP3_INCLUDE_DIRS
+        "$ENV{BOOST_INCLUDE_DIR}"
+        "$ENV{KOS_BASE}/include"
+        "$ENV{KOS_BASE}/../kos-ports/include"
+        "$ENV{KOS_BASE}/kernel/arch/dreamcast/include"
+        "$ENV{KOS_BASE}/addons/include"
+    )
+
+    SET(LP3_LIBS "")
+    add_compile_options(-std=c++11)
+    add_definitions(-DLP3_COMPILE_TARGET_DREAMCAST)
+    add_definitions(-DBOOST_NO_EXCEPTIONS)
+
+    link_directories(
+        "$ENV{KOS_BASE}/lib/$ENV{KOS_ARCH}"
+        "$ENV{KOS_BASE}/addons/lib/$ENV{KOS_ARCH}"
+        "$ENV{KOS_PORTS}/lib"
+    )
+endif()
 
 include_directories(
     src/Core
     src/Gfx
     src/Input
     target
-    ${CONAN_INCLUDE_DIRS}
-    ${OPENGL_INCLUDE_DIRS})
+    ${LP3_INCLUDE_DIRS})
+
 
 include(target/macaroni.cmake)
 
@@ -35,6 +65,7 @@ if(NOT SKIP_MACARONI)
 endif()
 
 
+set(BUILD_EXTRA ${SKIP_MACARONI} $<AND $<NOT ${DREAMCAST}>>)
 
 ###############################################################################
 #  Extra Functions
@@ -42,14 +73,14 @@ endif()
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
 
 function(create_exe name src other_libs)
-    if(NOT SKIP_MACARONI)
+    if(BUILD_EXTRA)
         add_executable(${name} ${src})
-        target_link_libraries(${name} ${other_libs} ${CONAN_LIBS})
+        target_link_libraries(${name} ${other_libs} ${LP3_LIBS})
     endif()
 endfunction()
 
 function(create_test name src other_libs)
-    if(NOT SKIP_MACARONI)
+    if(BUILD_EXTRA)
         create_exe(${name} ${src} ${other_libs})
     add_test(test_${name} ${EXECUTABLE_OUTPUT_PATH}/bin/${name})
         add_dependencies(check ${name})
@@ -67,14 +98,14 @@ add_library(Lp3_Core
 set_source_files_properties(
     ${MACARONI_LIBS_Lp3_Core_SRC_FILES}
     PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Core ${CONAN_LIBS})
+target_link_libraries(Lp3_Core ${LP3_LIBS})
 
 # If project.lua is found, invoke Macaroni. Otherwise ignore for package builds.
 if (EXISTS "${CMAKE_CURRENT_LIST_DIR}/project.lua")
     add_dependencies(Lp3_Core invoke_macaroni)
 endif()
 
-if(NOT SKIP_MACARONI)
+if(BUILD_EXTRA)
     create_test(PrimitivesTest src/Core/Lp3/PrimitivesTest.cpp Lp3_Core)
     create_test(AllocatorTest src/Core/Lp3/Engine/Memory/AllocatorTest.cpp Lp3_Core)
     create_test(CoroutineTest src/Core/Lp3/Engine/Coroutine/CoroutineTest.cpp Lp3_Core)
@@ -87,6 +118,15 @@ if(NOT SKIP_MACARONI)
 endif()
 
 ###############################################################################
+# Stupid
+###############################################################################
+# add_executable(pvrmark_strips_direct
+#     src/pvrmark_strips_direct.cpp)
+
+add_executable(dumb
+    src/dumb.cpp)
+
+###############################################################################
 #  Gfx
 ###############################################################################
 add_library(Lp3_Gfx
@@ -95,10 +135,10 @@ add_library(Lp3_Gfx
 set_source_files_properties(
     ${MACARONI_LIBS_Lp3_Gfx_SRC_FILES}
     PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Gfx Lp3_Core ${CONAN_LIBS}
+target_link_libraries(Lp3_Gfx Lp3_Core ${LP3_LIBS}
                       ${OPENGL_LIBRARIES})
 
-if(NOT SKIP_MACARONI)
+if(BUILD_EXTRA)
     create_test(PixelTest src/Gfx/Lp3/Engine/Gfx/PixelTest.cpp Lp3_Gfx)
 
     create_exe(DrawText target/DrawText.cpp Lp3_Gfx)
@@ -126,40 +166,46 @@ add_library(Lp3_Input
 set_source_files_properties(
     ${MACARONI_LIBS_Lp3_Input_SRC_FILES}
     PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Input Lp3_Core ${CONAN_LIBS})
+target_link_libraries(Lp3_Input Lp3_Core ${LP3_LIBS})
 
-if(NOT SKIP_MACARONI)
+if(BUILD_EXTRA)
     create_exe(InputDemo target/Lp3_Engine_Input_Demo.cpp Lp3_Input)
-    create_exe(DreamcastDemo target/DreamcastDemo.cpp Lp3_Input)
 
-    create_exe(DxDemo target/DxDemo.cpp Lp3_Input)
-    set_target_properties(DxDemo
-        PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
-    create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
-    set_target_properties(XInputDemo
-        PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+    if (DREAMCAST)
+        create_exe(DreamcastDemo target/DreamcastDemo.cpp Lp3_Input)
+    else()
+        create_exe(DxDemo target/DxDemo.cpp Lp3_Input)
+        set_target_properties(DxDemo
+            PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
+        create_exe(XInputDemo target/XInputDemo.cpp Lp3_Input)
+        set_target_properties(XInputDemo
+            PROPERTIES LINK_FLAGS_DEBUG "/SUBSYSTEM:CONSOLE")
 
-    create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Input)
-    target_link_libraries(ToolsDemo Lp3_Gfx ${OPENGL_LIBRARIES})
+        create_exe(ToolsDemo target/ToolsDemo.cpp Lp3_Input)
+        target_link_libraries(ToolsDemo Lp3_Gfx ${OPENGL_LIBRARIES})
+    endif()
 endif()
 
 
 
-###############################################################################
-#  Sfx
-###############################################################################
-add_library(Lp3_Sfx
-    ${MACARONI_LIBS_Lp3_Sfx_CPP_FILES}
-    ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES})
-set_source_files_properties(
-    ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES}
-    PROPERTIES HEADER_FILE_ONLY TRUE)
-target_link_libraries(Lp3_Sfx Lp3_Core ${CONAN_LIBS})
+if(NOT DREAMCAST)
+    ###############################################################################
+    #  Sfx
+    ###############################################################################
+    add_library(Lp3_Sfx
+        ${MACARONI_LIBS_Lp3_Sfx_CPP_FILES}
+        ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES})
+    set_source_files_properties(
+        ${MACARONI_LIBS_Lp3_Sfx_SRC_FILES}
+        PROPERTIES HEADER_FILE_ONLY TRUE)
+    target_link_libraries(Lp3_Sfx Lp3_Core ${LP3_LIBS})
 
-if(NOT SKIP_MACARONI)
-    create_exe(PlayWave target/PlayWave.cpp Lp3_Sfx)
-    target_link_libraries(PlayWave Xaudio2)
+    if(NOT SKIP_MACARONI)
+        create_exe(PlayWave target/PlayWave.cpp Lp3_Sfx)
+        target_link_libraries(PlayWave Xaudio2)
 
-    create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
-    target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)
+        create_exe(SoundDemo target/SoundDemo.cpp Lp3_Gfx)
+        target_link_libraries(SoundDemo Lp3_Input Lp3_Sfx Xaudio2)
+    endif()
+
 endif()

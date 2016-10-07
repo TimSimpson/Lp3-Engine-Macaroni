@@ -10,17 +10,17 @@
  */
 class ButtonMapping
 {
-    public Device * Device;
+    public Device * device;
     public string DeviceName;
     public unsigned int KeyIndex;
 
     public inline bool GetState()
     {
-        return Device->GetKeyState(KeyIndex);
+        return device->GetKeyState(KeyIndex);
     }
 
     public inline Lp3::Float32 GetAnalogState()
     {
-        return Device->GetKeyAnalogState(KeyIndex);
+        return device->GetKeyAnalogState(KeyIndex);
     }
 };

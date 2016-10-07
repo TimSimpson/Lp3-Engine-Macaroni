@@ -3,7 +3,7 @@
 ~import Lp3::Engine::Resources::ResettableReadStream;
 ~import Lp3::Engine::Resources::ReadStreamPtr;
 ~import Lp3::Engine::Resources::ResettableReadStreamPtr;
-
+~import memcpy;
 
 ~namespace Lp3::Engine::Resources;
 

@@ -8,16 +8,25 @@ This is a rudimentary game engine designed to compile against Windows, the Dream
 
 Because it runs on such a low common denominator certain aspects are very primitive, such as the graphics API (which maps closely to the Dreamcast's PVR library).
 
+NOTE: The code for the Dreamcast hasn't been touched in two years. I recently made some of it compile again but most of it is still broken.
+
 
 ## Prereqs
+
+### Windows
 
 Building this requires CMake, Conan, and Macaroni for C++.
 
 This engine logs to [Squirrel Console](https://github.com/TimSimpson/SquirrelConsole) on Windows, and falls back to standard out otherwise. Logging
 only happens in debug builds.
 
+### Dreamcast
+
+You'll need a typical KallistiOS toolchain, CMake, and Macaroni for C++.
 
 ## Building
+
+### Windows
 
 Assuming all of those things are installed and available from the path, try
 this:
@@ -30,6 +39,14 @@ this:
 This code was Dreamcast compatible at some point in the past; now, it is
 anyone's guess. Support for this will be resurrected the toolchain even gets
 past GCC 4.7.
+
+### Dreamcast
+
+    $ mkdir build-dc
+    $ cd build-dc
+    $ cmake -H"../" -B"./" -DDREAMCAST=true -DCMAKE_TOOLCHAIN_FILE="../Dreamcast.cmake" -G "Unix Makefiles"
+    $ make
+
 
 ## Media
 

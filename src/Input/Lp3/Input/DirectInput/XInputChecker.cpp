@@ -1,4 +1,5 @@
 #include "XInputChecker.h"
+#ifdef LP3_COMPILE_TARGET_WINDOWS
 
 // This code comes from Microsoft's website and appears to be the canonical
 // recommended way to do this. Not sure why it couldn't be a library call...
@@ -157,3 +158,5 @@ LCleanup:
 
 
 } } } } // end namespaces
+
+#endif

@@ -9,8 +9,9 @@
     #endif // LP3_COMPILE_TARGET_DREAMCAST
 }
 
-~import iostream;
+~import-h iostream;
 ~import jmp_buf;
+~import std::cout;
 
 ~namespace Lp3;
 
@@ -18,16 +19,16 @@
 {
     namespace
     {
-        jmp_buf DreamcastTestAsserts::buf;
-        const char * DreamcastTestAsserts::lastExceptionType;
+        //jmp_buf DreamcastTestAsserts::buf;
+        //const char * DreamcastTestAsserts::lastExceptionType;
     }
 }
 
 
 class DreamcastTestAsserts
 {
-    static jmp_buf buf;
-    static const char * lastExceptionType;
+    public static jmp_buf buf;
+    public static const char * lastExceptionType;
 
     template<typename TypeA, typename TypeB>
     public static void AssertEqual(const char * fileName, int lineNumber,

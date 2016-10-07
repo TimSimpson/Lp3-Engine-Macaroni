@@ -17,8 +17,10 @@ struct Coordinates2d
     template<typename Archive>
     void serialize(Archive & archive)
     {
+        /*
         archive(cereal::make_nvp("X", X));
         archive(cereal::make_nvp("Y", Y));
+        */
     }
 };
 
@@ -127,8 +129,10 @@ struct CoordinatePair
     template<typename Archive>
     void serialize(Archive & archive)
     {
+        /*
         archive(cereal::make_nvp("A", A));
         archive(cereal::make_nvp("B", B));
+        */
     }
 
     inline void Set(CoordType a, CoordType b)

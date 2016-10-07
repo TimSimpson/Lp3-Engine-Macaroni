@@ -1,4 +1,4 @@
-~import Lp3::Engine::Log::ErrOutPipe;
+//~import Lp3::Engine::Log::ErrOutPipe;
 
 class LP3_LOG_CRITICAL { ~hfile=<Lp3/Log.h> };
 class LP3_LOG_DEBUG { ~hfile=<Lp3/Log.h> };

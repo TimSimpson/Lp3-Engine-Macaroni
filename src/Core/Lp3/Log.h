@@ -33,6 +33,12 @@
 
     namespace Lp3 { namespace Log {
 
+        template<typename LastType>
+        void feedToFormat(boost::format & format, const LastType & arg)
+        {
+            format % arg;
+        }
+
         template<typename HeadType, typename... TailTypes>
         void feedToFormat(boost::format & format, const HeadType & head,
                           const TailTypes... tail)
@@ -41,11 +47,7 @@
             feedToFormat(format, tail...);
         }
 
-        template<typename LastType>
-        void feedToFormat(boost::format & format, const LastType & arg)
-        {
-            format % arg;
-        }
+
 		MACARONI_LIB_DECL_Lp3___Lp3_45_Engine___DEV___Lp3__Core
         void WriteLog(const char * const filename, const int lineNumber,
                       const LogLevel & level, const char * const message);

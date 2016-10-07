@@ -37,10 +37,12 @@ public:
     template<typename Archive>
     void serialize(Archive & archive)
     {
+        /*
         archive(cereal::make_nvp("Red", Red));
         archive(cereal::make_nvp("Green", Green));
         archive(cereal::make_nvp("Blue", Blue));
         archive(cereal::make_nvp("Alpha", Alpha));
+        */
     }
 };
 

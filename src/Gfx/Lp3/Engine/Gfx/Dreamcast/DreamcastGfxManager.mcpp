@@ -1,7 +1,9 @@
 ~unit "Lp3/Engine/Gfx/Dreamcast/DreamcastGfxManager" ;
 
+~import boost::optional;
 ~import Lp3::Engine::Gfx::GfxManager;
 ~import Lp3::Engine::Gfx::Dreamcast::DreamcastScreen;
+~import Lp3::Engine::Gfx::Geometry::Size2d;
 
 ~namespace Lp3::Engine::Gfx::Dreamcast;
 
@@ -43,6 +45,14 @@ class DreamcastGfxManager {
 
     private DreamcastScreen screen;
 
+    // Nothing works except for 640 x 480, so this argument is ignored.
+    public DreamcastGfxManager(boost::optional<
+                    Lp3::Engine::Gfx::Geometry::Size2d<unsigned int>
+                >   virtualResolution = boost::none)
+    {}
+
+    public ~DreamcastGfxManager() {
+    }
 
     public Screen & GetScreen(const unsigned int index)
     {

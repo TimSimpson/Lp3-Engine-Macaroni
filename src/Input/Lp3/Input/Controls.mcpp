@@ -87,7 +87,7 @@ class Controls
     {
         Control & control = GetControl(controlIndex);
         ButtonMapping mapping;
-        mapping.Device = device;
+        mapping.device = device;
         mapping.DeviceName = device->GetName();
         mapping.KeyIndex = keyIndex;
         control.ConfigureButtonMapping(buttonIndex, mapping);
